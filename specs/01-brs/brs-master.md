@@ -1,12 +1,12 @@
 # 01 — Business & Functional Specification (THE WHAT)
 
 > **Document Role:** Primary Business Specification (*What business problem we solve, the three personas, how folders/cohorts/projects are organized, who operates at each level, and the functional experience per persona*).  
-> *(Note: Visual Canvas UI layout and interaction mechanics are specified separately in [ui-master-spec.md](technical-design/ui/ui-master-spec.md).)*
+> *(Note: Visual Canvas UI layout and interaction mechanics are specified separately in [ui-master-spec.md](../technical-design/ui/ui-master-spec.md).)*
 >
 > **Secondary Persona Documents (WHY & HOW):**
-> * **Persona 1 — IT Admin:** [IT Admin CUJs (WHY)](business/it-admin-cuj.md) · [IT Admin Details (HOW)](business/it-admin-details.md)
-> * **Persona 2 — BU Admin:** [BU Admin CUJs (WHY)](business/bu-admin-cuj.md) · [BU Admin Details (HOW)](business/bu-admin-details.md)
-> * **Persona 3 — Student:** [Student CUJs (WHY)](business/student-cuj.md) · [Student Details (HOW)](business/student-details.md)
+> * **Persona 1 — IT Admin:** [IT Admin CUJs (WHY)](sub-it-admin-cuj.md) · [IT Admin Details (HOW)](sub-it-admin-details.md)
+> * **Persona 2 — BU Admin:** [BU Admin CUJs (WHY)](sub-bu-admin-cuj.md) · [BU Admin Details (HOW)](sub-bu-admin-details.md)
+> * **Persona 3 — Student:** [Student CUJs (WHY)](sub-student-cuj.md) · [Student Details (HOW)](sub-student-details.md)
 
 ---
 
@@ -68,7 +68,7 @@ The platform is built around three personas arranged in a **strict cumulative in
 
 ## 3. Typical Organization of Folders & Projects in Context
 
-To mirror how universities and enterprises are structured — where some schools are flat (e.g., *Business School*) while others are divided into departments (e.g., *College of Engineering $ightarrow$ Computer Science*) — the platform organizes GCP resources into a polymorphic hierarchy under a single **Root Sandbox Folder**:
+To mirror how universities and enterprises are structured — where some schools are flat (e.g., *Business School*) while others are divided into departments (e.g., *College of Engineering $\rightarrow$ Computer Science*) — the platform organizes GCP resources into a polymorphic hierarchy under a single **Root Sandbox Folder**:
 
 ```text
 [Root Sandbox Folder]                               <── IT Admin Scope (Root Pooled Budget)
@@ -103,14 +103,14 @@ To mirror how universities and enterprises are structured — where some schools
 
 1. **Naming Conventions:**
    * **Project Shard IDs:** Derived directly from the Cohort slug: `<cohort_slug>-p01`, `<cohort_slug>-p02`, ..., `<cohort_slug>-pNN`.
-   * **Student Slug:** Derived from the email prefix before `@` (normalized to lowercase alphanumeric/hyphens, e.g., `alice.tan@school.edu` $ightarrow$ `alice-tan`).
+   * **Student Slug:** Derived from the email prefix before `@` (normalized to lowercase alphanumeric/hyphens, e.g., `alice.tan@school.edu` $\rightarrow$ `alice-tan`).
    * **Student Resources:**
      * Service Account (auto-created on project mapping): `sa-<student_slug>`
      * GCS Bucket: `bkt-<project_id>-<student_slug>`
      * Vertex AI Search Data Store & App: `ds-<student_slug>` and `app-<student_slug>`
      * Cloud SQL Logical Database: `db_<student_slug>` (on shared instance `sql-<project_id>`)
      * Cloud Run Service: `run-<student_slug>`
-2. **Automatic Project Sharding ($\le 100$ Students per Project):** When a BU Admin specifies a Cohort size of $N$ students, the platform calculates $\lceil N / 100 ceil$ Project Shards (`<cohort_slug>-p01..pNN`) and initializes them via Terraform using the Control Tower's privileged service account.
+2. **Automatic Project Sharding ($\le 100$ Students per Project):** When a BU Admin specifies a Cohort size of $N$ students, the platform calculates $\lceil N / 100 \rceil$ Project Shards (`<cohort_slug>-p01..pNN`) and initializes them via Terraform using the Control Tower's privileged service account.
 3. **Decoupled Cohort Initialization vs. Student Mapping:**
    * **Step 1 (Cohort Init):** Project Shards and their shared project-level infrastructure (such as the Shared Cloud SQL instance) are initialized first via Terraform based on expected Cohort size.
    * **Step 2 (Student Mapping Later):** When the BU Admin later maps Cloud Identity Users, User Groups, or a CSV roster to the Cohort, each student is assigned to a Project Shard ($\le 100$ students/shard) and their personal **Service Account (`sa-<student_slug>`)** and baseline **Gemini** access are provisioned automatically.
@@ -136,7 +136,7 @@ To mirror how universities and enterprises are structured — where some schools
 | :--- | :--- | :--- | :--- | :--- |
 | **Root Sandbox Folder** | Control Tower, Billing Account Ref, Root Budget, `LIVE`/`SIMULATE` Config, School Folder Creation | **Owner (Full CRUD)** | — | — |
 | **School Folder & Dept Sub-folder** | Sub-folder organization, BU Admin IAM Group mapping (cascading), Pooled Folder Budgets | **Owner (Full CRUD)** | **Scoped Operator** *(within mapped Folder/Sub-folder)* | — |
-| **Cohort Folder** | Create Cohort Folder, size Cohort ($ightarrow \lceil N/100 ceil$ `<cohort_slug>-pNN` shards), map Cloud Identity Users/Groups, Cohort Budget, **Cohort Teardown** | *Inherited* | **Owner (Full CRUD)** | — |
+| **Cohort Folder** | Create Cohort Folder, size Cohort ($\rightarrow \lceil N/100 \rceil$ `<cohort_slug>-pNN` shards), map Cloud Identity Users/Groups, Cohort Budget, **Cohort Teardown** | *Inherited* | **Owner (Full CRUD)** | — |
 | **Project Shard ($\le 100$ students)** | Initialize/toggle Project-Level Terraform Services (`Shared Cloud SQL`, `Vertex AI Search`, `Cloud Run`, `GCS`), set **Project Spend Limit Override**, Student Search | *Inherited* | **Owner (Full CRUD)** | — |
 | **Student Sandbox Slice** | Default `Gemini` + `sa-<student_slug>` (created on project mapping); Self-service Create & Delete of `GCS Bucket`, `Vertex AI Search Agent`, `Cloud SQL DB`, `Cloud Run` + ClickOps usage in GCP | *Inherited* | *Inherited (Can act on behalf of student)* | **Owner (Portal Create/Delete + GCP Usage Rights)** |
 
@@ -145,11 +145,11 @@ To mirror how universities and enterprises are structured — where some schools
 ## 6. Outline of the Functional Experience per Persona
 
 * **Persona 1 — IT Admin:** Operates at the Root, School Folder, and Department Sub-folder level to establish the organizational tree, map cascading BU Admin IAM Groups, and manage Pooled Folder Budgets, with full inherited drilldown into BU Admin and Student scopes.
-  * **WHY (User Journeys):** [business/it-admin-cuj.md](business/it-admin-cuj.md)
-  * **HOW (Implementation Details):** [business/it-admin-details.md](business/it-admin-details.md)
-* **Persona 2 — BU Admin:** Operates within their mapped School Folder or Department Sub-folder to create Cohort Folders, initialize $\lceil N/100 ceil$ `<cohort_slug>-pNN` Project Shards via Terraform, configure project-level services and budget overrides, map Cloud Identity users/groups (which initializes student Service Accounts), search students, and teardown completed cohorts.
-  * **WHY (User Journeys):** [business/bu-admin-cuj.md](business/bu-admin-cuj.md)
-  * **HOW (Implementation Details):** [business/bu-admin-details.md](business/bu-admin-details.md)
+  * **WHY (User Journeys):** [sub-it-admin-cuj.md](sub-it-admin-cuj.md)
+  * **HOW (Implementation Details):** [sub-it-admin-details.md](sub-it-admin-details.md)
+* **Persona 2 — BU Admin:** Operates within their mapped School Folder or Department Sub-folder to create Cohort Folders, initialize $\lceil N/100 \rceil$ `<cohort_slug>-pNN` Project Shards via Terraform, configure project-level services and budget overrides, map Cloud Identity users/groups (which initializes student Service Accounts), search students, and teardown completed cohorts.
+  * **WHY (User Journeys):** [sub-bu-admin-cuj.md](sub-bu-admin-cuj.md)
+  * **HOW (Implementation Details):** [sub-bu-admin-details.md](sub-bu-admin-details.md)
 * **Persona 3 — Student:** Operates within their assigned Cohort Project Shard(s) with **Gemini** and **`sa-<student_slug>`** active out of the box, and self-serves creation and deletion of their 4 optional services (**GCS Bucket**, **Vertex AI Search Agent**, **Cloud SQL DB**, **Cloud Run**), using Google Cloud Console ClickOps and Antigravity IDE for day-to-day building.
-  * **WHY (User Journeys):** [business/student-cuj.md](business/student-cuj.md)
-  * **HOW (Implementation Details):** [business/student-details.md](business/student-details.md)
+  * **WHY (User Journeys):** [sub-student-cuj.md](sub-student-cuj.md)
+  * **HOW (Implementation Details):** [sub-student-details.md](sub-student-details.md)

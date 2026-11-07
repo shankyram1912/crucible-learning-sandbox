@@ -1,7 +1,7 @@
 # Student — Secondary Implementation Details (THE HOW)
 
-> **Parent Document:** [01 — Business & Functional Specification](../01-business-spec.md)  
-> **Companion CUJ Document:** [Student CUJs (WHY)](student-cuj.md)  
+> **Parent Document:** [01 — Business & Functional Specification](brs-master.md)  
+> **Companion CUJ Document:** [Student CUJs (WHY)](sub-student-cuj.md)  
 > **Pipeline Source Location:** `src/bff/pipelines/` (Atomic Pipeline)
 
 ---
@@ -9,7 +9,7 @@
 ## 1. Student Identity & Baseline Resources (Provisioned at Cohort Mapping)
 
 When a student (`<student_email>`) is mapped to a Cohort Project Shard (`<cohort_slug>-pNN`):
-* **`student_slug`:** Email prefix before `@`, normalized to lowercase alphanumeric and hyphens (`^[a-z0-9-]+$`), e.g., `alice.tan@school.edu` $ightarrow$ `alice-tan`.
+* **`student_slug`:** Email prefix before `@`, normalized to lowercase alphanumeric and hyphens (`^[a-z0-9-]+$`), e.g., `alice.tan@school.edu` $\rightarrow$ `alice-tan`.
 * **Baseline Active Nodes (Always Present, Not Deletable by Student):**
   1. **Gemini (Vertex AI):** Enabled via project-level `grp-students-<project_id>` membership + `roles/aiplatform.user` bound to `sa-<student_slug>`.
   2. **Service Account (`sa-<student_slug>`):** `sa-<student_slug>@<project_id>.iam.gserviceaccount.com`, created when the student is mapped to the project. `user:<student_email>` holds `roles/iam.serviceAccountUser` (`iam.serviceAccounts.actAs`) on this Service Account only (no `iam.serviceAccounts.create`, `delete`, or key creation rights).
@@ -18,7 +18,7 @@ When a student (`<student_email>`) is mapped to a Cohort Project Shard (`<cohort
 
 ## 2. The 4 Optional Student Services: Create, Usage Rights & Delete Matrix
 
-Students have **no IAM management rights (`setIamPolicy`)** and **no top-level resource `create` or `delete` permissions in GCP**. All creation and deletion execute through the Control Tower's **5-Stage Atomic Pipeline** (`VALIDATING` $ightarrow$ `CREATING`/`DELETING` $ightarrow$ `TAGGING_LABELLING` $ightarrow$ `BINDING_USAGE_RIGHTS` $ightarrow$ `READY` / `NOT_CONFIGURED`) under lock `locks/student_<student_email>_<project_id>`.
+Students have **no IAM management rights (`setIamPolicy`)** and **no top-level resource `create` or `delete` permissions in GCP**. All creation and deletion execute through the Control Tower's **5-Stage Atomic Pipeline** (`VALIDATING` $\rightarrow$ `CREATING`/`DELETING` $\rightarrow$ `TAGGING_LABELLING` $\rightarrow$ `BINDING_USAGE_RIGHTS` $\rightarrow$ `READY` / `NOT_CONFIGURED`) under lock `locks/student_<student_email>_<project_id>`.
 
 | Optional Service | Resource Name Pattern | What Atomic `CREATE` Provisions | Usage Rights Bound to `user:<student>` & `sa-<student_slug>` (No IAM / No GCP Delete) | What Atomic `DELETE` Tears Down |
 | :--- | :--- | :--- | :--- | :--- |

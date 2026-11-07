@@ -7,15 +7,15 @@ Visual Canvas & Multi-Tier Control Tower for managing GCP Learning Sandboxes acr
 ```text
 learning-sandbox/
 ├── specs/
-│   ├── 01-business-spec.md                        # PRIMARY (WHAT): Business problem, 3 personas, folder/cohort/project
-│   │                                              # organization, persona-to-level responsibility matrix & UX outline
-│   ├── business/                                  # SECONDARY DOCS referenced by 01-business-spec.md (no number prefixes)
-│   │   ├── it-admin-cuj.md                        # WHY: "As an IT Admin, I want to <Y> to accomplish <Z>"
-│   │   ├── it-admin-details.md                    # HOW: Folder Terraform, Admin Group cascading, Pooled Folder Budgets, Locks
-│   │   ├── bu-admin-cuj.md                        # WHY: "As a BU Admin, I want to <Y> to accomplish <Z>"
-│   │   ├── bu-admin-details.md                    # HOW: Cohort ⌈N/100⌉ sharding, Project Terraform services, Overrides, Teardown
-│   │   ├── student-cuj.md                         # WHY: "As a Student, I want to <Y> to accomplish <Z>"
-│   │   └── student-details.md                     # HOW: Atomic Create/Delete pipeline, 6-service usage rights, ClickOps handoff
+│   ├── 01-brs/                                    # BUSINESS REQUIREMENTS SPECIFICATION (BRS)
+│   │   ├── brs-master.md                          # PRIMARY (WHAT): Business problem, 3 personas, folder/cohort/project
+│   │   │                                          # organization, persona-to-level responsibility matrix & UX outline
+│   │   ├── sub-it-admin-cuj.md                    # WHY: "As an IT Admin, I want to <Y> to accomplish <Z>"
+│   │   ├── sub-it-admin-details.md                # HOW: Folder Terraform, Admin Group cascading, Pooled Folder Budgets, Locks
+│   │   ├── sub-bu-admin-cuj.md                    # WHY: "As a BU Admin, I want to <Y> to accomplish <Z>"
+│   │   ├── sub-bu-admin-details.md                # HOW: Cohort ⌈N/100⌉ sharding, Project Terraform services, Overrides, Teardown
+│   │   ├── sub-student-cuj.md                     # WHY: "As a Student, I want to <Y> to accomplish <Z>"
+│   │   └── sub-student-details.md                 # HOW: Atomic Create/Delete pipeline, 6-service usage rights, ClickOps handoff
 │   │
 │   ├── 02-technical-design.md                     # PRIMARY: Master Technical Design & Cross-Component Architecture
 │   └── technical-design/                          # SECONDARY DOCS referenced by 02-technical-design.md (no number prefixes)

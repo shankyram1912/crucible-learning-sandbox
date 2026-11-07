@@ -1,7 +1,7 @@
 # Student — Critical User Journeys (THE WHY)
 
-> **Parent Document:** [01 — Business & Functional Specification](../01-business-spec.md)  
-> **Companion Details Document:** [Student Implementation Details (HOW)](student-details.md)  
+> **Parent Document:** [01 — Business & Functional Specification](brs-master.md)  
+> **Companion Details Document:** [Student Implementation Details (HOW)](sub-student-details.md)  
 > **Persona:** Persona 3 — Student (Sandbox Builder)
 
 ---

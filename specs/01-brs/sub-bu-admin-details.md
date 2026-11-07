@@ -1,7 +1,7 @@
 # BU Admin — Secondary Implementation Details (THE HOW)
 
-> **Parent Document:** [01 — Business & Functional Specification](../01-business-spec.md)  
-> **Companion CUJ Document:** [BU Admin CUJs (WHY)](bu-admin-cuj.md)  
+> **Parent Document:** [01 — Business & Functional Specification](brs-master.md)  
+> **Companion CUJ Document:** [BU Admin CUJs (WHY)](sub-bu-admin-cuj.md)  
 > **Terraform Source Location:** `src/terraform/buadmin/`
 
 ---
@@ -10,7 +10,7 @@
 
 1. **Parent Folder Flexibility:** A Cohort Folder (`google_folder.cohort`) takes `parent_folder_id`, which can be either a **School Folder** (`folders/<school_id>`) or a **Department Sub-folder** (`folders/<subfolder_id>`).
 2. **Shard Count Formula:**
-   $$K = \max\left(1, \left\lceil rac{N_{	ext{students}}}{100} ightceilight)$$
+   $$K = \max\left(1, \left\lceil \frac{N_{	ext{students}}}{100} \right\rceil\right)$$
 3. **Deterministic Project Shard Naming:**
    * Each shard $i \in \{1 \dots K\}$ is named:
      $$	ext{project\_id}_i = 	exttt{<cohort\_slug>-p}\langle	ext{zero-padded } iangle \quad (	ext{e.g., } 	exttt{cs101-fall-p01})$$
@@ -78,7 +78,7 @@ For each project shard (`<cohort_slug>-p01..pKK`), the BU Admin Terraform module
 ## 4. What Happens During Student Mapping to a Cohort (Atomic Roster Pipeline)
 
 When the BU Admin maps Cloud Identity Users, User Groups, or a CSV list to a Cohort:
-1. **Group Expansion & Normalization:** Resolves Cloud Identity groups/users to individual student emails and computes each student's `student_slug` (email prefix before `@`, e.g., `alice.tan@school.edu` $ightarrow$ `alice-tan`).
+1. **Group Expansion & Normalization:** Resolves Cloud Identity groups/users to individual student emails and computes each student's `student_slug` (email prefix before `@`, e.g., `alice.tan@school.edu` $\rightarrow$ `alice-tan`).
 2. **Shard Bin-Packing ($\le 100$ students / project):** Assigns each student to the first shard `<cohort_slug>-pNN` with `< 100` assigned students (idempotent if the student is already assigned to that Cohort).
 3. **Automatic Student Service Account Creation:**
    * Creates `sa-<student_slug>@<project_id>.iam.gserviceaccount.com` in the assigned shard.

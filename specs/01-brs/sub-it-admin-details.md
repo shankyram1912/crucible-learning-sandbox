@@ -1,7 +1,7 @@
 # IT Admin — Secondary Implementation Details (THE HOW)
 
-> **Parent Document:** [01 — Business & Functional Specification](../01-business-spec.md)  
-> **Companion CUJ Document:** [IT Admin CUJs (WHY)](it-admin-cuj.md)  
+> **Parent Document:** [01 — Business & Functional Specification](brs-master.md)  
+> **Companion CUJ Document:** [IT Admin CUJs (WHY)](sub-it-admin-cuj.md)  
 > **Terraform Source Location:** `src/terraform/itadmin/`
 
 ---
@@ -53,7 +53,7 @@ gs://<control-tower-tfstate-bucket>/itadmin/school-<school_slug>/default.tfstate
 ```
 
 ### Expected `terraform output -json` Persisted to Firebase DB
-Both `LIVE` mode (via `terraform apply` $ightarrow$ `terraform output -json`) and `SIMULATE` mode (via `terraform validate` $ightarrow$ deterministic output synthesis) emit the exact same JSON structure into `/environments/{live|simulate}/folders/{folder_id}`:
+Both `LIVE` mode (via `terraform apply` $\rightarrow$ `terraform output -json`) and `SIMULATE` mode (via `terraform validate` $\rightarrow$ deterministic output synthesis) emit the exact same JSON structure into `/environments/{live|simulate}/folders/{folder_id}`:
 ```json
 {
   "school_folder_id": { "value": "folders/100000000101" },

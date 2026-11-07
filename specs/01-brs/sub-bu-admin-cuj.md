@@ -1,7 +1,7 @@
 # BU Admin — Critical User Journeys (THE WHY)
 
-> **Parent Document:** [01 — Business & Functional Specification](../01-business-spec.md)  
-> **Companion Details Document:** [BU Admin Implementation Details (HOW)](bu-admin-details.md)  
+> **Parent Document:** [01 — Business & Functional Specification](brs-master.md)  
+> **Companion Details Document:** [BU Admin Implementation Details (HOW)](sub-bu-admin-details.md)  
 > **Persona:** Persona 2 — BU Admin (School / Department / Cohort Operator)
 
 ---
@@ -16,15 +16,15 @@ The BU Admin (Faculty Lead, Lab Coordinator, or Department Admin) operates withi
 ### CUJ-BU-01: Create & Initialize a Cohort Based on Expected Student Size
 > **As a** BU Admin,  
 > **I want to** create a new Cohort Folder under my School Folder or Department Sub-folder by specifying the Cohort slug, expected student count ($N$), Cohort budget, default project shard limit, and which GCP services to enable,  
-> **So that** the platform automatically initializes $\lceil N / 100 ceil$ Project Shards (`<cohort_slug>-p01..pNN`) with the required APIs, shared infrastructure, and budgets weeks before student enrollment closes.
+> **So that** the platform automatically initializes $\lceil N / 100 \rceil$ Project Shards (`<cohort_slug>-p01..pNN`) with the required APIs, shared infrastructure, and budgets weeks before student enrollment closes.
 
 * **Business Inputs:**
   * `Parent Folder` (School Folder or Department Sub-folder)
   * `Cohort Name` & `Cohort Slug` (e.g., `cs101-fall`)
-  * `Expected Student Size (N)` (e.g., `350` $ightarrow$ initializes `4` shards: `cs101-fall-p01` .. `cs101-fall-p04`)
+  * `Expected Student Size (N)` (e.g., `350` $\rightarrow$ initializes `4` shards: `cs101-fall-p01` .. `cs101-fall-p04`)
   * `Pooled Cohort Folder Budget` (e.g., `$8,000`) & `Default Project Shard Limit` (e.g., `$3,000`)
   * `Enabled Project-Level Terraform Services`: `Gemini (Default)`, `GCS`, `Cloud Run`, `Vertex AI Search`, `Shared Cloud SQL Postgres`
-* **Business Outcome:** Cohort Folder and $\lceil N / 100 ceil$ Project Shards are initialized via Terraform (`src/terraform/buadmin`), with outputs persisted to Firebase DB and `N_shards * 100` empty student seats ready for assignment.
+* **Business Outcome:** Cohort Folder and $\lceil N / 100 \rceil$ Project Shards are initialized via Terraform (`src/terraform/buadmin`), with outputs persisted to Firebase DB and `N_shards * 100` empty student seats ready for assignment.
 
 ---
 

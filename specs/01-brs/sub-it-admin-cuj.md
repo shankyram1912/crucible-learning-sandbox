@@ -1,7 +1,7 @@
 # IT Admin — Critical User Journeys (THE WHY)
 
-> **Parent Document:** [01 — Business & Functional Specification](../01-business-spec.md)  
-> **Companion Details Document:** [IT Admin Implementation Details (HOW)](it-admin-details.md)  
+> **Parent Document:** [01 — Business & Functional Specification](brs-master.md)  
+> **Companion Details Document:** [IT Admin Implementation Details (HOW)](sub-it-admin-details.md)  
 > **Persona:** Persona 1 — IT Admin (Root & Organization Governance)
 
 ---
