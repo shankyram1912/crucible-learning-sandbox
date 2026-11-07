@@ -1,7 +1,7 @@
 # Student — Critical User Journeys (`THE WHY`)
 
 > **Master Document:** [Business Requirements Specification — Master (`THE WHAT`)](brs-master.md)  
-> **Companion Details Document:** [Student Implementation Details (`THE HOW`)](../02-tdd/sub-student-details.md)  
+> **Companion Technical Design:** [Technical Design — Master (`THE HOW`)](../02-tdd/tdd-master.md)  
 > **Persona:** Layer 3 — Student (JIT Workspace Initialization + App-Level Containers)
 
 ---

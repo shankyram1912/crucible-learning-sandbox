@@ -1,7 +1,7 @@
 # IT Admin — Critical User Journeys (`THE WHY`)
 
 > **Master Document:** [Business Requirements Specification — Master (`THE WHAT`)](brs-master.md)  
-> **Companion Details Document:** [IT Admin Implementation Details (`THE HOW`)](../02-tdd/sub-it-admin-details.md)  
+> **Companion Technical Design:** [Technical Design — Master (`THE HOW`)](../02-tdd/tdd-master.md)  
 > **Persona:** Layer 1 — IT Admin (`IT Admin ⊃ BU Admin [School Admin ⊃ Cohort Admin] ⊃ Student`)
 
 ---

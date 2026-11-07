@@ -1,6 +1,6 @@
 # Learning Sandbox (`learning-sandbox`)
 
-Visual Canvas & Multi-Tier Control Tower for managing GCP Learning Sandboxes across **IT Admins**, **BU / School Admins**, and **Students** (`IT Admin ⊃ BU Admin ⊃ Student`).
+Visual Canvas & Multi-Tier Control Tower for managing GCP Learning Sandboxes across **IT Admins**, **BU / School & Cohort Admins**, and **Students** (`IT Admin ⊃ BU Admin [School Admin ⊃ Cohort Admin] ⊃ Student`).
 
 ## Repository Structure
 
@@ -16,44 +16,45 @@ learning-sandbox/
 │   │   └── brs-student-cuj.md                     # WHY: "As a Student, I want to <Y> to accomplish <Z>"
 │   │
 │   └── 02-tdd/                                    # TECHNICAL DESIGN & LOW-LEVEL DESIGN (THE HOW / LLD)
-│       ├── tdd-master.md                          # PRIMARY: Master Technical Design & Cross-Component Architecture
-│       ├── sub-it-admin-details.md                # HOW (LLD): Versioned Config JSON, School Folder Terraform, Budgets, Locks
-│       ├── sub-bu-admin-details.md                # HOW (LLD): Sub-folder & Cohort Terraform, Active Provisioning Shard, Locks
-│       ├── sub-student-details.md                 # HOW (LLD): JIT Student Workspace Init, App Containers, Atomic Pipeline, Locks
-│       ├── bootstrap-spec.md                      # Central Control Tower Day-0 Setup
-│       ├── data-spec.md                           # Firebase Schema (/environments/{live|simulate}/...)
-│       ├── bff/
-│       │   ├── bff-master-spec.md                 # Primary BFF Spec (references functional BFF sub-specs below)
-│       │   ├── auth-and-persona-spec.md
-│       │   ├── control-and-lock-engine-spec.md
-│       │   ├── it-admin-bff-spec.md
-│       │   ├── bu-admin-bff-spec.md
-│       │   ├── directory-and-roster-bff-spec.md
-│       │   └── student-sandbox-bff-spec.md
-│       ├── ui/
-│       │   ├── ui-master-spec.md                  # Primary UI Spec (references functional UI sub-specs below)
-│       │   ├── lock-and-pipeline-drawer-ui-spec.md
-│       │   ├── it-admin-canvas-ui-spec.md
-│       │   ├── bu-admin-cohort-canvas-ui-spec.md
-│       │   ├── project-drilldown-canvas-ui-spec.md
-│       │   └── student-sandbox-canvas-ui-spec.md
-│       ├── it-admin-pipeline-spec.md
-│       ├── bu-admin-pipeline-spec.md
-│       ├── atomic-pipeline-spec.md
-│       └── agy-portal-guide-skill-spec.md
+│       ├── tdd-master.md                          # PRIMARY: Master Technical Design & Cross-Domain Architecture
+│       ├── tdd-data/                              # Data & Firestore Schema Domain
+│       │   ├── tdd-data-master.md
+│       │   ├── tdd-data-catalog-and-config.md
+│       │   ├── tdd-data-hierarchy-and-cohorts.md
+│       │   └── tdd-data-students-and-apps.md
+│       ├── tdd-apis/                              # FastAPI BFF & Operational API Domains (/api/v1/*)
+│       │   ├── tdd-apis-master.md
+│       │   ├── tdd-apis-routing-and-middleware.md
+│       │   ├── tdd-apis-session.md
+│       │   ├── tdd-apis-it-admin.md
+│       │   ├── tdd-apis-bu-admin.md
+│       │   └── tdd-apis-student.md
+│       ├── tdd-iac/                               # Terraform Modules & GCS .tflock State Locking
+│       │   ├── tdd-iac-master.md
+│       │   ├── tdd-iac-bootstrap.md
+│       │   ├── tdd-iac-itadmin-school.md
+│       │   └── tdd-iac-buadmin-subfolder-and-cohort.md
+│       ├── tdd-pipelines/                         # Async Execution Pipelines (Cloud Build TF & Atomic SDK)
+│       │   ├── tdd-pipelines-master.md
+│       │   ├── tdd-pipelines-cloud-build-terraform.md
+│       │   └── tdd-pipelines-atomic-runner.md
+│       ├── tdd-skills/                            # Companion Agent Skills
+│       │   ├── tdd-skills-master.md
+│       │   └── tdd-skills-agy-portal-guide.md
+│       └── tdd-uiux/                              # Visual Canvas & Portal UI/UX (Empty — To Discuss Next)
 │
 └── src/
     ├── terraform/
     │   ├── bootstrap/                             # Day-0 Control Tower project & root setup
-    │   ├── itadmin/                               # School folders, dept sub-folders, BU admin groups & folder budgets
-    │   └── buadmin/                               # Cohort folders, project shards, project services & budget overrides
+    │   ├── itadmin/                               # School folders, School admin IAM & pooled school budgets
+    │   └── buadmin/                               # Sub-folders, Cohort folders, project shards & shared SQL
     ├── bff/
-    │   ├── core/                                  # Config, auth/persona resolver, lock engine & Firebase client
-    │   ├── routers/                               # FastAPI routers (it_admin, bu_admin, directory_roster, student)
-    │   └── pipelines/                             # Pipeline runners (it_terraform, bu_terraform, atomic)
+    │   ├── core/                                  # Config, auth/persona resolver & Firestore client
+    │   ├── routers/                               # FastAPI routers (session, it_admin, bu_admin, student)
+    │   └── pipelines/                             # Pipeline runners (cloud_build_terraform, atomic_runner)
     ├── ui/
     │   └── src/
-    │       ├── components/shell/                  # Navbar, LockBanner, PipelineDrawer & SimControlBar
-    │       └── features/                          # React Flow canvas views (it-canvas, bu-cohort-canvas, project-drilldown, student-canvas)
+    │       ├── components/shell/                  # Navbar & workspace shell
+    │       └── features/                          # React Flow canvas views
     └── agy-skill/                                 # Packaged SKILL.md user guide for the Self-Service Portal
 ```
