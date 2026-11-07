@@ -7,43 +7,52 @@ Visual Canvas & Multi-Tier Control Tower for managing GCP Learning Sandboxes acr
 ```text
 learning-sandbox/
 ├── specs/
-│   ├── 01-business-spec.md                              # Functional & Domain Source of Truth
-│   └── 02-technical-design/                             # Technical Design Master Collection
-│       ├── 00-master-architecture.md                    # System Topology, Cross-Module Contracts & End-to-End Flows
-│       ├── 01-bootstrap-spec.md                         # Day-0 Control Tower Setup (Root IAM, Tag Keys, State Bucket, Pub/Sub)
-│       ├── 02-data-spec.md                              # Firebase DB Schema (/environments/{live|simulate}/...)
-│       ├── 03-bff/                                      # BFF (FastAPI) Master + Functional Sub-Specs
-│       │   ├── 00-bff-master-spec.md
-│       │   ├── 01-auth-and-persona-spec.md
-│       │   ├── 02-control-and-lock-engine-spec.md
-│       │   ├── 03-it-admin-bff-spec.md
-│       │   ├── 04-bu-admin-bff-spec.md
-│       │   ├── 05-directory-and-roster-bff-spec.md
-│       │   └── 06-student-sandbox-bff-spec.md
-│       ├── 04-ui/                                       # UI (React + Tailwind + React Flow) Master + Functional Sub-Specs
-│       │   ├── 00-ui-master-spec.md
-│       │   ├── 01-lock-and-pipeline-drawer-ui-spec.md
-│       │   ├── 02-it-admin-canvas-ui-spec.md
-│       │   ├── 03-bu-admin-cohort-canvas-ui-spec.md
-│       │   ├── 04-project-drilldown-canvas-ui-spec.md
-│       │   └── 05-student-sandbox-canvas-ui-spec.md
-│       ├── 05-it-admin-pipeline-spec.md                 # IT Admin Terraform Pipeline Spec
-│       ├── 06-bu-admin-pipeline-spec.md                 # BU Admin Terraform Pipeline & Project Services Spec
-│       ├── 07-atomic-pipeline-spec.md                   # Atomic Pipeline Spec (Student Create/Delete + Cohort Sharding)
-│       └── 08-agy-portal-guide-skill-spec.md            # Packaged AGY Skill User Guide Spec
+│   ├── 01-business-spec.md                        # PRIMARY (WHAT): Business problem, 3 personas, folder/cohort/project
+│   │                                              # organization, persona-to-level responsibility matrix & UX outline
+│   ├── business/                                  # SECONDARY DOCS referenced by 01-business-spec.md (no number prefixes)
+│   │   ├── it-admin-cuj.md                        # WHY: "As an IT Admin, I want to <Y> to accomplish <Z>"
+│   │   ├── it-admin-details.md                    # HOW: Folder Terraform, Admin Group cascading, Pooled Folder Budgets, Locks
+│   │   ├── bu-admin-cuj.md                        # WHY: "As a BU Admin, I want to <Y> to accomplish <Z>"
+│   │   ├── bu-admin-details.md                    # HOW: Cohort ⌈N/100⌉ sharding, Project Terraform services, Overrides, Teardown
+│   │   ├── student-cuj.md                         # WHY: "As a Student, I want to <Y> to accomplish <Z>"
+│   │   └── student-details.md                     # HOW: Atomic Create/Delete pipeline, 6-service usage rights, ClickOps handoff
+│   │
+│   ├── 02-technical-design.md                     # PRIMARY: Master Technical Design & Cross-Component Architecture
+│   └── technical-design/                          # SECONDARY DOCS referenced by 02-technical-design.md (no number prefixes)
+│       ├── bootstrap-spec.md                      # Central Control Tower Day-0 Setup
+│       ├── data-spec.md                           # Firebase Schema (/environments/{live|simulate}/...)
+│       ├── bff/
+│       │   ├── bff-master-spec.md                 # Primary BFF Spec (references functional BFF sub-specs below)
+│       │   ├── auth-and-persona-spec.md
+│       │   ├── control-and-lock-engine-spec.md
+│       │   ├── it-admin-bff-spec.md
+│       │   ├── bu-admin-bff-spec.md
+│       │   ├── directory-and-roster-bff-spec.md
+│       │   └── student-sandbox-bff-spec.md
+│       ├── ui/
+│       │   ├── ui-master-spec.md                  # Primary UI Spec (references functional UI sub-specs below)
+│       │   ├── lock-and-pipeline-drawer-ui-spec.md
+│       │   ├── it-admin-canvas-ui-spec.md
+│       │   ├── bu-admin-cohort-canvas-ui-spec.md
+│       │   ├── project-drilldown-canvas-ui-spec.md
+│       │   └── student-sandbox-canvas-ui-spec.md
+│       ├── it-admin-pipeline-spec.md
+│       ├── bu-admin-pipeline-spec.md
+│       ├── atomic-pipeline-spec.md
+│       └── agy-portal-guide-skill-spec.md
 │
 └── src/
     ├── terraform/
-    │   ├── bootstrap/                                   # Day-0 Control Tower project & root setup
-    │   ├── itadmin/                                     # School folders, dept sub-folders, BU admin groups & folder budgets
-    │   └── buadmin/                                     # Cohort folders, project shards, project services & budget overrides
+    │   ├── bootstrap/                             # Day-0 Control Tower project & root setup
+    │   ├── itadmin/                               # School folders, dept sub-folders, BU admin groups & folder budgets
+    │   └── buadmin/                               # Cohort folders, project shards, project services & budget overrides
     ├── bff/
-    │   ├── core/                                        # Config, auth/persona resolver, lock engine & Firebase client
-    │   ├── routers/                                     # FastAPI routers (it_admin, bu_admin, directory_roster, student)
-    │   └── pipelines/                                   # Pipeline runners (it_terraform, bu_terraform, atomic)
+    │   ├── core/                                  # Config, auth/persona resolver, lock engine & Firebase client
+    │   ├── routers/                               # FastAPI routers (it_admin, bu_admin, directory_roster, student)
+    │   └── pipelines/                             # Pipeline runners (it_terraform, bu_terraform, atomic)
     ├── ui/
     │   └── src/
-    │       ├── components/shell/                        # Navbar, LockBanner, PipelineDrawer & SimControlBar
-    │       └── features/                                # React Flow canvas views (it-canvas, bu-cohort-canvas, project-drilldown, student-canvas)
-    └── agy-skill/                                       # Packaged SKILL.md user guide for the Self-Service Portal
+    │       ├── components/shell/                  # Navbar, LockBanner, PipelineDrawer & SimControlBar
+    │       └── features/                          # React Flow canvas views (it-canvas, bu-cohort-canvas, project-drilldown, student-canvas)
+    └── agy-skill/                                 # Packaged SKILL.md user guide for the Self-Service Portal
 ```
