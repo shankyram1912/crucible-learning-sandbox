@@ -7,19 +7,19 @@ Visual Canvas & Multi-Tier Control Tower for managing GCP Learning Sandboxes acr
 ```text
 learning-sandbox/
 ├── specs/
-│   ├── SPEC-CONVENTIONS.md                        # Spec-Driven Design rules (WHAT/WHY/HOW, master + sub-*.md)
-│   ├── 01-brs/                                    # BUSINESS REQUIREMENTS SPECIFICATION (BRS)
+│   ├── SPEC-CONVENTIONS.md                        # Spec-Driven Design rules (01-brs WHAT/WHY vs. 02-tdd HOW/LLD)
+│   ├── 01-brs/                                    # BUSINESS REQUIREMENTS SPECIFICATION (THE WHAT & THE WHY)
 │   │   ├── brs-master.md                          # PRIMARY (WHAT): Business problem, 3 personas, folder/cohort/project
 │   │   │                                          # organization, persona-to-level responsibility matrix & UX outline
 │   │   ├── sub-it-admin-cuj.md                    # WHY: "As an IT Admin, I want to <Y> to accomplish <Z>"
-│   │   ├── sub-it-admin-details.md                # HOW: Folder Terraform, Admin Group cascading, Pooled Folder Budgets, Locks
-│   │   ├── sub-bu-admin-cuj.md                    # WHY: "As a BU Admin, I want to <Y> to accomplish <Z>"
-│   │   ├── sub-bu-admin-details.md                # HOW: Cohort ⌈N/100⌉ sharding, Project Terraform services, Overrides, Teardown
-│   │   ├── sub-student-cuj.md                     # WHY: "As a Student, I want to <Y> to accomplish <Z>"
-│   │   └── sub-student-details.md                 # HOW: Atomic Create/Delete pipeline, 6-service usage rights, ClickOps handoff
+│   │   ├── sub-bu-admin-cuj.md                    # WHY: "As a BU Admin (School/Cohort), I want to <Y> to accomplish <Z>"
+│   │   └── sub-student-cuj.md                     # WHY: "As a Student, I want to <Y> to accomplish <Z>"
 │   │
-│   ├── 02-technical-design.md                     # PRIMARY: Master Technical Design & Cross-Component Architecture
-│   └── technical-design/                          # SECONDARY DOCS referenced by 02-technical-design.md (no number prefixes)
+│   └── 02-tdd/                                    # TECHNICAL DESIGN & LOW-LEVEL DESIGN (THE HOW / LLD)
+│       ├── tdd-master.md                          # PRIMARY: Master Technical Design & Cross-Component Architecture
+│       ├── sub-it-admin-details.md                # HOW (LLD): Versioned Config JSON, School Folder Terraform, Budgets, Locks
+│       ├── sub-bu-admin-details.md                # HOW (LLD): Sub-folder & Cohort Terraform, Active Provisioning Shard, Locks
+│       ├── sub-student-details.md                 # HOW (LLD): JIT Student Workspace Init, App Containers, Atomic Pipeline, Locks
 │       ├── bootstrap-spec.md                      # Central Control Tower Day-0 Setup
 │       ├── data-spec.md                           # Firebase Schema (/environments/{live|simulate}/...)
 │       ├── bff/
