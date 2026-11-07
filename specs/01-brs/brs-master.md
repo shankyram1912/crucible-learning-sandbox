@@ -18,7 +18,7 @@ Institutions running cloud and AI programs generally use two distinct sandbox mo
 2. **Shared Cohort Project & Pooled Budget (What This Platform Solves):** When universities and enterprises run structured courses, labs, and hackathons for hundreds or thousands of students under **shared GCP projects and pooled folder/cohort budgets**, they hit three operational barriers:
    * **Shared-Project Isolation & IAM Challenge:** Placing multiple students into a shared GCP project with standard roles (`Editor` or broad service roles) allows students to see, overwrite, or delete each other's resources, exhaust shared budgets, or get blocked by `Permission Denied` errors on services where `create` and `list` are evaluated at the project level (such as Cloud Run and Vertex AI Search).
    * **The Central IT Bottleneck:** Central IT owns the Organization Root Folder, Cloud Billing Account, and global platform guardrails, while Schools, Departments, and Faculty (Business Units) own the academic cohorts and student rosters. Requiring central IT intervention every time a cohort needs projects, shared databases, or student onboarding turns a 5-minute setup into a multi-day ticket queue.
-   * **Multi-Assignment Organization for Students:** Within a shared project, a student often builds multiple labs or apps over a term. Without a clear boundary between **Student-Level Singletons** (`1` Service Account, `1` Bucket, `1` Logical DB, plus Gemini access — if enabled on the cohort) and **App-Level Boundaries (`app-<app_slug>`)** where students mix and match services within their per-student allowance, students either overwrite earlier work or clutter the shared project.
+   * **Multi Cohort & Multi App Level Services:** A student may belong to multiple Cohorts simultaneously and build multiple labs or applications over a term within each Cohort. Without a clear separation between **Student-Level Singletons** (`1` Service Account, `1` Bucket, `1` Logical DB, plus Gemini access — if enabled on the cohort) and **App-Level Containers (`app-<app_slug>`)** where students mix and match services within their per-student allowance and are allowed to delete app-specific services to free up and reuse capacity, students either overwrite earlier work or clutter the shared project.
 
 ### What the Learning Sandbox Solves
 The **Learning Sandbox** provides a **Self-Service Portal** backed by a **Central Control Tower** for the **Shared Project & Pooled Budget** model, cleanly decoupling:
@@ -39,9 +39,9 @@ The platform is built around three personas arranged in a **strict cumulative in
 │    - Manage Global Platform Config (loaded from Service Catalog Config):     │
 │      • Default Students per Project Shard (Default: 100 students/project)    │
 │      • Default Enabled Services (SA, Gemini, GCS, Cloud SQL, Cloud Run,      │
-│        Vertex AI Search, etc.) & underlying per-project service settings     │
-│      • Per-Student Min Quantity per service (from Service Catalog Config,    │
-│        with override allowed)                                                │
+│        Vertex AI Search, etc.)                                               │
+│      • Per-Service Sizes (e.g., Cloud SQL tier, Cloud Run CPU/memory) AND    │
+│        Service Quota Defaults (Min) & Max                                    │
 │    - Organize School Folders and Department Sub-folders under Root           │
 │    - Map BU Admin IAM Groups to School Folders or Department Sub-folders     │
 │    - Configure Billing Account associations and Pooled Folder Budgets        │
@@ -66,13 +66,13 @@ The platform is built around three personas arranged in a **strict cumulative in
 │    - Search for students across their folders/projects & Teardown Cohorts    │
 │  • Inherited Capabilities: 100% of Student capabilities in their scope       │
 ├──────────────────────────────────────────────────────────────────────────────┤
-│ LAYER 3: STUDENT (Sandbox Builder — Student Singletons + App Boundary)       │
+│ LAYER 3: STUDENT (Sandbox Builder — Student Singletons + App Containers)     │
 │  • Student-Level Singletons (Max 1 per Student, if Service Enabled on Cohort)│
 │    - Gemini Access (if Gemini enabled)                                       │
 │    - 1 Service Account: sa-<student_slug> (if SA enabled)                    │
 │    - 1 Student GCS Bucket: bkt-<project_id>-<student_slug> (if GCS enabled)  │
 │    - 1 Student Logical DB: db_<student_slug> on sql-<project_id> (if SQL on) │
-│  • App-Level Boundary (app-<app_slug> — Mix & Match up to Student Allowance) │
+│  • App-Level Containers (app-<app_slug> — Mix, Match & Delete App Services): │
 │    - Example App-Scoped Building Blocks (1..N across Apps within Allowance): │
 │      1. GCS Managed Folders under Student Bucket (Unlimited: ∞)              │
 │         (gs://bkt-<project_id>-<student_slug>/apps/<app_slug>/<folder>/)     │
@@ -96,15 +96,16 @@ Rather than hardcoding service lists or per-student quantities, the platform use
 
 ```text
 [1. Platform Service Catalog Config]
- │  Defines the list of supported services, their underlying default per-project
- │  Terraform/API settings (e.g., Cloud SQL tier, API lists), and baseline
- │  Per-Student Min Quantity (m_service).
+ │  Defines the list of supported services and two core configuration dimensions:
+ │    1. Service Sizes & Underlying Settings (e.g., Cloud SQL instance tier/size,
+ │       Cloud Run CPU/memory sizing, API lists)
+ │    2. Service Quota Defaults (Min / Default per student) and Max Ceilings
  ▼
 [2. IT Admin Global Config Screen]
  │  • Loads the Service Catalog Config and sets institution-wide defaults:
  │    - Default Students per Project Shard: S_shard = 100 (always defaults to 100)
  │    - Default Enabled Services for new Cohorts (including SA & Gemini)
- │    - Per-Student Min Quantity (m_service, taken from Service Catalog Config with override)
+ │    - Service Sizes & Service Quota Defaults (Min) / Max (with override allowed)
  ▼
 [3. BU Admin Cohort Editable Elements (Inherited from IT Admin Config)]
     • Cohort Sizing: Expected Students (N) & Students per Project (S_shard, default 100)
@@ -232,7 +233,7 @@ Rather than hardcoding service lists or per-student quantities, the platform use
 | **Cohort Folder** | Create Cohort Folder, edit Cohort Settings (inherited from IT Admin: Student Size $N$, `100` students/project $\rightarrow \lceil N/100 \rceil$ shards, Enabled Services including `SA` & `Gemini`, Per-Service Per-Student Quantity taking `min` from Catalog with Cohort override; non-destructive disable/reduction), map Cloud Identity Users/Groups, Cohort Budget, **Cohort Teardown** | *Inherited* | **Owner (Full CRUD)** | — |
 | **Project Shard ($\le 100$ students)** | Initialize/toggle Project-Level Terraform Services (`Shared Cloud SQL`, `Vertex AI Search`, `Cloud Run`, `GCS`, `SA`, `Gemini`), set **Project Spend Limit Override**, Student Search | *Inherited* | **Owner (Full CRUD)** | — |
 | **Student Level (Singletons per Student)** | `1` Service Account (`sa-<student_slug>`), `Gemini`, `1` Student Bucket (`bkt-...`), and `1` Student Logical DB (`db_<student_slug>`) — provisioned via Cohort Terraform when enabled on Cohort (retained if later disabled) | *Inherited* | *Inherited (Can act on behalf of student)* | **Usage Rights in GCP** |
-| **App Boundary (`app-<app_slug>`)** | Self-service Create & Delete of Apps and mix-and-match App-scoped services (`GCS Managed Folders` [$\infty$], `DB Schemas`, `Cloud Run Services`, `Vertex AI Search Data Stores & Apps`) within Cohort's Per-Student Quantity | *Inherited* | *Inherited (Can act on behalf of student)* | **Owner (Portal Create/Delete + GCP Usage Rights)** |
+| **App Container (`app-<app_slug>`)** | Self-service Create & Delete of App Containers and App-specific services (`GCS Managed Folders` [$\infty$], `DB Schemas`, `Cloud Run Services`, `Vertex AI Search Data Stores & Apps`) within Cohort's Per-Student Quantity | *Inherited* | *Inherited (Can act on behalf of student)* | **Owner (Portal Create/Delete + GCP Usage Rights)** |
 
 ---
 
