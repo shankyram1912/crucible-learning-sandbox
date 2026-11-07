@@ -7,6 +7,7 @@ Visual Canvas & Multi-Tier Control Tower for managing GCP Learning Sandboxes acr
 ```text
 learning-sandbox/
 ├── specs/
+│   ├── SPEC-CONVENTIONS.md                        # Spec-Driven Design rules (WHAT/WHY/HOW, master + sub-*.md)
 │   ├── 01-brs/                                    # BUSINESS REQUIREMENTS SPECIFICATION (BRS)
 │   │   ├── brs-master.md                          # PRIMARY (WHAT): Business problem, 3 personas, folder/cohort/project
 │   │   │                                          # organization, persona-to-level responsibility matrix & UX outline
