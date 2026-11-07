@@ -11,9 +11,9 @@ learning-sandbox/
 │   ├── 01-brs/                                    # BUSINESS REQUIREMENTS SPECIFICATION (THE WHAT & THE WHY)
 │   │   ├── brs-master.md                          # PRIMARY (WHAT): Business problem, 3 personas, folder/cohort/project
 │   │   │                                          # organization, persona-to-level responsibility matrix & UX outline
-│   │   ├── sub-it-admin-cuj.md                    # WHY: "As an IT Admin, I want to <Y> to accomplish <Z>"
-│   │   ├── sub-bu-admin-cuj.md                    # WHY: "As a BU Admin (School/Cohort), I want to <Y> to accomplish <Z>"
-│   │   └── sub-student-cuj.md                     # WHY: "As a Student, I want to <Y> to accomplish <Z>"
+│   │   ├── brs-it-admin-cuj.md                    # WHY: "As an IT Admin, I want to <Y> to accomplish <Z>"
+│   │   ├── brs-bu-admin-cuj.md                    # WHY: "As a BU Admin (School/Cohort), I want to <Y> to accomplish <Z>"
+│   │   └── brs-student-cuj.md                     # WHY: "As a Student, I want to <Y> to accomplish <Z>"
 │   │
 │   └── 02-tdd/                                    # TECHNICAL DESIGN & LOW-LEVEL DESIGN (THE HOW / LLD)
 │       ├── tdd-master.md                          # PRIMARY: Master Technical Design & Cross-Component Architecture

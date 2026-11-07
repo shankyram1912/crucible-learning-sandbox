@@ -2,7 +2,7 @@
 
 > **Master Document:** [Business Requirements Specification — Master (`THE WHAT`)](../01-brs/brs-master.md)
 > **TDD Master Document:** [Technical Design & LLD — Master](tdd-master.md)  
-> **Companion CUJ Document:** [IT Admin CUJs (`THE WHY`)](../01-brs/sub-it-admin-cuj.md)  
+> **Companion CUJ Document:** [IT Admin CUJs (`THE WHY`)](../01-brs/brs-it-admin-cuj.md)  
 > **Terraform Source Location:** `src/terraform/itadmin/`
 
 ---

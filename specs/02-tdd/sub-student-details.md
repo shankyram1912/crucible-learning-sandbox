@@ -2,7 +2,7 @@
 
 > **Master Document:** [Business Requirements Specification — Master (`THE WHAT`)](../01-brs/brs-master.md)
 > **TDD Master Document:** [Technical Design & LLD — Master](tdd-master.md)  
-> **Companion CUJ Document:** [Student CUJs (`THE WHY`)](../01-brs/sub-student-cuj.md)  
+> **Companion CUJ Document:** [Student CUJs (`THE WHY`)](../01-brs/brs-student-cuj.md)  
 > **Pipeline Source Location:** `src/bff/pipelines/` (Atomic Pipeline — Student Workspace Auto-Init + App Container CRUD)
 
 ---

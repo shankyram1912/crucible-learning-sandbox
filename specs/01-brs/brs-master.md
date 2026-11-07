@@ -4,9 +4,9 @@
 > *(Note: Visual Canvas UI layout and interaction mechanics are specified separately in [ui-master-spec.md](../02-tdd/ui/ui-master-spec.md).)*
 >
 > **Secondary Persona Documents (`WHY` & `HOW`):**
-> * **Persona 1 — IT Admin:** [sub-it-admin-cuj.md](sub-it-admin-cuj.md) · [../02-tdd/sub-it-admin-details.md](../02-tdd/sub-it-admin-details.md)
-> * **Persona 2 — BU Admin (School Admin & Cohort Admin):** [sub-bu-admin-cuj.md](sub-bu-admin-cuj.md) · [../02-tdd/sub-bu-admin-details.md](../02-tdd/sub-bu-admin-details.md)
-> * **Persona 3 — Student:** [sub-student-cuj.md](sub-student-cuj.md) · [../02-tdd/sub-student-details.md](../02-tdd/sub-student-details.md)
+> * **Persona 1 — IT Admin:** [brs-it-admin-cuj.md](brs-it-admin-cuj.md) · [../02-tdd/sub-it-admin-details.md](../02-tdd/sub-it-admin-details.md)
+> * **Persona 2 — BU Admin (School Admin & Cohort Admin):** [brs-bu-admin-cuj.md](brs-bu-admin-cuj.md) · [../02-tdd/sub-bu-admin-details.md](../02-tdd/sub-bu-admin-details.md)
+> * **Persona 3 — Student:** [brs-student-cuj.md](brs-student-cuj.md) · [../02-tdd/sub-student-details.md](../02-tdd/sub-student-details.md)
 
 ---
 
@@ -269,11 +269,11 @@ Rather than hardcoding service lists or per-student quantities, the platform use
 ## 7. Outline of the Functional Experience per Persona
 
 * **Persona 1 — IT Admin:** Operates at the Root, Global Config, and Top-Level School Folder level to configure version-tracked global service defaults (`100` students/project, mandatory `SA`, prerequisite mappings, service sizes, and quota `min`/`max`), create Top-Level School Folders, assign Top-Level School Admins, and manage Root/School Pooled Budgets.
-  * **WHY (User Journeys):** [sub-it-admin-cuj.md](sub-it-admin-cuj.md)
+  * **WHY (User Journeys):** [brs-it-admin-cuj.md](brs-it-admin-cuj.md)
   * **HOW (Implementation Details):** [../02-tdd/sub-it-admin-details.md](../02-tdd/sub-it-admin-details.md)
 * **Persona 2 — BU Admin (School Admin & Cohort Admin — All BU Admins Are Cohort Admins by Default):** School Admins organize Department Sub-folders and can assign additional Cohort Admins at the Sub-folder or Cohort level. Cohort Admins (including all School Admins) create Cohort Folders, initialize $\lceil N/100 \rceil$ `<cohort_slug>-pNN` Project Shards via Terraform, manage and switch the Cohort's **Current Active Provisioning Project**, configure enabled services and per-student quantities, map the **Cohort Student Email Group**, suspend/delete individual student slices, set project budget overrides, and teardown completed cohorts.
-  * **WHY (User Journeys):** [sub-bu-admin-cuj.md](sub-bu-admin-cuj.md)
+  * **WHY (User Journeys):** [brs-bu-admin-cuj.md](brs-bu-admin-cuj.md)
   * **HOW (Implementation Details):** [../02-tdd/sub-bu-admin-details.md](../02-tdd/sub-bu-admin-details.md)
 * **Persona 3 — Student:** Logs in, sees the Cohort(s) matching their **Cohort Student Email Group** memberships, and selects a Cohort. Upon entering the Cohort workspace, the platform checks if their Student Slice is initialized — automatically initializing their enabled **Student-Level Singletons** (`1` mandatory `sa-<student_slug>`, `Gemini`, `1` `bkt-<project_id>-<student_slug>`, `1` `db_<student_slug>`) in the Cohort's **Current Active Provisioning Project** if needed — and then unlocks **App Container (`app-<app_slug>`)** creation so they can freely mix, match, and delete App-specific services within their per-student allowance.
-  * **WHY (User Journeys):** [sub-student-cuj.md](sub-student-cuj.md)
+  * **WHY (User Journeys):** [brs-student-cuj.md](brs-student-cuj.md)
   * **HOW (Implementation Details):** [../02-tdd/sub-student-details.md](../02-tdd/sub-student-details.md)

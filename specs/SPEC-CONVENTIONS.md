@@ -23,9 +23,9 @@ specs/
 ├── SPEC-CONVENTIONS.md                  # This reference guide
 ├── 01-brs/                              # Tier 01: Business Requirements Specification (THE WHAT & THE WHY)
 │   ├── brs-master.md                    # Primary Master Document (THE WHAT)
-│   ├── sub-it-admin-cuj.md              # Secondary Document (THE WHY — Persona 1 CUJs)
-│   ├── sub-bu-admin-cuj.md              # Secondary Document (THE WHY — Persona 2 CUJs)
-│   └── sub-student-cuj.md               # Secondary Document (THE WHY — Persona 3 CUJs)
+│   ├── brs-it-admin-cuj.md              # Secondary Document (THE WHY — Persona 1 CUJs)
+│   ├── brs-bu-admin-cuj.md              # Secondary Document (THE WHY — Persona 2 CUJs)
+│   └── brs-student-cuj.md               # Secondary Document (THE WHY — Persona 3 CUJs)
 │
 └── 02-tdd/                              # Tier 02: Technical Design & Low-Level Design (THE HOW / LLD)
     ├── tdd-master.md                    # Primary Master Document (Technical Architecture Index)
@@ -42,7 +42,7 @@ specs/
 ### A. `specs/01-brs/` — Business Requirements Specification (`WHAT` & `WHY` Only)
 1. **Primary Master Document — `brs-master.md` (`THE WHAT`):**
    * Outlines the business problem being solved, the personas and cumulative inheritance hierarchy, the three-level configuration cascade (`Service Catalog Config` $\rightarrow$ `IT Admin Global Config` $\rightarrow$ `BU Admin Cohort Editable Elements`), the typical organization of folders/projects/students/apps, core business rules, and the responsibility matrix.
-2. **Persona CUJ Documents — `sub-<persona>-cuj.md` (`THE WHY`):**
+2. **Persona CUJ Documents — `brs-<persona>-cuj.md` (`THE WHY`):**
    * Lists the persona-specific **Critical User Journeys (CUJs)** in user-story format:
      > **As a** `<Persona>`,  
      > **I want to** `<perform action Y>`,  
