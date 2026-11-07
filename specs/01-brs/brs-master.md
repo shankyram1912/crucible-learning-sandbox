@@ -40,8 +40,8 @@ The platform is built around three personas arranged in a **strict cumulative in
 │      • Default Students per Project Shard (Default: 100 students/project)    │
 │      • Default Enabled Services (SA, Gemini, GCS, Cloud SQL, Cloud Run,      │
 │        Vertex AI Search, etc.) & underlying per-project service settings     │
-│      • Per-Project Quota Ceilings (Q_project) & Per-Student Min / Default    │
-│        settings per service                                                  │
+│      • Per-Project Quota Ceilings (Q_project) & Per-Student Min              │
+│        (from Service Catalog Config, with override allowed)                  │
 │    - Organize School Folders and Department Sub-folders under Root           │
 │    - Map BU Admin IAM Groups to School Folders or Department Sub-folders     │
 │    - Configure Billing Account associations and Pooled Folder Budgets        │
@@ -57,9 +57,9 @@ The platform is built around three personas arranged in a **strict cumulative in
 │      • Services Enabled on Cohort (SA, Gemini, GCS, Cloud SQL, Cloud Run,    │
 │        Vertex AI Search, etc. — enabling services triggers Terraform across  │
 │        all project shards and all mapped students in the Cohort)             │
-│      • Per-Service Per-Student Allowance (bounded between Min from Admin     │
-│        Service Catalog Config, Default, and dynamic Max derived from         │
-│        Q_project and students per project shard)                             │
+│      • Per-Service Per-Student Allowance: takes Min from Service Catalog     │
+│        Config by default, and allows Override up to dynamic Max              │
+│        (⌊Q_project / n_shard⌋)                                               │
 │      • Pooled Cohort Budget, Default Project Limit & Per-Project Overrides   │
 │    - Map Cloud Identity Users / User Groups (or CSV rosters) to Cohorts      │
 │      (triggers Terraform to provision enabled Student-Level Singletons for   │
@@ -99,14 +99,14 @@ Rather than hardcoding service lists or arbitrary per-student limits, the platfo
 [1. Platform Service Catalog Config]
  │  Defines the list of supported services, their underlying default per-project
  │  Terraform/API settings (e.g., Cloud SQL tier, API lists), baseline GCP Project
- │  Quota ceilings (Q_project), and baseline per-student Min (m_service) & Default (d_service).
+ │  Quota ceilings (Q_project), and baseline Per-Student Min (m_service).
  ▼
 [2. IT Admin Global Config Screen]
- │  • Loads the Service Catalog Config and sets institution-wide defaults & bounds:
+ │  • Loads the Service Catalog Config and allows IT Admin override of global bounds:
  │    - Default Students per Project Shard: S_shard = 100 (always defaults to 100)
  │    - Default Enabled Services for new Cohorts (including SA & Gemini)
  │    - Effective Max Quota per Project per Service (Q_project)
- │    - Per-Student Min (m_service) and Default (d_service) per Service
+ │    - Per-Student Min (m_service, taken from Service Catalog Config with override)
  ▼
 [3. BU Admin Cohort Editable Elements (Inherited from IT Admin Config)]
     • Cohort Sizing: Expected Students (N) & Students per Project (S_shard, default 100)
@@ -116,23 +116,22 @@ Rather than hardcoding service lists or arbitrary per-student limits, the platfo
       (SA, Gemini, GCS, Cloud SQL, Cloud Run, Vertex AI Search, etc.)
       ──> Enabling/updating services or mapping students triggers Cohort Terraform
           across all Project Shards and all Students in the Cohort!
-    • Per-Service Per-Student Max (for each enabled service):
-      - Pre-populated with IT Admin's Default Per-Student setting (d_service)
-      - Bounded on the low end by Min Per-Student (m_service, from Admin Service Catalog Config)
-      - Bounded on the high end by the Dynamic Max Ceiling:
-        m_service  <=  Selected_Max_Per_Student  <=  ⌊ Q_project(service) / n_shard ⌋
+    • Per-Service Per-Student Allowance (for each enabled service):
+      - Takes Min Per-Student (m_service) from Service Catalog Config by default
+      - Allows BU Admin Override up to the Dynamic Max Ceiling:
+        m_service  <=  Per_Student_Allowance (Override)  <=  ⌊ Q_project(service) / n_shard ⌋
 ```
 
 ### Cohort Editable Elements & Quota Math Reference
 
-| Service (From Catalog Config) | Cohort Enable Toggle (Triggers Cohort Terraform for All Students) | Student-Level Singleton *(Terraform-Provisioned, 1 per Student if Enabled)* | App-Level Building Block (`app-<app_slug>`, Atomic Pipeline) | Per-Student Allowance Bounds (`Min` / `Default` / `Max`) |
+| Service (From Catalog Config) | Cohort Enable Toggle (Triggers Cohort Terraform for All Students) | Student-Level Singleton *(Terraform-Provisioned, 1 per Student if Enabled)* | App-Level Building Block (`app-<app_slug>`, Atomic Pipeline) | Per-Student Allowance (`Min` from Catalog + Override up to `Max`) |
 | :--- | :--- | :--- | :--- | :--- |
 | **Service Account** | Enabled by default | `1` SA (`sa-<student_slug>`) | Bound as runtime identity across Student's Apps | Fixed Singleton (`1` per student when enabled) |
 | **Gemini (Vertex AI)** | Enabled by default | Project + `sa-<student_slug>` Gemini access | Called by Student's Apps & IDE | Enabled / Disabled per Cohort |
-| **GCS** | Enabled by default | `1` Bucket (`bkt-<project_id>-<student_slug>`) | **GCS Managed Folders** (`apps/<app_slug>/<folder>/`) | Bucket: `1` per student<br>Managed Folders: **Unlimited (`∞`)** *(default)* |
-| **Cloud SQL** | Configurable default | `1` Logical DB (`db_<student_slug>`) on shared `sql-<project_id>` | **Postgres Schemas** (`db_<student_slug>.<app_slug>_<schema>`) | Logical DB: `1` per student<br>Schemas: **Configurable** (`min` from config, `default` from config, `max` = $\lfloor Q_{\text{sql\_schemas}} / n_{\text{shard}} \rfloor$) |
-| **Cloud Run** | Enabled by default | *(Uses `sa-<student_slug>`)* | **Cloud Run Services** (`run-<student_slug>-<app_slug>-<svc>`) | **Configurable** (`min` from config, `default` from config, `max` = $\lfloor Q_{\text{cloud\_run}} / n_{\text{shard}} \rfloor$) |
-| **Vertex AI Search** | Enabled by default | *(Uses `sa-<student_slug>` + `bkt-...`)* | **Search Data Stores & Apps** (`search-ds-...` & `search-app-...`) | **Configurable** (`min` from config, `default` from config, `max` = $\lfloor Q_{\text{vertex\_search}} / n_{\text{shard}} \rfloor$) |
+| **GCS** | Enabled by default | `1` Bucket (`bkt-<project_id>-<student_slug>`) | **GCS Managed Folders** (`apps/<app_slug>/<folder>/`) | Bucket: `1` per student<br>Managed Folders: **Unlimited (`∞`)** |
+| **Cloud SQL** | Configurable default | `1` Logical DB (`db_<student_slug>`) on shared `sql-<project_id>` | **Postgres Schemas** (`db_<student_slug>.<app_slug>_<schema>`) | Logical DB: `1` per student<br>Schemas: Takes **`min`** from Service Catalog Config; **override** allowed up to $\lfloor Q_{\text{sql\_schemas}} / n_{\text{shard}} \rfloor$ |
+| **Cloud Run** | Enabled by default | *(Uses `sa-<student_slug>`)* | **Cloud Run Services** (`run-<student_slug>-<app_slug>-<svc>`) | Takes **`min`** from Service Catalog Config; **override** allowed up to $\lfloor Q_{\text{cloud\_run}} / n_{\text{shard}} \rfloor$ |
+| **Vertex AI Search** | Enabled by default | *(Uses `sa-<student_slug>` + `bkt-...`)* | **Search Data Stores & Apps** (`search-ds-...` & `search-app-...`) | Takes **`min`** from Service Catalog Config; **override** allowed up to $\lfloor Q_{\text{vertex\_search}} / n_{\text{shard}} \rfloor$ |
 
 * **Flexible Mix & Match Across Apps:** A student's configured `max_per_student` is a **pooled allowance across all Apps (`app-<app_slug>`) created by that student** in that Cohort project. For example, if a Cohort allows `max = 3` Cloud Run services per student, a student may deploy all `3` inside `app-capstone`, or `1` each across `app-lab1`, `app-lab2`, and `app-lab3`.
 
