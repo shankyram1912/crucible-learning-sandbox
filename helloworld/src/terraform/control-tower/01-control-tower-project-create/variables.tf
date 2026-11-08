@@ -58,7 +58,7 @@ variable "tf_state_bucket" {
 }
 
 variable "billing_labels" {
-  description = "Billing labels from initialize.env LABEL_* keys (built by initialize.sh). Applied as provider default_labels."
+  description = "Billing labels from initialize.env LABEL_* keys (built by initialize.sh). Applied to the Control Tower project only."
   type        = map(string)
   default     = {}
 

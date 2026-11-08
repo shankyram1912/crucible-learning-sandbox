@@ -57,17 +57,3 @@ variable "service_agent_services" {
     "artifactregistry.googleapis.com",
   ]
 }
-
-variable "billing_labels" {
-  description = "Billing labels from initialize.env LABEL_* keys (built by initialize.sh). Applied as provider default_labels."
-  type        = map(string)
-  default     = {}
-
-  validation {
-    condition = alltrue([
-      for k, v in var.billing_labels :
-      can(regex("^[a-z][a-z0-9_-]{0,62}$", k)) && can(regex("^[a-z0-9_-]{0,63}$", v))
-    ])
-    error_message = "Billing label keys must start with a lowercase letter; keys and values may use lowercase letters, digits, '-' and '_' (max 63 characters)."
-  }
-}

@@ -42,7 +42,7 @@ gcloud services enable cloudresourcemanager.googleapis.com serviceusage.googleap
    cp initialize.env.example initialize.env
    ```
    Required for the first operation: `QUOTA_PROJECT`, `ORG_ID`, `BILLING_ACCOUNT_ID`, `CT_FOLDER_NAME`, `CT_FOLDER_PARENT`, `CT_PROJECT_ID`, `REGION`, `TF_STATE_BUCKET`.
-   Billing labels (`LABEL_COST_CENTER_BU`, `LABEL_COST_CENTER`, `LABEL_CATEGORY`, `LABEL_SUBCATEGORY`) are required; they are applied to the project and every labelable resource.
+   Billing labels (`LABEL_COST_CENTER_BU`, `LABEL_COST_CENTER`, `LABEL_CATEGORY`, `LABEL_SUBCATEGORY`) are required; they are applied to the Control Tower project, which attributes all its costs in billing.
    `CT_PROJECT_ID` and `TF_STATE_BUCKET` default to names derived from the org ID (for example `lsb-control-tower-e26`); leave them as they are unless you need different names.
 4. Check everything before changing anything:
    ```bash

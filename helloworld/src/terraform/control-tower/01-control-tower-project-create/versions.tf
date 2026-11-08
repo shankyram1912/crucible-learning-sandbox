@@ -12,6 +12,5 @@ terraform {
 # Quota/billing project for API calls comes from the environment set by initialize.sh
 # (GOOGLE_BILLING_PROJECT + USER_PROJECT_OVERRIDE=true).
 provider "google" {
-  region         = var.region
-  default_labels = var.billing_labels
+  region = var.region
 }

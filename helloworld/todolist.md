@@ -11,7 +11,7 @@ Tracks the build sequence for the hello world MVP. Specs: [helloworld-spec.md](s
 | 1 | `ControlTowerProjectCreate` | ✅ Done (2026-11-08) | Folder "Control Tower" under University Sandbox, project `lsb-control-tower-e26`, billing, state bucket |
 | 2 | `ControlTowerApisEnable` | ✅ Done (2026-11-08) | 16 baseline APIs, service agents (Cloud Run, Cloud Build, Artifact Registry); no Compute |
 | 3 | `ControlTowerFirestoreCreate` | ✅ Done (2026-11-08) | Firestore Native `lsb-control-tower-db`, asia-southeast1, PITR, delete protection |
-| 3a | Re-run `ControlTowerProjectCreate` to apply billing labels | ⬜ To do | Plan verified read-only: 0 to add, 2 to change (project + bucket labels), 0 to destroy. Ops 2 and 3: no changes |
+| 3a | Re-run `ControlTowerProjectCreate` to apply billing labels | ⬜ To do | Plan verified read-only: 0 to add, 1 to change (project labels), 0 to destroy. Ops 2 and 3: no changes |
 | 3b | Enable Cloud Billing export to BigQuery | ⬜ To do (Console, manual) | Needed to report costs by label |
 | 4 | `ControlTowerIdentityCreate` | ⬜ To design (section 3) | Service accounts and least-privilege IAM |
 | 5 | `ControlTowerRegistryCreate` | ⬜ To do | Artifact Registry Docker repo `lsb`, cleanup policy |

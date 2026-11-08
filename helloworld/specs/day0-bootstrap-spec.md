@@ -136,7 +136,7 @@ Any `LABEL_<NAME>` key becomes label `<name>` (lowercased, `_` to `-`); adding a
 3. **Validates** that every required key is set and non-empty, and lists all missing keys at once.
 4. Exports every key as-is, plus a lowercase **`TF_VAR_`** copy (for example `BILLING_ACCOUNT_ID` becomes `TF_VAR_billing_account_id`), using a generic loop. Adding a setting is one new line in `initialize.env`, with no script change.
 5. Sets the quota project for both tools, for this session only (global gcloud config is not changed): `CLOUDSDK_CORE_PROJECT` + `CLOUDSDK_BILLING_QUOTA_PROJECT` for gcloud, and `GOOGLE_BILLING_PROJECT` + `USER_PROJECT_OVERRIDE=true` for Terraform.
-6. Builds **`TF_VAR_billing_labels`** (a JSON map) from all `LABEL_*` keys; every operation passes it to the Google provider as `default_labels`, so all labelable resources get the billing labels automatically.
+6. Builds **`TF_VAR_billing_labels`** (a JSON map) from all `LABEL_*` keys; `ControlTowerProjectCreate` applies it to the Control Tower project's labels.
 7. Sets `TF_INPUT=0` so Terraform fails instead of prompting for a missing variable.
 8. Sets `TF_CLI_ARGS_init="-backend-config=bucket=$TF_STATE_BUCKET"` so every `terraform init` uses the state bucket. Each operation's backend block hardcodes only its own prefix (for example `control-tower/02-control-tower-apis-enable`).
 9. Prints a short summary of what was loaded and adds a prompt prefix such as `[ct: lsb-control-tower-e26]`.
@@ -149,7 +149,7 @@ Any `LABEL_<NAME>` key becomes label `<name>` (lowercased, `_` to `-`); adding a
 | `CLOUDSDK_CORE_PROJECT` + `CLOUDSDK_BILLING_QUOTA_PROJECT` | Make gcloud use `QUOTA_PROJECT` for this session only |
 | `GOOGLE_BILLING_PROJECT` + `USER_PROJECT_OVERRIDE=true` | Make Terraform bill API calls to `QUOTA_PROJECT` |
 | `GOOGLE_CLOUD_QUOTA_PROJECT` | Overrides any quota project stored in ADC (used by Google client libraries, including the Terraform GCS backend) |
-| `TF_VAR_billing_labels` | JSON map built from `LABEL_*` keys, used as the provider's `default_labels` |
+| `TF_VAR_billing_labels` | JSON map built from `LABEL_*` keys, applied to the Control Tower project's labels |
 | `TF_INPUT=0` | Terraform fails instead of prompting for a missing value |
 | `TF_CLI_ARGS_init` | Passes `-backend-config=bucket=$TF_STATE_BUCKET` to every `terraform init` |
 
@@ -325,7 +325,7 @@ Long description printed before the run: [operation.md](../src/terraform/control
 4. **State bucket:** create `TF_STATE_BUCKET` in the project (in `REGION`, versioning on, 7-day soft delete, uniform bucket-level access, public access prevented).
 5. **State:** this operation starts with **local state** (no bucket exists yet). After apply, `run.sh` generates `backend.tf` (gitignored) and **migrates the state into the bucket** under `control-tower/01-control-tower-project-create`. In a fresh clone, `run.sh` detects the remote state and generates `backend.tf` before `terraform init`, so nothing is created twice.
 6. **Written back to `initialize.env`:** `CT_FOLDER_ID`, `CT_FOLDER_MANAGED`, `CT_PROJECT_NUMBER`.
-6a. **Billing labels:** the project and the state bucket carry the billing labels (provider `default_labels`) plus `managed-by` and `operation`. The folder cannot take labels.
+6a. **Billing labels:** the project carries the billing labels plus `managed-by` and `operation`; project labels attribute all of the project's costs. Other resources (bucket) keep only `managed-by` and `operation`. The folder cannot take labels.
 7. **Readiness:** project `ACTIVE` and billing enabled before `ControlTowerApisEnable` can run.
 
 ### 2. `ControlTowerApisEnable` (`02-control-tower-apis-enable`)

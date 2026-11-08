@@ -44,7 +44,7 @@ while IFS= read -r _lsb_key; do
 done < <(grep -E '^[A-Z_][A-Z0-9_]*=' "$LSB_ENV_FILE" | cut -d= -f1 | sort -u)
 
 # 3b. Billing labels: LABEL_<NAME>=value  ->  TF_VAR_billing_labels = {"<name>": "value", ...}
-#     (<name> lowercased, "_" -> "-"). Used as the provider's default_labels in every operation.
+#     (<name> lowercased, "_" -> "-"). Applied to the Control Tower project (ControlTowerProjectCreate).
 _lsb_labels=""
 while IFS= read -r _lsb_key; do
   _lsb_name="${_lsb_key#LABEL_}"; _lsb_name="${_lsb_name,,}"; _lsb_name="${_lsb_name//_/-}"

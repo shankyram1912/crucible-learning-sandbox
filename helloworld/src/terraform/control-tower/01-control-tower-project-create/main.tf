@@ -29,7 +29,8 @@ resource "google_project" "ct" {
   name            = var.ct_project_id
   folder_id       = local.folder_id
   billing_account = var.billing_account_id
-  labels          = local.labels
+  # Billing labels go on the project: they attribute every cost in the project in the billing export.
+  labels          = merge(local.labels, var.billing_labels)
   deletion_policy = "PREVENT"
 
   lifecycle {

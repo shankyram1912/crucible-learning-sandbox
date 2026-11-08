@@ -60,12 +60,13 @@ gs://lsb-control-tower-bucket/
 6. **Guardrails are not enforced by Terraform re-runs.** Rules that must never be broken by Console edits (bucket create/delete, public endpoints, regions) live in org policies and IAM deny.
 
 ### 1.7 Billing labels
-1. **Every project the platform creates is labeled for billing**, and the same labels go on every resource that supports labels. Project labels attribute all of a project's costs in the billing export, including resources that cannot be labeled (Firestore databases, folders, service accounts).
-2. **Label set:** `cost-center-bu`, `cost-center`, `category`, `subcategory`. No `owner` label. `environment` is added only if multiple environments exist.
-3. **Control Tower values:** `cost-center-bu=central-it`, `cost-center=lsb-control-tower`, `category=lsb-control-tower`, `subcategory=lsb-control-tower`.
-4. **Later, school-specific:** cohort projects use the same keys with school values (for example `cost-center-bu=<school>`), plus `playground` and `cohort` labels, so costs can be split per school and cohort.
-5. **Mechanism:** labels come from configuration and are applied through the Terraform provider's `default_labels`, never hand-written per resource.
-6. **Reporting** needs Cloud Billing export to BigQuery enabled on the billing account.
+1. **Billing labels go on projects.** Every project the platform creates is labeled for billing. Project labels attribute all of a project's costs in the billing export, including resources that cannot be labeled (Firestore databases, folders, service accounts), so copying the same labels onto every resource adds nothing.
+2. **Resource labels only where values differ within a project**, for example per student or app in shared cohort projects later, to split that project's cost.
+3. **Label set:** `cost-center-bu`, `cost-center`, `category`, `subcategory`. No `owner` label. `environment` is added only if multiple environments exist.
+4. **Control Tower values:** `cost-center-bu=central-it`, `cost-center=lsb-control-tower`, `category=lsb-control-tower`, `subcategory=lsb-control-tower`.
+5. **Later, school-specific:** cohort projects use the same keys with school values (for example `cost-center-bu=<school>`), plus `playground` and `cohort` labels, so costs can be split per school and cohort.
+6. **Mechanism:** labels come from configuration (`LABEL_*` keys) and are applied to the project by the operation that creates it, never hand-written.
+7. **Reporting** needs Cloud Billing export to BigQuery enabled on the billing account.
 
 ---
 
