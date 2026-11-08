@@ -115,7 +115,7 @@ Folders cannot carry labels, and labels are never inherited. To cover every proj
 | `grp-lsb-it-admins@<domain>` | IT Admins | **Playground Folders** (create, defined tags, name the BU Admin controllers) | Only IT Admins add or remove members of both groups; control of every Playground Folder and playground by default |
 | `grp-lsb-bu-admins@<domain>` | BU Admins, plus `grp-lsb-it-admins@` nested | **Playgrounds** inside the Playground Folders they control (owners, `subcategory` override, template, services) | |
 
-- Both are created in Day-0 (identity operation) as **locked groups** (`cloudidentity.googleapis.com/groups.locked` plus the security label): only Super Admins and Groups Admins can change membership; group owners, managers and self-join are blocked.
+- Both are created in Day-0 step 4 (`PlaygroundGroupsCreate`, before the tag operations that grant them Tag User) as **locked groups** (`cloudidentity.googleapis.com/groups.locked` plus the security label): only Super Admins and Groups Admins can change membership; group owners, managers and self-join are blocked.
 - Membership changes go through the platform, which enforces "IT Admins only". No human owners or managers on these groups.
 - Drift detection: Admin audit log alert on membership changes not made through the platform; platform-recorded intended membership compared periodically.
 

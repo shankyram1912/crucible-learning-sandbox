@@ -72,11 +72,12 @@ gcloud services enable cloudresourcemanager.googleapis.com serviceusage.googleap
 | `ControlTowerProjectCreate` | Control Tower folder (created, or existing via `CT_FOLDER_ID`), project with billing, Cloud Storage API, Terraform state bucket |
 | `ControlTowerApisEnable` | Baseline APIs on the Control Tower project (platform, observability, billing, Firestore, storage, Cloud Run, Artifact Registry, Cloud Build, Secret Manager, Cloud Identity, Directory) and the Cloud Run, Cloud Build and Artifact Registry service agents. Compute is not enabled (networking comes later) |
 | `ControlTowerFirestoreCreate` | Firestore database `FIRESTORE_DATABASE` (Native mode, in `REGION`) with point-in-time recovery and delete protection, used by the Self Service APIs |
+| `PlaygroundGroupsCreate` | Locked playground service groups `IT_ADMINS_GROUP` and `BU_ADMINS_GROUP` (IT Admins nested in BU Admins), plus the initial IT Admins from `IT_ADMINS_INITIAL_MEMBERS`. Needs a Super Admin (or Groups Admin able to manage locked groups) and the Cloud Identity API on the quota project |
 | `RunAll` | Runs bootstrap operations in order: `--from=<Operation>` (default: first) `--to=<Operation>` (default: last). Each operation still shows its description, validates, shows its plan and asks to proceed (unless `--yes`). Stops at the first failure and prints a summary |
 | `Status` | Progress of all operations: status, time, who ran it, git commit |
 | `Restore` | In a fresh Cloud Shell: pulls `initialize.env`, `controltower.status` and logs back from the state bucket |
 
-Run them in order: `ControlTowerProjectCreate`, `ControlTowerApisEnable`, `ControlTowerFirestoreCreate`, or use `RunAll`:
+Run them in order: `ControlTowerProjectCreate`, `ControlTowerApisEnable`, `ControlTowerFirestoreCreate`, `PlaygroundGroupsCreate`, or use `RunAll`:
 ```bash
 ./run.sh --operation=RunAll                                   # all operations, first to last
 ./run.sh --operation=RunAll --from=ControlTowerApisEnable      # from an operation to the end
@@ -111,6 +112,7 @@ Run them in order: `ControlTowerProjectCreate`, `ControlTowerApisEnable`, `Contr
 | `01-control-tower-project-create/` | Terraform for the first operation, plus [operation.md](01-control-tower-project-create/operation.md) (its long description) | Yes |
 | `02-control-tower-apis-enable/` | Terraform for the second operation, plus [operation.md](02-control-tower-apis-enable/operation.md) | Yes |
 | `03-control-tower-firestore-create/` | Terraform for the third operation, plus [operation.md](03-control-tower-firestore-create/operation.md) | Yes |
+| `04-playground-groups-create/` | Terraform for the fourth operation, plus [operation.md](04-playground-groups-create/operation.md) | Yes |
 
 After each successful operation, `initialize.env`, `controltower.status` and `logs/` are copied to `gs://<TF_STATE_BUCKET>/control-tower/_runner/`.
 

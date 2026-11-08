@@ -11,6 +11,7 @@
 #   ControlTowerProjectCreate   (order 1) Control Tower folder, project, billing link, state bucket
 #   ControlTowerApisEnable      (order 2) baseline APIs + service agents on the Control Tower project
 #   ControlTowerFirestoreCreate (order 3) Firestore database for the Self Service APIs
+#   PlaygroundGroupsCreate      (order 4) locked playground service groups (IT Admins nested in BU Admins)
 #
 # Flags (bootstrap operations):
 #   --validate-only   run the operation's validation and stop (no changes)
@@ -34,27 +35,31 @@ MIN_TERRAFORM="1.5.0"
 # ---------------------------------------------------------------------------
 # Operation registry (order = position in BOOTSTRAP_OPS)
 # ---------------------------------------------------------------------------
-BOOTSTRAP_OPS=(ControlTowerProjectCreate ControlTowerApisEnable ControlTowerFirestoreCreate)
+BOOTSTRAP_OPS=(ControlTowerProjectCreate ControlTowerApisEnable ControlTowerFirestoreCreate PlaygroundGroupsCreate)
 declare -A OP_DIR=(
   [ControlTowerProjectCreate]="01-control-tower-project-create"
   [ControlTowerApisEnable]="02-control-tower-apis-enable"
   [ControlTowerFirestoreCreate]="03-control-tower-firestore-create"
+  [PlaygroundGroupsCreate]="04-playground-groups-create"
 )
 declare -A OP_TITLE=(
   [ControlTowerProjectCreate]="Control Tower folder + project + state bucket"
   [ControlTowerApisEnable]="Baseline APIs + service agents on the Control Tower project"
   [ControlTowerFirestoreCreate]="Firestore database for the Self Service APIs"
+  [PlaygroundGroupsCreate]="Locked playground service groups (IT Admins nested in BU Admins)"
 )
 declare -A OP_KEYS=(
   [ControlTowerProjectCreate]="QUOTA_PROJECT ORG_ID BILLING_ACCOUNT_ID CT_FOLDER_NAME CT_FOLDER_PARENT CT_PROJECT_ID REGION TF_STATE_BUCKET"
   [ControlTowerApisEnable]="QUOTA_PROJECT CT_PROJECT_ID CT_PROJECT_NUMBER REGION TF_STATE_BUCKET"
   [ControlTowerFirestoreCreate]="QUOTA_PROJECT CT_PROJECT_ID REGION TF_STATE_BUCKET FIRESTORE_DATABASE"
+  [PlaygroundGroupsCreate]="QUOTA_PROJECT REGION TF_STATE_BUCKET DIRECTORY_CUSTOMER_ID DOMAIN IT_ADMINS_GROUP BU_ADMINS_GROUP IT_ADMINS_INITIAL_MEMBERS"
 )
 # APIs that must be enabled on QUOTA_PROJECT for the operation's calls
 declare -A OP_QUOTA_APIS=(
   [ControlTowerProjectCreate]="cloudresourcemanager.googleapis.com serviceusage.googleapis.com cloudbilling.googleapis.com storage.googleapis.com"
   [ControlTowerApisEnable]="serviceusage.googleapis.com storage.googleapis.com"
   [ControlTowerFirestoreCreate]="firestore.googleapis.com storage.googleapis.com"
+  [PlaygroundGroupsCreate]="cloudidentity.googleapis.com storage.googleapis.com"
 )
 
 # ---------------------------------------------------------------------------
@@ -75,7 +80,7 @@ die()   { err "$*"; exit 2; }
 title() { printf '\n%s\n\n' " ${C_BOLD}$*${C_RESET}"; }
 
 usage() {
-  sed -n '2,24p' "$0" | sed 's/^# \{0,1\}//'
+  sed -n '2,25p' "$0" | sed 's/^# \{0,1\}//'
   exit "${1:-0}"
 }
 
@@ -507,6 +512,60 @@ post_apply_ControlTowerFirestoreCreate() { # dir prefix
   wait_for "Firestore database ${FIRESTORE_DATABASE} on ${CT_PROJECT_ID}" 180 \
     gcloud firestore databases describe --database="$FIRESTORE_DATABASE" --project="$CT_PROJECT_ID" --format="value(name)"
   ok "location $(terraform -chdir="$1" output -raw location), point-in-time recovery and delete protection enabled"
+}
+
+# PlaygroundGroupsCreate: group emails and initial members in DOMAIN; warn if groups already exist.
+validate_PlaygroundGroupsCreate() {
+  local g m
+  for g in "${IT_ADMINS_GROUP-}" "${BU_ADMINS_GROUP-}"; do
+    [[ -z "$g" ]] && continue
+    [[ "$g" == *"@${DOMAIN-}" ]] || problems+=("group $g is not in domain ${DOMAIN-}")
+  done
+  IFS=',' read -r -a _lsb_members <<<"${IT_ADMINS_INITIAL_MEMBERS-}"
+  for m in "${_lsb_members[@]}"; do
+    m="${m// /}"; [[ -z "$m" ]] && continue
+    [[ "$m" == *"@${DOMAIN-}" ]] || problems+=("initial IT Admin $m is not in domain ${DOMAIN-}")
+  done
+  if [[ "$(status_get PlaygroundGroupsCreate STATUS)" != "DONE" ]]; then
+    for g in "${IT_ADMINS_GROUP-}" "${BU_ADMINS_GROUP-}"; do
+      [[ -z "$g" ]] && continue
+      if gcloud identity groups describe "$g" --format="value(name)" >/dev/null 2>&1; then
+        warnings+=("group $g already exists: apply will fail unless it came from an interrupted earlier run of this operation")
+      fi
+    done
+  fi
+}
+
+post_apply_PlaygroundGroupsCreate() { # dir prefix
+  local dir="$1" out m labels g
+  CURRENT_STEP="adding initial IT Admins"
+  IFS=',' read -r -a _lsb_members <<<"${IT_ADMINS_INITIAL_MEMBERS}"
+  for m in "${_lsb_members[@]}"; do
+    m="${m// /}"; [[ -z "$m" ]] && continue
+    if gcloud identity groups memberships check-transitive-membership --group-email="$IT_ADMINS_GROUP" --member-email="$m" --format="value(hasMembership)" 2>/dev/null | grep -qi true; then
+      ok "$m already in $IT_ADMINS_GROUP"
+    else
+      gcloud identity groups memberships add --group-email="$IT_ADMINS_GROUP" --member-email="$m" --roles=MEMBER >/dev/null
+      ok "added $m to $IT_ADMINS_GROUP"
+    fi
+  done
+
+  CURRENT_STEP="readiness check"
+  wait_for "$IT_ADMINS_GROUP nested in $BU_ADMINS_GROUP" 120 \
+    bash -c 'gcloud identity groups memberships check-transitive-membership --group-email="$1" --member-email="$2" --format="value(hasMembership)" | grep -qi true' _ "$BU_ADMINS_GROUP" "$IT_ADMINS_GROUP"
+  for g in "$IT_ADMINS_GROUP" "$BU_ADMINS_GROUP"; do
+    labels="$(gcloud identity groups describe "$g" --format="json(labels)" 2>/dev/null || true)"
+    if grep -q 'groups.locked' <<<"$labels"; then
+      ok "$g is a locked security group"
+    else
+      warn "$g does not carry the locked label: lock it in the Admin console (Groups > group > Group settings) or with the Cloud Identity API"
+    fi
+  done
+
+  CURRENT_STEP="writing outputs back to initialize.env"
+  out="$(terraform -chdir="$dir" output -json)"
+  env_write_back IT_ADMINS_GROUP_ID "$(jq -r '.it_admins_group_id.value' <<<"$out")"
+  env_write_back BU_ADMINS_GROUP_ID "$(jq -r '.bu_admins_group_id.value' <<<"$out")"
 }
 
 # ---------------------------------------------------------------------------

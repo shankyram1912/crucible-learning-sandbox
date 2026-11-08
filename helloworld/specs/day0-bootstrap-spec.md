@@ -35,7 +35,10 @@ helloworld/src/terraform/control-tower/
 ├── 02-control-tower-apis-enable/
 │   ├── operation.md
 │   └── *.tf
-└── 03-control-tower-firestore-create/
+├── 03-control-tower-firestore-create/
+│   ├── operation.md
+│   └── *.tf
+└── 04-playground-groups-create/
     ├── operation.md
     └── *.tf
 ```
@@ -80,6 +83,9 @@ Every key is also exported to Terraform as a lowercase `TF_VAR_` copy (for examp
 | `ORG_ID` | Numeric ID of the GCP organization | `69296271958` | Org-level lookups and the default folder parent |
 | `DIRECTORY_CUSTOMER_ID` | Workspace / Cloud Identity customer ID | `C03ccny1h` | Required to create Google Groups later (`parent=customers/<id>`). Not used by the first two operations. |
 | `DOMAIN` | Primary domain of the org | `shankyram.altostrat.com` | Email validation and group naming later. Not used by the first two operations. |
+| `IT_ADMINS_GROUP` | IT Admins service group | `grp-lsb-it-admins@shankyram.altostrat.com` | Created by `PlaygroundGroupsCreate` as a locked security group; must be in `DOMAIN` |
+| `BU_ADMINS_GROUP` | BU Admins service group (IT Admins nested) | `grp-lsb-bu-admins@shankyram.altostrat.com` | Created by `PlaygroundGroupsCreate` as a locked security group; must be in `DOMAIN` |
+| `IT_ADMINS_INITIAL_MEMBERS` | Initial IT Admins (comma-separated user emails) | `admin@shankyram.altostrat.com` | Added once by `PlaygroundGroupsCreate`; later membership changes go through the platform |
 
 **Billing**
 | Key | What it is | Example | Notes |
@@ -171,6 +177,7 @@ Usage: `./run.sh --operation=<OperationName> [--validate-only] [--describe] [--y
 | `ControlTowerProjectCreate` | bootstrap (order 1) | Control Tower folder (or existing), project, billing link, state bucket |
 | `ControlTowerApisEnable` | bootstrap (order 2) | Enables the baseline APIs on the Control Tower project, creates the Cloud Run, Cloud Build and Artifact Registry service agents |
 | `ControlTowerFirestoreCreate` | bootstrap (order 3) | Creates the Firestore database for the Self Service APIs |
+| `PlaygroundGroupsCreate` | bootstrap (order 4) | Creates the two locked playground service groups (IT Admins nested in BU Admins) and adds the initial IT Admins |
 
 New bootstrap operations are added as new numbered folders with a PascalCase operation name.
 
@@ -358,8 +365,21 @@ Long description printed before the run: [operation.md](../src/terraform/control
 6. **Written back to `initialize.env`:** nothing (`FIRESTORE_DATABASE` is already set).
 7. **Cannot be undone:** the location cannot change after creation, and a deleted database ID cannot be reused for a period.
 
+### 4. `PlaygroundGroupsCreate` (`04-playground-groups-create`)
+Long description printed before the run: [operation.md](../src/terraform/control-tower/04-playground-groups-create/operation.md)
+
+1. Own root and state (`control-tower/04-playground-groups-create`).
+2. **Groups (Terraform, `google_cloud_identity_group`):** `IT_ADMINS_GROUP` and `BU_ADMINS_GROUP` under `customers/<DIRECTORY_CUSTOMER_ID>`, with labels `cloudidentity.googleapis.com/groups.discussion_forum`, `cloudidentity.googleapis.com/groups.security` and `cloudidentity.googleapis.com/groups.locked`; `initial_group_config = "EMPTY"` so no human becomes owner; `prevent_destroy`.
+3. **Nesting (Terraform, `google_cloud_identity_group_membership`):** `IT_ADMINS_GROUP` is a member of `BU_ADMINS_GROUP` (structure).
+4. **Initial IT Admins (post-apply hook, Cloud Identity API):** each address in `IT_ADMINS_INITIAL_MEMBERS` is added to `IT_ADMINS_GROUP` as a member (data, not Terraform); already-present members are skipped.
+5. **Runs as the admin** in Cloud Shell with their own credentials (super admin, or Groups Admin able to manage locked groups); calls are billed to `QUOTA_PROJECT`, which must have the Cloud Identity API enabled.
+6. **Validation:** group emails and initial members belong to `DOMAIN`; warns if a group already exists before this operation is `DONE`.
+7. **Readiness:** both groups are found, the nesting exists, and the locked label is present (warning if the API did not accept it, with the manual fix printed).
+8. **Written back:** `IT_ADMINS_GROUP_ID`, `BU_ADMINS_GROUP_ID` (Cloud Identity group resource names).
+9. **To verify on first run:** that the locked label is accepted at creation through Terraform, and that locked groups are available in the Workspace / Cloud Identity edition.
+
 ### Later operations
-To be defined one by one, in this order: **`PlaygroundTagsDefinedCreate`** (defined playground tags: org-level keys `cost-center-bu`, `cost-center`, `category` with values from the catalog, Terraform) and **`PlaygroundTagsDynamicCreate`** (dynamic playground tag `subcategory` with an allowed-values pattern; the pinned google provider v6.50 lacks `allowed_values_regex`, so a newer provider or `gcloud`/API), used on playground folders only, not on the Control Tower (see [helloworld-spec.md](helloworld-spec.md) section 1.8), service accounts and IAM (`sa-lsb-api`, `sa-control-tower`, `sa-lsb-build`, plus the manual Groups Admin grant), Artifact Registry, the Self Service APIs Cloud Run service, build and deploy pipelines, org guardrails. For the hello world MVP, the Self Service APIs are first built and run locally against the real Firestore (ADC), so these follow once the API exists.
+To be defined one by one, in this order (after step 4): **`PlaygroundTagsDefinedCreate`** (defined playground tags: org-level keys `cost-center-bu`, `cost-center`, `category` with values from the catalog, Terraform) and **`PlaygroundTagsDynamicCreate`** (dynamic playground tag `subcategory` with an allowed-values pattern; the pinned google provider v6.50 lacks `allowed_values_regex`, so a newer provider or `gcloud`/API), used on playground folders only, not on the Control Tower (see [helloworld-spec.md](helloworld-spec.md) section 1.8), service accounts and IAM (`sa-lsb-api`, `sa-control-tower`, `sa-lsb-build`, plus the manual Groups Admin grant), Artifact Registry, the Self Service APIs Cloud Run service, build and deploy pipelines, org guardrails. For the hello world MVP, the Self Service APIs are first built and run locally against the real Firestore (ADC), so these follow once the API exists.
 
 **Networking (service-specific, after services are enabled):** owns everything network-related for the Control Tower, so no earlier operation makes network decisions:
 - Decides the access model for exposing Cloud Run university-wide: `*.run.app` with Google sign-in or IAP on Cloud Run (no Compute needed); custom domain through an external HTTPS load balancer; campus-only or WAF via Cloud Armor; or internal-only via VPC.
