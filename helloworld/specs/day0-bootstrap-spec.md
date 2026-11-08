@@ -187,14 +187,14 @@ $ ./run.sh --operation=ControlTowerProjectCreate
  Inputs (initialize.env)
    ORG_ID              69296271958
    CT_FOLDER_ID        (empty)  -> folder "Control Tower" will be created
-   CT_FOLDER_PARENT    folders/361218745460
+   CT_FOLDER_PARENT    folders/600433119916
    CT_PROJECT_ID       lsb-control-tower-e26
    BILLING_ACCOUNT_ID  XXXXXX-XXXXXX-XXXXXX
    REGION              asia-southeast1
    TF_STATE_BUCKET     lsb-control-tower-e26-bucket
 
  What will happen
-   1. Create folder "Control Tower" under folders/361218745460 (Learning Sandbox)
+   1. Create folder "Control Tower" under folders/600433119916 (University Sandbox)
    2. Create project lsb-control-tower-e26 in that folder
    3. Link billing account XXXXXX-XXXXXX-XXXXXX
    4. Create bucket gs://lsb-control-tower-e26-bucket (asia-southeast1, versioned)

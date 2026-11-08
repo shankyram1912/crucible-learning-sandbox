@@ -372,25 +372,33 @@ pre_init_ControlTowerProjectCreate() { # dir prefix
   fi
 }
 
+# Adds a problem unless the folder exists, is accessible and is ACTIVE.
+check_folder_active() { # folder_id label
+  local state
+  state="$(gcloud resource-manager folders describe "$1" --format="value(lifecycleState)" 2>/dev/null || true)"
+  if [[ -z "$state" ]]; then
+    problems+=("$2 not found or not accessible by $account")
+  elif [[ "$state" != "ACTIVE" ]]; then
+    problems+=("$2 is $state (not ACTIVE): choose an active folder")
+  fi
+}
+
 validate_ControlTowerProjectCreate() {
   # Billing account visible to the admin
   if [[ -n "${BILLING_ACCOUNT_ID-}" ]]; then
     gcloud billing accounts describe "$BILLING_ACCOUNT_ID" --format="value(name)" >/dev/null 2>&1 \
       || problems+=("billing account $BILLING_ACCOUNT_ID not visible to $account (needs Billing User or Viewer)")
   fi
-  # Folder parent exists and is accessible
+  # Folder parent exists, is accessible and ACTIVE (a folder being deleted still "exists")
   case "${CT_FOLDER_PARENT-}" in
-    folders/*)
-      gcloud resource-manager folders describe "${CT_FOLDER_PARENT#folders/}" --format="value(name)" >/dev/null 2>&1 \
-        || problems+=("CT_FOLDER_PARENT ${CT_FOLDER_PARENT} not found or not accessible by $account") ;;
+    folders/*)  check_folder_active "${CT_FOLDER_PARENT#folders/}" "CT_FOLDER_PARENT ${CT_FOLDER_PARENT}" ;;
     organizations/*)
       gcloud organizations describe "${CT_FOLDER_PARENT#organizations/}" --format="value(name)" >/dev/null 2>&1 \
         || problems+=("CT_FOLDER_PARENT ${CT_FOLDER_PARENT} not found or not accessible by $account") ;;
   esac
-  # Existing folder (when CT_FOLDER_ID is set) is accessible
+  # Existing folder (when CT_FOLDER_ID is set) is accessible and ACTIVE
   if [[ -n "${CT_FOLDER_ID-}" ]]; then
-    gcloud resource-manager folders describe "$CT_FOLDER_ID" --format="value(name)" >/dev/null 2>&1 \
-      || problems+=("CT_FOLDER_ID ${CT_FOLDER_ID} not found or not accessible by $account")
+    check_folder_active "$CT_FOLDER_ID" "CT_FOLDER_ID ${CT_FOLDER_ID}"
   fi
   # Project ID and bucket name are global: warn if they already exist before this operation is DONE
   if [[ "$(status_get ControlTowerProjectCreate STATUS)" != "DONE" && -n "${CT_PROJECT_ID-}" ]]; then
