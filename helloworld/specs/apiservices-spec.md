@@ -9,13 +9,14 @@ The **Learning Sandbox Self Service APIs** are the single entry point for every 
 ## 1. Principles
 
 1. **REST first, CLI as a thin client.** The CLI never talks to GCP or Firestore directly. It only calls the REST API, so the same API can later back a web UI.
-2. **One endpoint, one command.** Every REST operation has exactly one CLI command (Appendix B).
-3. **Async by default.** Mutating calls (define cohort, set members, enable service) return `202 Accepted` with a `job_id`. The work runs as a provisioning job with tasks (see [helloworld-spec.md](helloworld-spec.md) section 1.6).
-4. **The CLI follows jobs live.** Mutating commands watch their job until it finishes and show each task's progress. `--no-wait` returns immediately with the `job_id`.
-5. **Human output by default, machine output on request.** Default output is colored tables, trees and live progress. `--json` prints the raw API response for scripting.
-6. **Fail fast and clearly.** Pre-check failures are returned before any job starts, with every problem listed, not just the first.
-7. **Add-only services.** There is no endpoint or command to disable a service (helloworld-spec 1.6.4).
-8. **Authentication is always required.** Every API call, including from the same machine (localhost), must carry a verified Google identity. There is no unauthenticated or dev bypass mode.
+2. **All changes go through the API; a UI may read live state directly.** Every change (define cohort, set members, enable service) is a REST call. A future web UI may additionally read live state (job and task progress, cohort status, lists) **directly from Firestore with real-time listeners**, under security rules that deny all client writes (section 3.5). The CLI keeps reading through the API.
+3. **One endpoint, one command.** Every REST operation has exactly one CLI command (Appendix B).
+4. **Async by default.** Mutating calls (define cohort, set members, enable service) return `202 Accepted` with a `job_id`. The work runs as a provisioning job with tasks (see [helloworld-spec.md](helloworld-spec.md) section 1.6).
+5. **The CLI follows jobs live.** Mutating commands watch their job until it finishes and show each task's progress. `--no-wait` returns immediately with the `job_id`.
+6. **Human output by default, machine output on request.** Default output is colored tables, trees and live progress. `--json` prints the raw API response for scripting.
+7. **Fail fast and clearly.** Pre-check failures are returned before any job starts, with every problem listed, not just the first.
+8. **Add-only services.** There is no endpoint or command to disable a service (helloworld-spec 1.6.4).
+9. **Authentication is always required.** Every API call, including from the same machine (localhost), must carry a verified Google identity (Google ID token or Firebase ID token, section 3.1). There is no unauthenticated or dev bypass mode.
 
 ---
 
@@ -24,7 +25,7 @@ The **Learning Sandbox Self Service APIs** are the single entry point for every 
 | Part | Choice | Why |
 |---|---|---|
 | **REST API** | Python 3.12 + **FastAPI** | Same language as the provisioning code (Terraform runner, Cloud Identity, Firestore SDKs). Typed request/response models (Pydantic) with validation built in. Generates OpenAPI docs at `/docs` for free, which is the contract for the CLI now and a UI later. Native async fits long-running jobs. |
-| **State** | **Firestore** database `lsb-control-tower-db` in `lsb-control-tower` | Serverless, no instance to run. Document model fits playgrounds, cohorts, jobs and tasks. Transactions enforce one active job per cohort. Real-time listeners are available if a UI wants live updates later. |
+| **State** | **Firestore** database `lsb-control-tower-db` in `lsb-control-tower` | Serverless, no instance to run. Document model fits playgrounds, cohorts, jobs and tasks. Transactions enforce one active job per cohort. Real-time listeners let a future UI show live job progress without polling (read-only, section 3.5). |
 | **Provisioning** | **Terraform** (seed cohort, enable service) + **Google Cloud SDKs** (membership, readiness checks) | Per [helloworld-spec.md](helloworld-spec.md): Terraform only where it adds value; fast directory and data operations use the APIs directly. |
 | **CLI commands** | Python + **Typer** | Same author and style as FastAPI: plain functions with type hints become commands. Can reuse the API's Pydantic models so CLI and API cannot drift. Built-in `--help`, nested commands and shell completion. Built on Click, the mature Python CLI standard. |
 | **CLI output** | **Rich** | Colors, tables, trees, live in-place updates and spinners (needed for `job watch`), pretty JSON and error panels. Disables color automatically when output is not a terminal or `NO_COLOR` is set. Typer uses Rich for help formatting, so they fit together. |
@@ -38,8 +39,10 @@ The **Learning Sandbox Self Service APIs** are the single entry point for every 
 ## 3. Deployment and auth
 
 ### 3.1 Authentication (always on)
-1. Every request carries `Authorization: Bearer <Google-signed ID token>`. Requests without a valid token get `401`, including requests from localhost.
-2. The API verifies the token signature, issuer, expiry, allowed audience (configured list), and that the user belongs to the org domain (`shankyram.altostrat.com`). The caller's identity is the **email in the verified token**.
+1. Every request carries `Authorization: Bearer <ID token>`. Requests without a valid token get `401`, including requests from localhost. Two token types are accepted:
+   - **Google ID token** (issuer `accounts.google.com`), used by the CLI.
+   - **Firebase ID token** (issuer `securetoken.google.com/<project>`), used by a future UI signed in with Firebase Auth (Google sign-in).
+2. For either type, the API verifies the token signature, issuer, expiry, allowed audience (configured list), and that the user belongs to the org domain (`shankyram.altostrat.com`). The caller's identity is the **email in the verified token**; the rest of the API does not care which type it was.
 3. The API **never trusts identity claimed by the client** (for example an `X-User` header).
 4. **Authorization** (what the caller may do: IT Admin, Cohort Admin) is decided by the API from the verified email and its group memberships. Failing it returns `403`.
 
@@ -47,10 +50,10 @@ The **Learning Sandbox Self Service APIs** are the single entry point for every 
 | Client | Where the token comes from |
 |---|---|
 | **CLI** | The user's gcloud login / ADC, via `google-auth` |
-| **Future UI on Cloud Run** (Control Tower) | The user signs in with Google in the browser; the UI passes the **user's** ID token through to the API as the bearer |
+| **Future UI on Cloud Run** (Control Tower) | The user signs in with Google through **Firebase Auth** in the browser; the UI passes the **user's** Firebase ID token to the API as the bearer, and uses the same sign-in for its read-only Firestore listeners |
 
 - A UI backend must **pass the user's token through**, never call the API with its own service account token. Otherwise every request looks like the same service account and persona checks break.
-- Adding a UI later therefore needs **no API change**.
+- Adding a UI later needs no change to the API's endpoints; only Firebase ID token verification is added to authentication.
 
 ### 3.3 Where the CLI can run
 The CLI only needs network reach to the API and a Google login. It never talks to GCP or Firestore.
@@ -68,6 +71,21 @@ In every setup the bearer token is required.
 - **API:** `helloworld/src/api`, runs locally on the Control Tower VM for the MVP; Cloud Run in `asia-southeast1` later.
 - **CLI:** `helloworld/src/cli`, its own small package (Typer, Rich, httpx, google-auth), installable with `pip` from the repo.
 
+
+### 3.5 UI live state: read-only Firestore access (future UI)
+| Kind of call | UI | CLI |
+|---|---|---|
+| **Live state** (job and task progress, cohort status, lists) | Reads Firestore directly with real-time listeners | Polls the API (`GET /v1/jobs/{id}`, `lsb job watch`) |
+| **Changes** | Calls the Self Service APIs | Calls the Self Service APIs |
+
+What the direct read path requires (added by a later UI operation, not needed for the CLI-first MVP):
+1. **Firebase enabled on the Control Tower project** (`firebase` API, a registered Web App for the client config). The existing database `lsb-control-tower-db` is used as is; the Firebase client SDK supports named databases.
+2. **Firebase Auth with Google sign-in**, restricted to the org domain.
+3. **Security rules on `lsb-control-tower-db`:**
+   - **All client writes denied.** Only the API (its service account, through IAM) writes.
+   - Reads allowed only for what the caller may see (for example a cohort's jobs only for that cohort's admins).
+   - Rules cannot look up Google Group membership, so the API maintains each user's personas and cohorts as **Firebase custom claims** or in a **membership document** the rules read.
+4. **The API stays the source of truth.** The UI never derives state on its own beyond displaying what the API wrote.
 ---
 
 ## 4. Operation specs (build one by one)

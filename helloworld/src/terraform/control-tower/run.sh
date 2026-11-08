@@ -8,6 +8,7 @@
 #   Restore                     pull initialize.env, controltower.status and logs back from the state bucket
 #   ControlTowerProjectCreate   (order 1) Control Tower folder, project, billing link, state bucket
 #   ControlTowerApisEnable      (order 2) baseline APIs + service agents on the Control Tower project
+#   ControlTowerFirestoreCreate (order 3) Firestore database for the Self Service APIs
 #
 # Flags (bootstrap operations):
 #   --validate-only   run the operation's validation and stop (no changes)
@@ -31,23 +32,27 @@ MIN_TERRAFORM="1.5.0"
 # ---------------------------------------------------------------------------
 # Operation registry (order = position in BOOTSTRAP_OPS)
 # ---------------------------------------------------------------------------
-BOOTSTRAP_OPS=(ControlTowerProjectCreate ControlTowerApisEnable)
+BOOTSTRAP_OPS=(ControlTowerProjectCreate ControlTowerApisEnable ControlTowerFirestoreCreate)
 declare -A OP_DIR=(
   [ControlTowerProjectCreate]="01-control-tower-project-create"
   [ControlTowerApisEnable]="02-control-tower-apis-enable"
+  [ControlTowerFirestoreCreate]="03-control-tower-firestore-create"
 )
 declare -A OP_TITLE=(
   [ControlTowerProjectCreate]="Control Tower folder + project + state bucket"
   [ControlTowerApisEnable]="Baseline APIs + service agents on the Control Tower project"
+  [ControlTowerFirestoreCreate]="Firestore database for the Self Service APIs"
 )
 declare -A OP_KEYS=(
   [ControlTowerProjectCreate]="QUOTA_PROJECT ORG_ID BILLING_ACCOUNT_ID CT_FOLDER_NAME CT_FOLDER_PARENT CT_PROJECT_ID REGION TF_STATE_BUCKET"
   [ControlTowerApisEnable]="QUOTA_PROJECT CT_PROJECT_ID CT_PROJECT_NUMBER REGION TF_STATE_BUCKET"
+  [ControlTowerFirestoreCreate]="QUOTA_PROJECT CT_PROJECT_ID REGION TF_STATE_BUCKET FIRESTORE_DATABASE"
 )
 # APIs that must be enabled on QUOTA_PROJECT for the operation's calls
 declare -A OP_QUOTA_APIS=(
   [ControlTowerProjectCreate]="cloudresourcemanager.googleapis.com serviceusage.googleapis.com cloudbilling.googleapis.com storage.googleapis.com"
   [ControlTowerApisEnable]="serviceusage.googleapis.com storage.googleapis.com"
+  [ControlTowerFirestoreCreate]="firestore.googleapis.com storage.googleapis.com"
 )
 
 # ---------------------------------------------------------------------------
@@ -68,7 +73,7 @@ die()   { err "$*"; exit 2; }
 title() { printf '\n%s\n\n' " ${C_BOLD}$*${C_RESET}"; }
 
 usage() {
-  sed -n '2,21p' "$0" | sed 's/^# \{0,1\}//'
+  sed -n '2,22p' "$0" | sed 's/^# \{0,1\}//'
   exit "${1:-0}"
 }
 
@@ -466,6 +471,26 @@ post_apply_ControlTowerApisEnable() { # dir prefix
     warn "compute.googleapis.com is enabled on ${CT_PROJECT_ID} (possibly as a dependency): check for a 'default' VPC; the networking operation should remove it"
   fi
   terraform -chdir="$dir" output -json service_agents | jq -r 'to_entries[] | "  \(.key): \(.value)"' | while IFS= read -r l; do ok "service agent ${l#  }"; done
+}
+
+# ControlTowerFirestoreCreate: Firestore API on the CT project; warn if the database already exists.
+validate_ControlTowerFirestoreCreate() {
+  [[ -z "${CT_PROJECT_ID-}" ]] && return 0
+  if ! gcloud services list --enabled --project="$CT_PROJECT_ID" --format="value(config.name)" 2>/dev/null | grep -qx firestore.googleapis.com; then
+    problems+=("firestore.googleapis.com is not enabled on $CT_PROJECT_ID (run ControlTowerApisEnable first)")
+    return 0
+  fi
+  if [[ -n "${FIRESTORE_DATABASE-}" && "$(status_get ControlTowerFirestoreCreate STATUS)" != "DONE" ]] \
+     && gcloud firestore databases describe --database="$FIRESTORE_DATABASE" --project="$CT_PROJECT_ID" --format="value(name)" >/dev/null 2>&1; then
+    warnings+=("Firestore database $FIRESTORE_DATABASE already exists on $CT_PROJECT_ID: apply will fail unless it came from an interrupted earlier run of this operation")
+  fi
+}
+
+post_apply_ControlTowerFirestoreCreate() { # dir prefix
+  CURRENT_STEP="readiness check"
+  wait_for "Firestore database ${FIRESTORE_DATABASE} on ${CT_PROJECT_ID}" 180 \
+    gcloud firestore databases describe --database="$FIRESTORE_DATABASE" --project="$CT_PROJECT_ID" --format="value(name)"
+  ok "location $(terraform -chdir="$1" output -raw location), point-in-time recovery and delete protection enabled"
 }
 
 # ---------------------------------------------------------------------------

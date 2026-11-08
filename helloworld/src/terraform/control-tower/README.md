@@ -70,10 +70,11 @@ gcloud services enable cloudresourcemanager.googleapis.com serviceusage.googleap
 |---|---|
 | `ControlTowerProjectCreate` | Control Tower folder (created, or existing via `CT_FOLDER_ID`), project with billing, Cloud Storage API, Terraform state bucket |
 | `ControlTowerApisEnable` | Baseline APIs on the Control Tower project (platform, observability, billing, Firestore, storage, Cloud Run, Artifact Registry, Cloud Build, Secret Manager, Cloud Identity, Directory) and the Cloud Run, Cloud Build and Artifact Registry service agents. Compute is not enabled (networking comes later) |
+| `ControlTowerFirestoreCreate` | Firestore database `FIRESTORE_DATABASE` (Native mode, in `REGION`) with point-in-time recovery and delete protection, used by the Self Service APIs |
 | `Status` | Progress of all operations: status, time, who ran it, git commit |
 | `Restore` | In a fresh Cloud Shell: pulls `initialize.env`, `controltower.status` and logs back from the state bucket |
 
-Run them in order: `ControlTowerProjectCreate`, then `ControlTowerApisEnable`. More operations (Firestore, service accounts, pipelines, networking) are added one by one.
+Run them in order: `ControlTowerProjectCreate`, `ControlTowerApisEnable`, `ControlTowerFirestoreCreate`. More operations (Firestore, service accounts, pipelines, networking) are added one by one.
 
 ### Flags
 | Flag | Effect |
@@ -99,6 +100,7 @@ Run them in order: `ControlTowerProjectCreate`, then `ControlTowerApisEnable`. M
 | `logs/` | One log per run | No |
 | `01-control-tower-project-create/` | Terraform for the first operation, plus `operation.md` (its long description) | Yes |
 | `02-control-tower-apis-enable/` | Terraform for the second operation, plus `operation.md` | Yes |
+| `03-control-tower-firestore-create/` | Terraform for the third operation, plus `operation.md` | Yes |
 
 After each successful operation, `initialize.env`, `controltower.status` and `logs/` are copied to `gs://<TF_STATE_BUCKET>/control-tower/_runner/`.
 

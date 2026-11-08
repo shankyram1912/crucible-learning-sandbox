@@ -324,8 +324,17 @@ Colors follow [apiservices-spec.md](apiservices-spec.md) section 5.1.
 5. APIs are **never disabled on destroy** (an enabled service is never disabled).
 6. **Readiness:** every listed API `ENABLED`, and service agents exist for Cloud Run, Cloud Build and Artifact Registry.
 
+### 3. `ControlTowerFirestoreCreate` (`03-control-tower-firestore-create`)
+1. Own root and state (`control-tower/03-control-tower-firestore-create`).
+2. **Database:** Firestore `FIRESTORE_DATABASE` (`lsb-control-tower-db`) on `CT_PROJECT_ID`, type `FIRESTORE_NATIVE`, location `REGION` (`asia-southeast1`).
+3. **Protection:** delete protection enabled, `prevent_destroy`, point-in-time recovery enabled (7-day window, to recover from bad writes).
+4. **Access:** server-side only for the CLI-first MVP. Only the Self Service APIs' service account reads and writes, through IAM (granted in the identity operation). Firebase enablement, Firebase Auth and security rules for a future UI's read-only listeners belong to a later UI operation ([apiservices-spec.md](apiservices-spec.md) section 3.5); the database does not change for that.
+5. **Readiness:** the database is reported by `gcloud firestore databases describe --database=<FIRESTORE_DATABASE> --project=<CT_PROJECT_ID>`.
+6. **Written back to `initialize.env`:** nothing (`FIRESTORE_DATABASE` is already set).
+7. **Cannot be undone:** the location cannot change after creation, and a deleted database ID cannot be reused for a period.
+
 ### Later operations
-To be defined one by one (service accounts and IAM, Firestore database, Artifact Registry, build and deploy pipelines, Cloud Run services, org guardrails).
+To be defined one by one, in this order: service accounts and IAM (`sa-lsb-api`, `sa-control-tower`, `sa-lsb-build`, plus the manual Groups Admin grant), Artifact Registry, the Self Service APIs Cloud Run service, build and deploy pipelines, org guardrails. For the hello world MVP, the Self Service APIs are first built and run locally against the real Firestore (ADC), so these follow once the API exists.
 
 **Networking (service-specific, after services are enabled):** owns everything network-related for the Control Tower, so no earlier operation makes network decisions:
 - Decides the access model for exposing Cloud Run university-wide: `*.run.app` with Google sign-in or IAP on Cloud Run (no Compute needed); custom domain through an external HTTPS load balancer; campus-only or WAF via Cloud Armor; or internal-only via VPC.
