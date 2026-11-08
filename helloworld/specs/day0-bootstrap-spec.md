@@ -20,7 +20,7 @@ Day-0 bootstrap creates the **Control Tower** foundation that everything else ru
 ## 2. Layout
 
 ```
-helloworld/seed/terraform/control-tower/
+helloworld/src/terraform/control-tower/
 ├── initialize.env.example    committed template
 ├── initialize.env            settings + generated outputs (gitignored)
 ├── initialize.sh             loads and validates settings (sourced)
