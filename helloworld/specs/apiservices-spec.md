@@ -44,7 +44,11 @@ The **Learning Sandbox Self Service APIs** are the single entry point for every 
    - **Firebase ID token** (issuer `securetoken.google.com/<project>`), used by a future UI signed in with Firebase Auth (Google sign-in).
 2. For either type, the API verifies the token signature, issuer, expiry, allowed audience (configured list), and that the user belongs to the org domain (`shankyram.altostrat.com`). The caller's identity is the **email in the verified token**; the rest of the API does not care which type it was.
 3. The API **never trusts identity claimed by the client** (for example an `X-User` header).
-4. **Authorization** (what the caller may do: IT Admin, Cohort Admin) is decided by the API from the verified email and its group memberships. Failing it returns `403`.
+4. **Authorization** is decided by the API from the verified email, its group memberships and, for creation, the caller's own GCP rights ([helloworld-spec.md](helloworld-spec.md) section 2). Failing it returns `403`.
+   - **Personas:** IT Admin (`grp-lsb-it-admins@`), BU Admin (`grp-lsb-bu-admins@`, IT Admins included through nesting), Playground Folder controller, playground owner, student.
+   - **Creation gate** (Playground Folders and playgrounds): caller in `grp-lsb-bu-admins@` **and** holds `resourcemanager.folders.create` on the parent folder in standard GCP IAM.
+   - **Group membership changes** for `grp-lsb-it-admins@` and `grp-lsb-bu-admins@`: IT Admins only.
+5. **User access token for GCP-rights checks.** Alongside the ID token, the client sends the caller's Google OAuth **access token** in `X-LSB-Access-Token` (CLI: from the gcloud login / ADC; UI: from Google sign-in with the `cloud-platform` scope). The API uses it, as the user, only for read-only checks: `testIamPermissions` on the parent folder (creation gate) and listing the folders the user can browse (folder picker). It is never stored and never used to change anything; changes run as the platform (`sa-control-tower`).
 
 ### 3.2 Clients get tokens differently, the API treats them the same
 | Client | Where the token comes from |
@@ -90,7 +94,9 @@ What the direct read path requires (added by a later UI operation, not needed fo
 
 ## 4. Operation specs (build one by one)
 
-Each resource operation from Appendix A, together with its CLI command from Appendix B, gets its own spec before it is built. Workflow per operation:
+Each resource operation from Appendix A, together with its CLI command from Appendix B, gets its own spec before it is built.
+
+> Appendices A and B predate the playground model: "cohort" there means **playground**, and playgrounds live inside **Playground Folders** created by the platform (no designation of existing folders). Each operation spec follows [helloworld-spec.md](helloworld-spec.md) section 2. Workflow per operation:
 
 1. **Write** the operation spec (request, response, validation, pre-checks, job tasks, auth rule, CLI command and output).
 2. **Implement** it in the API and the CLI.
