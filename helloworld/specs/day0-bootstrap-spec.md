@@ -181,6 +181,16 @@ Usage: `./run.sh --operation=<OperationName> [--validate-only] [--describe] [--y
 
 New bootstrap operations are added as new numbered folders with a PascalCase operation name.
 
+#### Naming convention
+Bootstrap operation names are PascalCase **Scope + Object + Verb**:
+- **Scope:** `ControlTower` when the resources live in the Control Tower project (or its folder); `Playground` when they are org-level resources that exist to govern playgrounds (groups, tags, guardrails).
+- **Object:** the resource, adjective before noun (`DefinedTags`, not `TagsDefined`); plural when the operation creates several of a kind (`Groups`, `Pipelines`).
+- **Verb:** `Create`; `Enable` only for turning on APIs.
+- **Folder:** two-digit order plus the kebab-case name, e.g. `05-playground-defined-tags-create`.
+- Utilities (`RunAll`, `Status`, `Restore`) are runner commands, not operations, and do not follow this pattern.
+
+Planned names: `PlaygroundDefinedTagsCreate`, `PlaygroundDynamicTagsCreate`, `ControlTowerIdentityCreate`, `ControlTowerRegistryCreate`, `ControlTowerApiServiceCreate`, `ControlTowerPipelinesCreate`, `ControlTowerNetworkCreate`, `PlaygroundGuardrailsCreate`.
+
 ### 4.2 Long description before every bootstrap operation
 Before anything runs, `run.sh` prints the operation's **`operation.md`** in full, filled in with the actual values from `initialize.env`. Every `operation.md` has the same sections:
 
@@ -379,9 +389,9 @@ Long description printed before the run: [operation.md](../src/terraform/control
 9. **To verify on first run:** that the locked label is accepted at creation through Terraform, and that locked groups are available in the Workspace / Cloud Identity edition.
 
 ### Later operations
-To be defined one by one, in this order (after step 4): **`PlaygroundTagsDefinedCreate`** (defined playground tags: org-level keys `cost-center-bu`, `cost-center`, `category` with values from the catalog, Terraform) and **`PlaygroundTagsDynamicCreate`** (dynamic playground tag `subcategory` with an allowed-values pattern; the pinned google provider v6.50 lacks `allowed_values_regex`, so a newer provider or `gcloud`/API), used on playground folders only, not on the Control Tower (see [helloworld-spec.md](helloworld-spec.md) section 1.8), service accounts and IAM (`sa-lsb-api`, `sa-control-tower`, `sa-lsb-build`, plus the manual Groups Admin grant), Artifact Registry, the Self Service APIs Cloud Run service, build and deploy pipelines, org guardrails. For the hello world MVP, the Self Service APIs are first built and run locally against the real Firestore (ADC), so these follow once the API exists.
+To be defined one by one, in this order (after step 4): **`PlaygroundDefinedTagsCreate`** (defined playground tags: org-level keys `cost-center-bu`, `cost-center`, `category` with values from the catalog, Terraform) and **`PlaygroundDynamicTagsCreate`** (dynamic playground tag `subcategory` with an allowed-values pattern; the pinned google provider v6.50 lacks `allowed_values_regex`, so a newer provider or `gcloud`/API), used on playground folders only, not on the Control Tower (see [helloworld-spec.md](helloworld-spec.md) section 1.8), service accounts and IAM (`sa-lsb-api`, `sa-control-tower`, `sa-lsb-build`, plus the manual Groups Admin grant), Artifact Registry, the Self Service APIs Cloud Run service, build and deploy pipelines, org guardrails (`PlaygroundGuardrailsCreate`). For the hello world MVP, the Self Service APIs are first built and run locally against the real Firestore (ADC), so these follow once the API exists.
 
-**Networking (service-specific, after services are enabled):** owns everything network-related for the Control Tower, so no earlier operation makes network decisions:
+**`ControlTowerNetworkCreate` (networking, service-specific, after services are enabled):** owns everything network-related for the Control Tower, so no earlier operation makes network decisions:
 - Decides the access model for exposing Cloud Run university-wide: `*.run.app` with Google sign-in or IAP on Cloud Run (no Compute needed); custom domain through an external HTTPS load balancer; campus-only or WAF via Cloud Armor; or internal-only via VPC.
 - Enables `compute` (and `servicenetworking` / VPC access if needed), and immediately removes the `default` network, or sets the org policy `compute.skipDefaultNetworkCreation` on the Control Tower folder before enabling.
 - Creates the load balancer, serverless NEG, managed certificate and Cloud Armor policy when the chosen access model needs them.
