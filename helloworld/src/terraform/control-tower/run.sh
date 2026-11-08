@@ -7,6 +7,7 @@
 #   Status                      progress of all bootstrap operations
 #   Restore                     pull initialize.env, controltower.status and logs back from the state bucket
 #   ControlTowerProjectCreate   (order 1) Control Tower folder, project, billing link, state bucket
+#   ControlTowerApisEnable      (order 2) baseline APIs + service agents on the Control Tower project
 #
 # Flags (bootstrap operations):
 #   --validate-only   run the operation's validation and stop (no changes)
@@ -30,19 +31,23 @@ MIN_TERRAFORM="1.5.0"
 # ---------------------------------------------------------------------------
 # Operation registry (order = position in BOOTSTRAP_OPS)
 # ---------------------------------------------------------------------------
-BOOTSTRAP_OPS=(ControlTowerProjectCreate)
+BOOTSTRAP_OPS=(ControlTowerProjectCreate ControlTowerApisEnable)
 declare -A OP_DIR=(
   [ControlTowerProjectCreate]="01-control-tower-project-create"
+  [ControlTowerApisEnable]="02-control-tower-apis-enable"
 )
 declare -A OP_TITLE=(
   [ControlTowerProjectCreate]="Control Tower folder + project + state bucket"
+  [ControlTowerApisEnable]="Baseline APIs + service agents on the Control Tower project"
 )
 declare -A OP_KEYS=(
   [ControlTowerProjectCreate]="QUOTA_PROJECT ORG_ID BILLING_ACCOUNT_ID CT_FOLDER_NAME CT_FOLDER_PARENT CT_PROJECT_ID REGION TF_STATE_BUCKET"
+  [ControlTowerApisEnable]="QUOTA_PROJECT CT_PROJECT_ID CT_PROJECT_NUMBER REGION TF_STATE_BUCKET"
 )
 # APIs that must be enabled on QUOTA_PROJECT for the operation's calls
 declare -A OP_QUOTA_APIS=(
   [ControlTowerProjectCreate]="cloudresourcemanager.googleapis.com serviceusage.googleapis.com cloudbilling.googleapis.com storage.googleapis.com"
+  [ControlTowerApisEnable]="serviceusage.googleapis.com storage.googleapis.com"
 )
 
 # ---------------------------------------------------------------------------
@@ -63,7 +68,7 @@ die()   { err "$*"; exit 2; }
 title() { printf '\n%s\n\n' " ${C_BOLD}$*${C_RESET}"; }
 
 usage() {
-  sed -n '2,20p' "$0" | sed 's/^# \{0,1\}//'
+  sed -n '2,21p' "$0" | sed 's/^# \{0,1\}//'
   exit "${1:-0}"
 }
 
@@ -435,6 +440,32 @@ post_apply_ControlTowerProjectCreate() { # dir prefix
   env_write_back CT_FOLDER_ID      "$(jq -r '.folder_id.value' <<<"$out")"
   env_write_back CT_FOLDER_MANAGED "$(jq -r '.folder_managed.value' <<<"$out")"
   env_write_back CT_PROJECT_NUMBER "$(jq -r '.project_number.value' <<<"$out")"
+}
+
+# ControlTowerApisEnable: project from operation 1 must be ACTIVE, billed, with its state bucket.
+validate_ControlTowerApisEnable() {
+  local state billing
+  [[ -z "${CT_PROJECT_ID-}" ]] && return 0
+  state="$(gcloud projects describe "$CT_PROJECT_ID" --format="value(lifecycleState)" 2>/dev/null || true)"
+  if [[ "$state" != "ACTIVE" ]]; then
+    problems+=("project $CT_PROJECT_ID is ${state:-not found or not accessible} (run ControlTowerProjectCreate first)")
+    return 0
+  fi
+  billing="$(gcloud billing projects describe "$CT_PROJECT_ID" --format="value(billingEnabled)" 2>/dev/null || true)"
+  [[ "$billing" == "True" ]] || problems+=("billing is not enabled on $CT_PROJECT_ID")
+  bucket_exists || problems+=("state bucket gs://${TF_STATE_BUCKET} not found (run ControlTowerProjectCreate first)")
+}
+
+post_apply_ControlTowerApisEnable() { # dir prefix
+  local dir="$1" apis
+  CURRENT_STEP="readiness check"
+  apis="$(terraform -chdir="$dir" output -json enabled_apis | jq -r '.[]')"
+  wait_for "all $(wc -l <<<"$apis" | tr -d ' ') APIs ENABLED on ${CT_PROJECT_ID}" 180 \
+    bash -c 'enabled="$(gcloud services list --enabled --project="$1" --format="value(config.name)")"; shift; for a in "$@"; do grep -qx "$a" <<<"$enabled" || exit 1; done' _ "$CT_PROJECT_ID" $apis
+  if gcloud services list --enabled --project="$CT_PROJECT_ID" --format="value(config.name)" 2>/dev/null | grep -qx compute.googleapis.com; then
+    warn "compute.googleapis.com is enabled on ${CT_PROJECT_ID} (possibly as a dependency): check for a 'default' VPC; the networking operation should remove it"
+  fi
+  terraform -chdir="$dir" output -json service_agents | jq -r 'to_entries[] | "  \(.key): \(.value)"' | while IFS= read -r l; do ok "service agent ${l#  }"; done
 }
 
 # ---------------------------------------------------------------------------

@@ -309,14 +309,24 @@ Colors follow [apiservices-spec.md](apiservices-spec.md) section 5.1.
 
 ### 2. `ControlTowerApisEnable` (`02-control-tower-apis-enable`)
 1. Own root and state (`control-tower/02-control-tower-apis-enable`), project ID from `initialize.env`.
-2. API list is a variable; baseline:
-   - Platform: `serviceusage`, `cloudresourcemanager`, `iam`, `iamcredentials`, `logging`, `monitoring`
-   - Billing: `cloudbilling`, `billingbudgets`
-   - Data and state: `firestore`, `storage`
-   - Runtime and CI/CD: `run`, `artifactregistry`, `cloudbuild`, `secretmanager`
-   - Identity: `cloudidentity`
-3. APIs are **never disabled on destroy** (an enabled service is never disabled).
-4. **Readiness:** every listed API `ENABLED`, and service agents exist for Cloud Run, Cloud Build and Artifact Registry.
+2. API list is a variable. Baseline (Control Tower's own services):
+   | Group | APIs | Why |
+   |---|---|---|
+   | Platform | `serviceusage`, `cloudresourcemanager`, `iam`, `iamcredentials` | Enable APIs; manage folders and projects; service accounts and impersonation |
+   | Observability | `logging`, `monitoring` | Logs and metrics for Cloud Run and builds |
+   | Billing | `cloudbilling`, `billingbudgets` | Link cohort projects to billing; budgets |
+   | Data and state | `firestore`, `storage` | Firestore database; Terraform state bucket |
+   | Runtime and CI/CD | `run`, `artifactregistry`, `cloudbuild`, `secretmanager` | Self Service APIs (and later UI) on Cloud Run, images, build pipeline, secrets |
+   | Identity | `cloudidentity`, `admin` (Directory API) | Create groups and manage members; pre-check that member emails exist in the directory |
+3. **Consumer APIs for managed services are added with each service, not here.** API calls made by `sa-control-tower` against cohort projects are billed to the Control Tower project, so each service also enables its API here when it is introduced (for example `sqladmin` with Cloud SQL, `discoveryengine` with Vertex AI Search, `aiplatform` with Gemini, `cloudasset` for inventory).
+4. **`compute` is deliberately excluded.** The project is created with Terraform's default `auto_create_network = true`, so the first enablement of the Compute API creates a `default` VPC with permissive firewall rules. Compute and all networking belong to the later, service-specific **networking** operation (see below).
+5. APIs are **never disabled on destroy** (an enabled service is never disabled).
+6. **Readiness:** every listed API `ENABLED`, and service agents exist for Cloud Run, Cloud Build and Artifact Registry.
 
 ### Later operations
 To be defined one by one (service accounts and IAM, Firestore database, Artifact Registry, build and deploy pipelines, Cloud Run services, org guardrails).
+
+**Networking (service-specific, after services are enabled):** owns everything network-related for the Control Tower, so no earlier operation makes network decisions:
+- Decides the access model for exposing Cloud Run university-wide: `*.run.app` with Google sign-in or IAP on Cloud Run (no Compute needed); custom domain through an external HTTPS load balancer; campus-only or WAF via Cloud Armor; or internal-only via VPC.
+- Enables `compute` (and `servicenetworking` / VPC access if needed), and immediately removes the `default` network, or sets the org policy `compute.skipDefaultNetworkCreation` on the Control Tower folder before enabling.
+- Creates the load balancer, serverless NEG, managed certificate and Cloud Armor policy when the chosen access model needs them.
