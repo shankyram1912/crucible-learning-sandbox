@@ -43,6 +43,16 @@ while IFS= read -r _lsb_key; do
   export "TF_VAR_${_lsb_key,,}=${!_lsb_key-}"
 done < <(grep -E '^[A-Z_][A-Z0-9_]*=' "$LSB_ENV_FILE" | cut -d= -f1 | sort -u)
 
+# 3b. Billing labels: LABEL_<NAME>=value  ->  TF_VAR_billing_labels = {"<name>": "value", ...}
+#     (<name> lowercased, "_" -> "-"). Used as the provider's default_labels in every operation.
+_lsb_labels=""
+while IFS= read -r _lsb_key; do
+  _lsb_name="${_lsb_key#LABEL_}"; _lsb_name="${_lsb_name,,}"; _lsb_name="${_lsb_name//_/-}"
+  _lsb_val="${!_lsb_key-}"
+  _lsb_labels+="${_lsb_labels:+,}\"${_lsb_name}\":\"${_lsb_val//\"/}\""
+done < <(grep -E '^LABEL_[A-Z0-9_]+=' "$LSB_ENV_FILE" | cut -d= -f1 | sort -u)
+export TF_VAR_billing_labels="{${_lsb_labels}}"
+
 # 4. Keys required by every operation (per-operation keys are checked by run.sh Validate).
 _lsb_missing=()
 for _lsb_key in QUOTA_PROJECT; do
@@ -58,6 +68,8 @@ fi
 export CLOUDSDK_CORE_PROJECT="$QUOTA_PROJECT"
 export CLOUDSDK_BILLING_QUOTA_PROJECT="$QUOTA_PROJECT"
 export GOOGLE_BILLING_PROJECT="$QUOTA_PROJECT"
+# Overrides any quota project stored in ADC (used by Google client libraries, incl. the Terraform GCS backend).
+export GOOGLE_CLOUD_QUOTA_PROJECT="$QUOTA_PROJECT"
 export USER_PROJECT_OVERRIDE=true
 
 # 6. Terraform: fail instead of prompting; every init uses the state bucket.
@@ -85,12 +97,13 @@ if [[ -z "${LSB_QUIET-}" ]]; then
     "ORG_SUFFIX" "${ORG_SUFFIX-}" \
     "CT_PROJECT_ID" "${CT_PROJECT_ID-}" \
     "REGION" "${REGION-}" \
-    "TF_STATE_BUCKET" "${TF_STATE_BUCKET-}"
+    "TF_STATE_BUCKET" "${TF_STATE_BUCKET-}" \
+    "billing labels" "${TF_VAR_billing_labels}"
   if [[ $- == *i* ]]; then
     LSB_ORIG_PS1="${LSB_ORIG_PS1-$PS1}"
     PS1="[ct: ${CT_PROJECT_ID:-?}] ${LSB_ORIG_PS1}"
   fi
 fi
 
-unset _lsb_dir _lsb_key _lsb_missing _lsb_org_id
+unset _lsb_dir _lsb_key _lsb_missing _lsb_org_id _lsb_labels _lsb_name _lsb_val
 return 0

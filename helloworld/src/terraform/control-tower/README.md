@@ -42,6 +42,7 @@ gcloud services enable cloudresourcemanager.googleapis.com serviceusage.googleap
    cp initialize.env.example initialize.env
    ```
    Required for the first operation: `QUOTA_PROJECT`, `ORG_ID`, `BILLING_ACCOUNT_ID`, `CT_FOLDER_NAME`, `CT_FOLDER_PARENT`, `CT_PROJECT_ID`, `REGION`, `TF_STATE_BUCKET`.
+   Billing labels (`LABEL_COST_CENTER_BU`, `LABEL_COST_CENTER`, `LABEL_CATEGORY`, `LABEL_SUBCATEGORY`) are required; they are applied to the project and every labelable resource.
    `CT_PROJECT_ID` and `TF_STATE_BUCKET` default to names derived from the org ID (for example `lsb-control-tower-e26`); leave them as they are unless you need different names.
 4. Check everything before changing anything:
    ```bash
@@ -98,9 +99,9 @@ Run them in order: `ControlTowerProjectCreate`, `ControlTowerApisEnable`, `Contr
 | `install-terraform.sh` | Optional standalone Terraform installer | Yes |
 | `controltower.status` | Progress per operation | No |
 | `logs/` | One log per run | No |
-| `01-control-tower-project-create/` | Terraform for the first operation, plus `operation.md` (its long description) | Yes |
-| `02-control-tower-apis-enable/` | Terraform for the second operation, plus `operation.md` | Yes |
-| `03-control-tower-firestore-create/` | Terraform for the third operation, plus `operation.md` | Yes |
+| `01-control-tower-project-create/` | Terraform for the first operation, plus [operation.md](01-control-tower-project-create/operation.md) (its long description) | Yes |
+| `02-control-tower-apis-enable/` | Terraform for the second operation, plus [operation.md](02-control-tower-apis-enable/operation.md) | Yes |
+| `03-control-tower-firestore-create/` | Terraform for the third operation, plus [operation.md](03-control-tower-firestore-create/operation.md) | Yes |
 
 After each successful operation, `initialize.env`, `controltower.status` and `logs/` are copied to `gs://<TF_STATE_BUCKET>/control-tower/_runner/`.
 

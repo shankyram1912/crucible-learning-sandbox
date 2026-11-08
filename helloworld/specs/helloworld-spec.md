@@ -3,6 +3,7 @@
 Scope: guiding principles for the hello world prototype (one playground folder, one cohort, a few services). These principles carry forward into the main `specs/` once validated.
 
 Related specs:
+- [../todolist.md](../todolist.md): build sequence and status (Day-0 steps, Self Service API operations)
 - [day0-bootstrap-spec.md](day0-bootstrap-spec.md): Day-0 Control Tower bootstrap (Cloud Shell, `initialize.env`, `run.sh`, steps)
 - [apiservices-spec.md](apiservices-spec.md): Learning Sandbox Self Service APIs (REST interface and `lsb` CLI mapping)
 - [gcpservices-spec.md](gcpservices-spec.md): GCP services
@@ -57,6 +58,14 @@ gs://lsb-control-tower-bucket/
    - **No "block new creations" in the default operating model.** Restricting new creations for an enabled service (for example near end of term) is not a portal feature. It is a backend action, decided case by case by the platform team, never a default behavior.
 5. **IAM in Terraform is always additive** (`google_*_iam_member`), never authoritative (`_binding` / `_policy`), so bindings added in the Console are not wiped.
 6. **Guardrails are not enforced by Terraform re-runs.** Rules that must never be broken by Console edits (bucket create/delete, public endpoints, regions) live in org policies and IAM deny.
+
+### 1.7 Billing labels
+1. **Every project the platform creates is labeled for billing**, and the same labels go on every resource that supports labels. Project labels attribute all of a project's costs in the billing export, including resources that cannot be labeled (Firestore databases, folders, service accounts).
+2. **Label set:** `cost-center-bu`, `cost-center`, `category`, `subcategory`. No `owner` label. `environment` is added only if multiple environments exist.
+3. **Control Tower values:** `cost-center-bu=central-it`, `cost-center=lsb-control-tower`, `category=lsb-control-tower`, `subcategory=lsb-control-tower`.
+4. **Later, school-specific:** cohort projects use the same keys with school values (for example `cost-center-bu=<school>`), plus `playground` and `cohort` labels, so costs can be split per school and cohort.
+5. **Mechanism:** labels come from configuration and are applied through the Terraform provider's `default_labels`, never hand-written per resource.
+6. **Reporting** needs Cloud Billing export to BigQuery enabled on the billing account.
 
 ---
 

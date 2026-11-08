@@ -243,6 +243,18 @@ validate_common() {
   account="$(gcloud_account)"
   [[ -n "$account" ]] || problems+=("no active gcloud account (run: gcloud auth login)")
 
+  # Billing labels (LABEL_* keys): required, and must follow GCP label rules.
+  local lkey lname lval nlabels=0
+  while IFS= read -r lkey; do
+    [[ -n "$lkey" ]] || continue
+    nlabels=$((nlabels + 1))
+    lname="${lkey#LABEL_}"; lname="${lname,,}"; lname="${lname//_/-}"
+    lval="${!lkey-}"
+    [[ "$lname" =~ ^[a-z][a-z0-9_-]{0,62}$ ]] || problems+=("initialize.env: label key from $lkey ('$lname') is not a valid GCP label key")
+    [[ "$lval" =~ ^[a-z0-9_-]{0,63}$ ]] || problems+=("initialize.env: $lkey='$lval' is not a valid GCP label value (lowercase letters, digits, '-', '_', max 63)")
+  done < <(grep -E '^LABEL_[A-Z0-9_]+=' "$LSB_ENV_FILE" | cut -d= -f1 | sort -u || true)
+  (( nlabels > 0 )) || problems+=("initialize.env: no billing labels (add LABEL_COST_CENTER_BU, LABEL_COST_CENTER, LABEL_CATEGORY, LABEL_SUBCATEGORY)")
+
   if [[ -n "${QUOTA_PROJECT-}" ]]; then
     gcloud projects describe "$QUOTA_PROJECT" --format="value(projectId)" >/dev/null 2>&1 \
       || problems+=("quota project $QUOTA_PROJECT not reachable by $account (check access, and that cloudresourcemanager.googleapis.com is enabled on it: gcloud services enable cloudresourcemanager.googleapis.com --project=$QUOTA_PROJECT)")

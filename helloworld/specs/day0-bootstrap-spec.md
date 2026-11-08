@@ -32,7 +32,10 @@ helloworld/src/terraform/control-tower/
 ├── 01-control-tower-project-create/
 │   ├── operation.md          long description printed before the run
 │   └── *.tf                  Terraform root
-└── 02-control-tower-apis-enable/
+├── 02-control-tower-apis-enable/
+│   ├── operation.md
+│   └── *.tf
+└── 03-control-tower-firestore-create/
     ├── operation.md
     └── *.tf
 ```
@@ -102,6 +105,16 @@ Every key is also exported to Terraform as a lowercase `TF_VAR_` copy (for examp
 | `TF_STATE_BUCKET` | Bucket for all Terraform state and runner backups | `${CT_PROJECT_ID}-bucket` (e.g. `lsb-control-tower-e26-bucket`) | Created by `ControlTowerProjectCreate`. Bucket names are global, so it is derived from the project ID. Also holds the `initialize.env`, status and log backups used by `Restore`. |
 | `FIRESTORE_DATABASE` | ID of the Firestore database used by the Self Service APIs | `lsb-control-tower-db` | Created by a later operation. 4 to 63 characters: lowercase letters, digits, hyphens. |
 
+**Billing labels** ([helloworld-spec.md](helloworld-spec.md) section 1.7)
+| Key | Label | Control Tower value | Notes |
+|---|---|---|---|
+| `LABEL_COST_CENTER_BU` | `cost-center-bu` | `central-it` | Business unit paying |
+| `LABEL_COST_CENTER` | `cost-center` | `lsb-control-tower` | Cost center |
+| `LABEL_CATEGORY` | `category` | `lsb-control-tower` | Category |
+| `LABEL_SUBCATEGORY` | `subcategory` | `lsb-control-tower` | Subcategory |
+
+Any `LABEL_<NAME>` key becomes label `<name>` (lowercased, `_` to `-`); adding a label is one new line. Values: lowercase letters, digits, `-`, `_`, max 63 characters. At least one label is required.
+
 #### Generated section (written by `run.sh`, do not edit)
 | Key | Written by | What it is | Used for |
 |---|---|---|---|
@@ -123,9 +136,10 @@ Every key is also exported to Terraform as a lowercase `TF_VAR_` copy (for examp
 3. **Validates** that every required key is set and non-empty, and lists all missing keys at once.
 4. Exports every key as-is, plus a lowercase **`TF_VAR_`** copy (for example `BILLING_ACCOUNT_ID` becomes `TF_VAR_billing_account_id`), using a generic loop. Adding a setting is one new line in `initialize.env`, with no script change.
 5. Sets the quota project for both tools, for this session only (global gcloud config is not changed): `CLOUDSDK_CORE_PROJECT` + `CLOUDSDK_BILLING_QUOTA_PROJECT` for gcloud, and `GOOGLE_BILLING_PROJECT` + `USER_PROJECT_OVERRIDE=true` for Terraform.
-6. Sets `TF_INPUT=0` so Terraform fails instead of prompting for a missing variable.
-7. Sets `TF_CLI_ARGS_init="-backend-config=bucket=$TF_STATE_BUCKET"` so every `terraform init` uses the state bucket. Each operation's backend block hardcodes only its own prefix (for example `control-tower/02-control-tower-apis-enable`).
-8. Prints a short summary of what was loaded and adds a prompt prefix such as `[ct: lsb-control-tower-e26]`.
+6. Builds **`TF_VAR_billing_labels`** (a JSON map) from all `LABEL_*` keys; every operation passes it to the Google provider as `default_labels`, so all labelable resources get the billing labels automatically.
+7. Sets `TF_INPUT=0` so Terraform fails instead of prompting for a missing variable.
+8. Sets `TF_CLI_ARGS_init="-backend-config=bucket=$TF_STATE_BUCKET"` so every `terraform init` uses the state bucket. Each operation's backend block hardcodes only its own prefix (for example `control-tower/02-control-tower-apis-enable`).
+9. Prints a short summary of what was loaded and adds a prompt prefix such as `[ct: lsb-control-tower-e26]`.
 
 #### Variables set automatically by `initialize.sh` (not in the file)
 | Variable | Purpose |
@@ -134,6 +148,8 @@ Every key is also exported to Terraform as a lowercase `TF_VAR_` copy (for examp
 | `TF_VAR_*` | Lowercase copies of every key, read by Terraform |
 | `CLOUDSDK_CORE_PROJECT` + `CLOUDSDK_BILLING_QUOTA_PROJECT` | Make gcloud use `QUOTA_PROJECT` for this session only |
 | `GOOGLE_BILLING_PROJECT` + `USER_PROJECT_OVERRIDE=true` | Make Terraform bill API calls to `QUOTA_PROJECT` |
+| `GOOGLE_CLOUD_QUOTA_PROJECT` | Overrides any quota project stored in ADC (used by Google client libraries, including the Terraform GCS backend) |
+| `TF_VAR_billing_labels` | JSON map built from `LABEL_*` keys, used as the provider's `default_labels` |
 | `TF_INPUT=0` | Terraform fails instead of prompting for a missing value |
 | `TF_CLI_ARGS_init` | Passes `-backend-config=bucket=$TF_STATE_BUCKET` to every `terraform init` |
 
@@ -152,7 +168,8 @@ Usage: `./run.sh --operation=<OperationName> [--validate-only] [--describe] [--y
 | `Status` | utility | Table of all operations: status, time, who ran it, git commit |
 | `Restore` | utility | In a fresh Cloud Shell, pulls `initialize.env`, `controltower.status` and logs back from the state bucket |
 | `ControlTowerProjectCreate` | bootstrap (order 1) | Control Tower folder (or existing), project, billing link, state bucket |
-| `ControlTowerApisEnable` | bootstrap (order 2) | Enables the baseline APIs on the Control Tower project |
+| `ControlTowerApisEnable` | bootstrap (order 2) | Enables the baseline APIs on the Control Tower project, creates the Cloud Run, Cloud Build and Artifact Registry service agents |
+| `ControlTowerFirestoreCreate` | bootstrap (order 3) | Creates the Firestore database for the Self Service APIs |
 
 New bootstrap operations are added as new numbered folders with a PascalCase operation name.
 
@@ -231,7 +248,7 @@ Validation is not a separate operation. Every bootstrap operation validates itse
 
 | Layer | Checks | Applies to |
 |---|---|---|
-| **Shared** | Required tools and versions (terraform, gcloud, jq, envsubst, git); active gcloud account; quota project reachable | Every operation |
+| **Shared** | Required tools and versions (terraform, gcloud, jq, envsubst, git); active gcloud account; quota project reachable; billing labels present and valid | Every operation |
 | **Registry** | The `initialize.env` keys the operation declares; the APIs it declares as required on the quota project | Each operation, from its registry entry in `run.sh` |
 | **Operation hook** | `validate_<OperationName>` function for checks specific to that operation (for example billing account visible, folder parent accessible, project ID already taken) | Operations that define a hook |
 
@@ -300,15 +317,20 @@ Colors follow [apiservices-spec.md](apiservices-spec.md) section 5.1.
 ## 7. Baseline operations
 
 ### 1. `ControlTowerProjectCreate` (`01-control-tower-project-create`)
+Long description printed before the run: [operation.md](../src/terraform/control-tower/01-control-tower-project-create/operation.md)
+
 1. **Folder:** if `CT_FOLDER_ID` is set, use that existing folder and skip creation; if empty, create `CT_FOLDER_NAME` under `CT_FOLDER_PARENT`.
 2. **Project:** create `CT_PROJECT_ID` in the folder and link `BILLING_ACCOUNT_ID`.
 3. **Cloud Storage API:** enabled on the new project (needed before the bucket can be created).
 4. **State bucket:** create `TF_STATE_BUCKET` in the project (in `REGION`, versioning on, 7-day soft delete, uniform bucket-level access, public access prevented).
 5. **State:** this operation starts with **local state** (no bucket exists yet). After apply, `run.sh` generates `backend.tf` (gitignored) and **migrates the state into the bucket** under `control-tower/01-control-tower-project-create`. In a fresh clone, `run.sh` detects the remote state and generates `backend.tf` before `terraform init`, so nothing is created twice.
 6. **Written back to `initialize.env`:** `CT_FOLDER_ID`, `CT_FOLDER_MANAGED`, `CT_PROJECT_NUMBER`.
+6a. **Billing labels:** the project and the state bucket carry the billing labels (provider `default_labels`) plus `managed-by` and `operation`. The folder cannot take labels.
 7. **Readiness:** project `ACTIVE` and billing enabled before `ControlTowerApisEnable` can run.
 
 ### 2. `ControlTowerApisEnable` (`02-control-tower-apis-enable`)
+Long description printed before the run: [operation.md](../src/terraform/control-tower/02-control-tower-apis-enable/operation.md)
+
 1. Own root and state (`control-tower/02-control-tower-apis-enable`), project ID from `initialize.env`.
 2. API list is a variable. Baseline (Control Tower's own services):
    | Group | APIs | Why |
@@ -325,6 +347,8 @@ Colors follow [apiservices-spec.md](apiservices-spec.md) section 5.1.
 6. **Readiness:** every listed API `ENABLED`, and service agents exist for Cloud Run, Cloud Build and Artifact Registry.
 
 ### 3. `ControlTowerFirestoreCreate` (`03-control-tower-firestore-create`)
+Long description printed before the run: [operation.md](../src/terraform/control-tower/03-control-tower-firestore-create/operation.md)
+
 1. Own root and state (`control-tower/03-control-tower-firestore-create`).
 2. **Database:** Firestore `FIRESTORE_DATABASE` (`lsb-control-tower-db`) on `CT_PROJECT_ID`, type `FIRESTORE_NATIVE`, location `REGION` (`asia-southeast1`).
 3. **Protection:** delete protection enabled, `prevent_destroy`, point-in-time recovery enabled (7-day window, to recover from bad writes).
