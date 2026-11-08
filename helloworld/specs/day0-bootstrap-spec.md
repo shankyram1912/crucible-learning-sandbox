@@ -13,7 +13,7 @@ Day-0 bootstrap creates the **Control Tower** foundation that everything else ru
 3. The admin fills in **`initialize.env`** (one file holding every setting).
 4. The admin runs each operation with **`./run.sh --operation=<OperationName>`**, one operation at a time, in order.
 
-**Why Cloud Shell:** Terraform, gcloud and git are preinstalled; Terraform runs as the signed-in admin with no key files; the home directory persists between sessions. Nothing in GCP can run Day-0 itself, because Day-0 is what creates the platform.
+**Why Cloud Shell:** gcloud and git are preinstalled (and usually Terraform; if not, the optional `install-terraform.sh` installs it, see section 2.1); Terraform runs as the signed-in admin with no key files; the home directory persists between sessions. Nothing in GCP can run Day-0 itself, because Day-0 is what creates the platform.
 
 ---
 
@@ -26,6 +26,7 @@ helloworld/src/terraform/control-tower/
 ├── initialize.env            settings + generated outputs (gitignored)
 ├── initialize.sh             loads and validates settings (sourced)
 ├── run.sh                    operation runner
+├── install-terraform.sh      optional standalone Terraform installer
 ├── controltower.status       progress per operation (gitignored, generated)
 ├── logs/                     run logs (gitignored, generated)
 ├── 01-control-tower-project-create/
@@ -37,6 +38,13 @@ helloworld/src/terraform/control-tower/
 ```
 
 Each operation folder is its **own Terraform root** with its **own `terraform init` and state**, plus an `operation.md` describing it. The numeric prefix only fixes the order.
+
+### 2.1 Optional Terraform installer (`install-terraform.sh`)
+- Standalone, no sudo: installs Terraform (default `1.17.1`, or `--version=<x.y.z|latest>`) into `~/.local/bin` (persists in Cloud Shell's home), or `--dir=<path>`.
+- Verifies the download against HashiCorp's published SHA256 checksums; detects `amd64` / `arm64`.
+- Adds the install directory to `PATH` in `~/.bashrc` unless `--no-profile`.
+- Idempotent: skips the download if the requested version is already installed.
+- Not called by `run.sh`; validation points to it when `terraform` is missing or too old.
 
 ---
 

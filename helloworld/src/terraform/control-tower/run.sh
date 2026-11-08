@@ -213,14 +213,20 @@ terraform_version() {
 validate_common() {
   local tool tfv
   for tool in terraform gcloud jq envsubst git; do
-    command -v "$tool" >/dev/null 2>&1 || problems+=("tool not found: $tool")
+    if ! command -v "$tool" >/dev/null 2>&1; then
+      if [[ "$tool" == "terraform" ]]; then
+        problems+=("tool not found: terraform (install it with: ./install-terraform.sh   then: export PATH=\"\$HOME/.local/bin:\$PATH\")")
+      else
+        problems+=("tool not found: $tool")
+      fi
+    fi
   done
   if command -v terraform >/dev/null 2>&1; then
     tfv="$(terraform_version)"
     if [[ -z "$tfv" ]]; then
       problems+=("could not determine terraform version (output of 'terraform version': $(terraform version 2>&1 | head -n1))")
     elif ! version_ge "$tfv" "$MIN_TERRAFORM"; then
-      problems+=("terraform $tfv is older than $MIN_TERRAFORM")
+      problems+=("terraform $tfv is older than $MIN_TERRAFORM (upgrade with: ./install-terraform.sh)")
     fi
   fi
 

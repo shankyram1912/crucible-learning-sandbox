@@ -12,7 +12,14 @@ Full design: [day0-bootstrap-spec.md](../../../specs/day0-bootstrap-spec.md)
 |---|---|
 | Account | Org admin with **Folder Creator** on the parent folder, **Project Creator**, and **Billing User** on the billing account |
 | Quota project | An existing project with these APIs enabled: Resource Manager, Service Usage, Cloud Billing, Cloud Storage |
-| Tools | `terraform` 1.5+, `gcloud`, `jq`, `envsubst`, `git` (all preinstalled in Cloud Shell) |
+| Tools | `terraform` 1.5+, `gcloud`, `jq`, `envsubst`, `git`. Cloud Shell has all except possibly `terraform`: install it with `./install-terraform.sh` (see below) |
+
+Install Terraform if `terraform version` fails (optional, standalone, no sudo):
+```bash
+./install-terraform.sh                 # Terraform 1.17.1 into ~/.local/bin, verified against HashiCorp checksums
+export PATH="$HOME/.local/bin:$PATH"   # this shell; new shells pick it up from ~/.bashrc
+```
+Options: `--version=<x.y.z|latest>`, `--dir=<install dir>`, `--no-profile` (do not edit `~/.bashrc`). Safe to re-run.
 
 Enable the APIs on the quota project if needed:
 ```bash
@@ -86,6 +93,7 @@ More operations (APIs, Firestore, service accounts, pipelines) are added one by 
 | `initialize.env` | Your settings, plus values written back by operations (generated section) | No |
 | `initialize.sh` | Loads and validates settings. `run.sh` uses it automatically; source it yourself (`source ./initialize.sh`) only for ad-hoc `terraform` or `gcloud` commands | Yes |
 | `run.sh` | Operation runner | Yes |
+| `install-terraform.sh` | Optional standalone Terraform installer | Yes |
 | `controltower.status` | Progress per operation | No |
 | `logs/` | One log per run | No |
 | `01-control-tower-project-create/` | Terraform for the first operation, plus `operation.md` (its long description) | Yes |
@@ -112,6 +120,7 @@ There is no destroy operation. The project, folder and bucket are protected from
 
 | Message | Fix |
 |---|---|
+| `tool not found: terraform` | Run `./install-terraform.sh`, then `export PATH="$HOME/.local/bin:$PATH"` |
 | `initialize.sh must be sourced` | Use `source ./initialize.sh`, or just use `./run.sh` |
 | `quota project ... is missing APIs` | Run the `gcloud services enable ...` command printed in the message |
 | `quota project ... not reachable` | Check you can access it, and that Resource Manager API is enabled on it |
