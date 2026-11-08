@@ -3,7 +3,8 @@
 Scope: guiding principles for the hello world prototype (one playground folder, one cohort, a few services). These principles carry forward into the main `specs/` once validated.
 
 Related specs:
-- [services-spec.md](services-spec.md): per-service details
+- [apiservices-spec.md](apiservices-spec.md): Learning Sandbox Self Service APIs (REST interface and `lsb` CLI mapping)
+- [gcpservices-spec.md](gcpservices-spec.md): GCP services
 
 ---
 
