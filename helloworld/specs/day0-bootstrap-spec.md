@@ -68,7 +68,6 @@ Every key is also exported to Terraform as a lowercase `TF_VAR_` copy (for examp
 | `ORG_ID` | Numeric ID of the GCP organization | `69296271958` | Org-level lookups and the default folder parent |
 | `DIRECTORY_CUSTOMER_ID` | Workspace / Cloud Identity customer ID | `C03ccny1h` | Required to create Google Groups later (`parent=customers/<id>`). Not used by the first two operations. |
 | `DOMAIN` | Primary domain of the org | `shankyram.altostrat.com` | Email validation and group naming later. Not used by the first two operations. |
-| `IT_ADMINS_GROUP` | Group of IT Admins who get admin/read access to the Control Tower | `grp-ls-it-admins@shankyram.altostrat.com` | Must already exist. Used by a later IAM operation. |
 
 **Billing**
 | Key | What it is | Example | Notes |

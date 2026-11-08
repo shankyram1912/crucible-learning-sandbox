@@ -158,6 +158,16 @@ backup_runner_files() {
 # ---------------------------------------------------------------------------
 version_ge() { [[ "$(printf '%s\n%s\n' "$2" "$1" | sort -V | head -n1)" == "$2" ]]; }
 
+# Terraform version as x.y.z: JSON output first, then the plain "Terraform vX.Y.Z" line.
+terraform_version() {
+  local v
+  v="$(terraform version -json 2>/dev/null | jq -r '.terraform_version // empty' 2>/dev/null || true)"
+  if [[ -z "$v" ]]; then
+    v="$(terraform version 2>/dev/null | sed -nE 's/^Terraform v([0-9]+\.[0-9]+\.[0-9]+).*/\1/p' | head -n1 || true)"
+  fi
+  printf '%s' "$v"
+}
+
 validate() { # op
   local op="$1" problems=() key api tfv account enabled
   title "Validate for ${C_MAGENTA}${op}${C_RESET}"
@@ -166,8 +176,12 @@ validate() { # op
     command -v "$tool" >/dev/null 2>&1 || problems+=("tool not found: $tool")
   done
   if command -v terraform >/dev/null 2>&1; then
-    tfv="$(terraform version -json 2>/dev/null | jq -r '.terraform_version' 2>/dev/null || echo 0)"
-    version_ge "$tfv" "$MIN_TERRAFORM" || problems+=("terraform $tfv is older than $MIN_TERRAFORM")
+    tfv="$(terraform_version)"
+    if [[ -z "$tfv" ]]; then
+      problems+=("could not determine terraform version (output of 'terraform version': $(terraform version 2>&1 | head -n1))")
+    elif ! version_ge "$tfv" "$MIN_TERRAFORM"; then
+      problems+=("terraform $tfv is older than $MIN_TERRAFORM")
+    fi
   fi
 
   account="$(gcloud_account)"
