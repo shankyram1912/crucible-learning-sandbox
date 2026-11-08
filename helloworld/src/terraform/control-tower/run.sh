@@ -2,8 +2,10 @@
 # Learning Sandbox Day-0 Control Tower bootstrap runner.
 #
 #   ./run.sh --operation=<OperationName> [--validate-only] [--describe] [--yes] [--force] [--no-tmux]
+#   ./run.sh --operation=RunAll [--from=<OperationName>] [--to=<OperationName>] [same flags]
 #
 # Operations:
+#   RunAll                      run bootstrap operations in order: --from (default: first) to --to (default: last)
 #   Status                      progress of all bootstrap operations
 #   Restore                     pull initialize.env, controltower.status and logs back from the state bucket
 #   ControlTowerProjectCreate   (order 1) Control Tower folder, project, billing link, state bucket
@@ -73,14 +75,14 @@ die()   { err "$*"; exit 2; }
 title() { printf '\n%s\n\n' " ${C_BOLD}$*${C_RESET}"; }
 
 usage() {
-  sed -n '2,22p' "$0" | sed 's/^# \{0,1\}//'
+  sed -n '2,24p' "$0" | sed 's/^# \{0,1\}//'
   exit "${1:-0}"
 }
 
 # ---------------------------------------------------------------------------
 # Arguments
 # ---------------------------------------------------------------------------
-OP=""; YES=0; FORCE=0; DESCRIBE=0; VALIDATE_ONLY=0; NO_TMUX=0
+OP=""; YES=0; FORCE=0; DESCRIBE=0; VALIDATE_ONLY=0; NO_TMUX=0; FROM_OP=""; TO_OP=""
 for arg in "$@"; do
   case "$arg" in
     --operation=*) OP="${arg#*=}" ;;
@@ -89,6 +91,8 @@ for arg in "$@"; do
     --describe)    DESCRIBE=1 ;;
     --validate-only) VALIDATE_ONLY=1 ;;
     --no-tmux)     NO_TMUX=1 ;;
+    --from=*)      FROM_OP="${arg#*=}" ;;
+    --to=*)        TO_OP="${arg#*=}" ;;
     -h|--help)     usage 0 ;;
     *)             err "Unknown argument: $arg"; usage 2 ;;
   esac
@@ -707,14 +711,56 @@ op_restore() {
 }
 
 # ---------------------------------------------------------------------------
+# RunAll: run bootstrap operations in order from --from (default: first) to --to (default: last).
+# Each operation runs as its own run.sh process (same flags, no nested tmux), so every operation
+# keeps its own description, validation, plan/confirm, status and log. Stops at the first failure.
+# ---------------------------------------------------------------------------
+op_run_all() {
+  local from_i=0 to_i=$(( ${#BOOTSTRAP_OPS[@]} - 1 )) i op rc args=() results=()
+  if [[ -n "$FROM_OP" ]]; then
+    from_i="$(op_index "$FROM_OP")" || die "Unknown --from operation: $FROM_OP (known: ${BOOTSTRAP_OPS[*]})"
+  fi
+  if [[ -n "$TO_OP" ]]; then
+    to_i="$(op_index "$TO_OP")" || die "Unknown --to operation: $TO_OP (known: ${BOOTSTRAP_OPS[*]})"
+  fi
+  (( from_i <= to_i )) || die "--from ${BOOTSTRAP_OPS[$from_i]} comes after --to ${BOOTSTRAP_OPS[$to_i]}"
+
+  (( YES )) && args+=(--yes)
+  (( FORCE )) && args+=(--force)
+  (( DESCRIBE )) && args+=(--describe)
+  (( VALIDATE_ONLY )) && args+=(--validate-only)
+  args+=(--no-tmux)
+
+  title "RunAll: ${C_MAGENTA}${BOOTSTRAP_OPS[$from_i]}${C_RESET} → ${C_MAGENTA}${BOOTSTRAP_OPS[$to_i]}${C_RESET}  ${C_GRAY}($(( to_i - from_i + 1 )) operation(s))${C_RESET}"
+  for (( i = from_i; i <= to_i; i++ )); do
+    op="${BOOTSTRAP_OPS[$i]}"
+    printf '%s\n' "${C_BOLD}━━━ $((i + 1))/${#BOOTSTRAP_OPS[@]}  ${op} ━━━${C_RESET}"
+    rc=0
+    "$ROOT/run.sh" --operation="$op" "${args[@]}" || rc=$?
+    if (( rc != 0 )); then
+      results+=("${C_RED}✖ $((i + 1))  ${op}  (exit ${rc})${C_RESET}")
+      for (( i = i + 1; i <= to_i; i++ )); do results+=("${C_GRAY}○ $((i + 1))  ${BOOTSTRAP_OPS[$i]}  (not run)${C_RESET}"); done
+      title "RunAll stopped"
+      printf '  %s\n' "${results[@]}"
+      exit "$rc"
+    fi
+    results+=("${C_GREEN}✔ $((i + 1))  ${op}${C_RESET}")
+  done
+  title "RunAll finished"
+  printf '  %s\n' "${results[@]}"
+  echo
+}
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 load_config
 
 case "$OP" in
+  RunAll)  op_run_all ;;
   Status)  op_status ;;
   Restore) op_restore ;;
   *)
-    op_index "$OP" >/dev/null || die "Unknown operation: $OP (known: Status Restore ${BOOTSTRAP_OPS[*]})"
+    op_index "$OP" >/dev/null || die "Unknown operation: $OP (known: RunAll Status Restore ${BOOTSTRAP_OPS[*]})"
     run_operation "$OP" ;;
 esac

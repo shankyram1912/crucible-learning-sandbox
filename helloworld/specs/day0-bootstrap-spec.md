@@ -160,11 +160,12 @@ Any `LABEL_<NAME>` key becomes label `<name>` (lowercased, `_` to `-`); adding a
 
 ## 4. `run.sh`
 
-Usage: `./run.sh --operation=<OperationName> [--validate-only] [--describe] [--yes] [--force] [--no-tmux]`
+Usage: `./run.sh --operation=<OperationName> [--validate-only] [--describe] [--yes] [--force] [--no-tmux]`, or `./run.sh --operation=RunAll [--from=<OperationName>] [--to=<OperationName>] [same flags]`
 
 ### 4.1 Operations
 | Operation | Kind | Does |
 |---|---|---|
+| `RunAll` | utility | Runs the bootstrap operations in order from `--from` (default: first) to `--to` (default: last); neither = all. Each operation runs as its own `run.sh` process with the same flags (description, validation, plan and confirm, status, log are unchanged). Stops at the first failure and prints a summary (done / failed / not run). Runs in one tmux session; `--validate-only` and `--describe` apply to every operation in the range |
 | `Status` | utility | Table of all operations: status, time, who ran it, git commit |
 | `Restore` | utility | In a fresh Cloud Shell, pulls `initialize.env`, `controltower.status` and logs back from the state bucket |
 | `ControlTowerProjectCreate` | bootstrap (order 1) | Control Tower folder (or existing), project, billing link, state bucket |

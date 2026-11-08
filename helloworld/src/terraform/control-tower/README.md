@@ -72,10 +72,18 @@ gcloud services enable cloudresourcemanager.googleapis.com serviceusage.googleap
 | `ControlTowerProjectCreate` | Control Tower folder (created, or existing via `CT_FOLDER_ID`), project with billing, Cloud Storage API, Terraform state bucket |
 | `ControlTowerApisEnable` | Baseline APIs on the Control Tower project (platform, observability, billing, Firestore, storage, Cloud Run, Artifact Registry, Cloud Build, Secret Manager, Cloud Identity, Directory) and the Cloud Run, Cloud Build and Artifact Registry service agents. Compute is not enabled (networking comes later) |
 | `ControlTowerFirestoreCreate` | Firestore database `FIRESTORE_DATABASE` (Native mode, in `REGION`) with point-in-time recovery and delete protection, used by the Self Service APIs |
+| `RunAll` | Runs bootstrap operations in order: `--from=<Operation>` (default: first) `--to=<Operation>` (default: last). Each operation still shows its description, validates, shows its plan and asks to proceed (unless `--yes`). Stops at the first failure and prints a summary |
 | `Status` | Progress of all operations: status, time, who ran it, git commit |
 | `Restore` | In a fresh Cloud Shell: pulls `initialize.env`, `controltower.status` and logs back from the state bucket |
 
-Run them in order: `ControlTowerProjectCreate`, `ControlTowerApisEnable`, `ControlTowerFirestoreCreate`. More operations (Firestore, service accounts, pipelines, networking) are added one by one.
+Run them in order: `ControlTowerProjectCreate`, `ControlTowerApisEnable`, `ControlTowerFirestoreCreate`, or use `RunAll`:
+```bash
+./run.sh --operation=RunAll                                   # all operations, first to last
+./run.sh --operation=RunAll --from=ControlTowerApisEnable      # from an operation to the end
+./run.sh --operation=RunAll --to=ControlTowerApisEnable        # from the start to an operation
+./run.sh --operation=RunAll --from=ControlTowerApisEnable --to=ControlTowerFirestoreCreate
+./run.sh --operation=RunAll --validate-only                   # validate every operation in the range
+``` More operations (Firestore, service accounts, pipelines, networking) are added one by one.
 
 ### Flags
 | Flag | Effect |
@@ -85,6 +93,7 @@ Run them in order: `ControlTowerProjectCreate`, `ControlTowerApisEnable`, `Contr
 | `--yes` | Skip the `Proceed?` prompt |
 | `--force` | Run even if the previous operation is not `DONE` |
 | `--no-tmux` | Run in the current shell instead of the `lsb-day0` tmux session |
+| `--from=<Operation>` / `--to=<Operation>` | `RunAll` only: first and last operation of the range (defaults: first and last) |
 
 ---
 
