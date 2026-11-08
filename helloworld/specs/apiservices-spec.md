@@ -24,7 +24,7 @@ The **Learning Sandbox Self Service APIs** are the single entry point for every 
 | Part | Choice | Why |
 |---|---|---|
 | **REST API** | Python 3.12 + **FastAPI** | Same language as the provisioning code (Terraform runner, Cloud Identity, Firestore SDKs). Typed request/response models (Pydantic) with validation built in. Generates OpenAPI docs at `/docs` for free, which is the contract for the CLI now and a UI later. Native async fits long-running jobs. |
-| **State** | **Firestore** database `control-tower` in `controltower-514000` | Serverless, no instance to run. Document model fits playgrounds, cohorts, jobs and tasks. Transactions enforce one active job per cohort. Real-time listeners are available if a UI wants live updates later. |
+| **State** | **Firestore** database `lsb-control-tower-db` in `lsb-control-tower` | Serverless, no instance to run. Document model fits playgrounds, cohorts, jobs and tasks. Transactions enforce one active job per cohort. Real-time listeners are available if a UI wants live updates later. |
 | **Provisioning** | **Terraform** (seed cohort, enable service) + **Google Cloud SDKs** (membership, readiness checks) | Per [helloworld-spec.md](helloworld-spec.md): Terraform only where it adds value; fast directory and data operations use the APIs directly. |
 | **CLI commands** | Python + **Typer** | Same author and style as FastAPI: plain functions with type hints become commands. Can reuse the API's Pydantic models so CLI and API cannot drift. Built-in `--help`, nested commands and shell completion. Built on Click, the mature Python CLI standard. |
 | **CLI output** | **Rich** | Colors, tables, trees, live in-place updates and spinners (needed for `job watch`), pretty JSON and error panels. Disables color automatically when output is not a terminal or `NO_COLOR` is set. Typer uses Rich for help formatting, so they fit together. |
@@ -76,7 +76,7 @@ Each resource operation from Appendix A, together with its CLI command from Appe
 
 1. **Write** the operation spec (request, response, validation, pre-checks, job tasks, auth rule, CLI command and output).
 2. **Implement** it in the API and the CLI.
-3. **Test** it in the live environment (`controltower-514000`, org `shankyram.altostrat.com`).
+3. **Test** it in the live environment (`lsb-control-tower`, org `shankyram.altostrat.com`).
 4. **Mark done** in the table below.
 
 | # | Operation | CLI | Spec | Status |

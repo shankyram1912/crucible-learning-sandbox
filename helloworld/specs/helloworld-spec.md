@@ -3,6 +3,7 @@
 Scope: guiding principles for the hello world prototype (one playground folder, one cohort, a few services). These principles carry forward into the main `specs/` once validated.
 
 Related specs:
+- [day0-bootstrap-spec.md](day0-bootstrap-spec.md): Day-0 Control Tower bootstrap (Cloud Shell, `initialize.env`, `run.sh`, steps)
 - [apiservices-spec.md](apiservices-spec.md): Learning Sandbox Self Service APIs (REST interface and `lsb` CLI mapping)
 - [gcpservices-spec.md](gcpservices-spec.md): GCP services
 
@@ -11,7 +12,7 @@ Related specs:
 ## 1. Terraform
 
 ### 1.1 Where Terraform is used
-1. **Day-0 (once, run by a human):** Control Tower project (`controltower-514000`), `sa-control-tower`, the Terraform state bucket, org/root-folder policies, org-level custom roles, and IAM deny guardrails.
+1. **Day-0 (once, run by a human):** Control Tower project (`lsb-control-tower`), `sa-control-tower`, the Terraform state bucket, org/root-folder policies, org-level custom roles, and IAM deny guardrails.
 2. **Cohort lifecycle (by the platform):** cohort project creation and per-service project initialization, driven by a playground template.
 3. **Not Terraform:** user-to-group membership (bulk Cloud Identity API operation), and anything students create on demand later.
 
@@ -33,10 +34,10 @@ Related specs:
 5. **v1 default: fire-and-forget.** A service module is applied once when the service is enabled and is not re-applied automatically. State is still kept so the module can be re-applied or torn down later.
 
 ### 1.5 Seeds and state live in the Control Tower
-All Terraform inputs and state are stored centrally in one bucket in `controltower-514000`, never inside cohort projects.
+All Terraform inputs and state are stored centrally in one bucket in `lsb-control-tower`, never inside cohort projects.
 
 ```
-gs://controltower-514000-tf/
+gs://lsb-control-tower-bucket/
   cohorts/<cohort>/
     seeds/v1.tfvars.json, v2.tfvars.json ...   inputs per config version
     state/cohort/default.tfstate               cohort folder, groups, N projects + billing
