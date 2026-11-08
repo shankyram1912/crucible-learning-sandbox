@@ -1,13 +1,18 @@
 #!/usr/bin/env bash
 # Learning Sandbox Day-0 Control Tower bootstrap runner.
 #
-#   ./run.sh --operation=<OperationName> [--yes] [--force] [--describe]
+#   ./run.sh --operation=<OperationName> [--validate-only] [--describe] [--yes] [--force]
 #
 # Operations:
-#   Validate                    environment and config checks, no changes
 #   Status                      progress of all bootstrap operations
 #   Restore                     pull initialize.env, controltower.status and logs back from the state bucket
 #   ControlTowerProjectCreate   (order 1) Control Tower folder, project, billing link, state bucket
+#
+# Flags (bootstrap operations):
+#   --validate-only   run the operation's validation and stop (no changes)
+#   --describe        print the operation's long description and stop
+#   --yes             skip the confirmation prompt
+#   --force           run even if the previous operation is not DONE
 #
 # See helloworld/specs/day0-bootstrap-spec.md
 
@@ -57,20 +62,21 @@ die()   { err "$*"; exit 2; }
 title() { printf '\n%s\n\n' " ${C_BOLD}$*${C_RESET}"; }
 
 usage() {
-  sed -n '2,13p' "$0" | sed 's/^# \{0,1\}//'
+  sed -n '2,19p' "$0" | sed 's/^# \{0,1\}//'
   exit "${1:-0}"
 }
 
 # ---------------------------------------------------------------------------
 # Arguments
 # ---------------------------------------------------------------------------
-OP=""; YES=0; FORCE=0; DESCRIBE=0
+OP=""; YES=0; FORCE=0; DESCRIBE=0; VALIDATE_ONLY=0
 for arg in "$@"; do
   case "$arg" in
     --operation=*) OP="${arg#*=}" ;;
     --yes)         YES=1 ;;
     --force)       FORCE=1 ;;
     --describe)    DESCRIBE=1 ;;
+    --validate-only) VALIDATE_ONLY=1 ;;
     -h|--help)     usage 0 ;;
     *)             err "Unknown argument: $arg"; usage 2 ;;
   esac
@@ -148,8 +154,12 @@ backup_runner_files() {
   bucket_exists || return 0
   local remote="gs://${TF_STATE_BUCKET}/${RUNNER_PREFIX}"
   gcloud storage cp --quiet "$LSB_ENV_FILE" "$remote/initialize.env" >/dev/null 2>&1 || warn "Backup of initialize.env to bucket failed"
-  [[ -f "$STATUS_FILE" ]] && { gcloud storage cp --quiet "$STATUS_FILE" "$remote/controltower.status" >/dev/null 2>&1 || warn "Backup of controltower.status to bucket failed"; }
-  [[ -d "$LOG_DIR" ]] && { gcloud storage rsync --recursive --quiet "$LOG_DIR" "$remote/logs" >/dev/null 2>&1 || warn "Backup of logs to bucket failed"; }
+  if [[ -f "$STATUS_FILE" ]]; then
+    gcloud storage cp --quiet "$STATUS_FILE" "$remote/controltower.status" >/dev/null 2>&1 || warn "Backup of controltower.status to bucket failed"
+  fi
+  if [[ -d "$LOG_DIR" ]]; then
+    gcloud storage rsync --recursive --quiet "$LOG_DIR" "$remote/logs" >/dev/null 2>&1 || warn "Backup of logs to bucket failed"
+  fi
   return 0
 }
 
@@ -168,10 +178,9 @@ terraform_version() {
   printf '%s' "$v"
 }
 
-validate() { # op
-  local op="$1" problems=() key api tfv account enabled
-  title "Validate for ${C_MAGENTA}${op}${C_RESET}"
-
+# Shared checks run for every bootstrap operation.
+validate_common() {
+  local tool tfv
   for tool in terraform gcloud jq envsubst git; do
     command -v "$tool" >/dev/null 2>&1 || problems+=("tool not found: $tool")
   done
@@ -187,37 +196,47 @@ validate() { # op
   account="$(gcloud_account)"
   [[ -n "$account" ]] || problems+=("no active gcloud account (run: gcloud auth login)")
 
-  for key in ${OP_KEYS[$op]}; do
+  if [[ -n "${QUOTA_PROJECT-}" ]]; then
+    gcloud projects describe "$QUOTA_PROJECT" --format="value(projectId)" >/dev/null 2>&1 \
+      || problems+=("quota project $QUOTA_PROJECT not reachable by $account (check access, and that cloudresourcemanager.googleapis.com is enabled on it: gcloud services enable cloudresourcemanager.googleapis.com --project=$QUOTA_PROJECT)")
+  fi
+}
+
+# Checks declared in the operation registry: required keys and APIs on the quota project.
+validate_registry() { # op
+  local op="$1" key api enabled missing_apis=()
+  for key in ${OP_KEYS[$op]-}; do
     [[ -n "${!key-}" ]] || problems+=("initialize.env: $key is empty")
   done
-
-  if [[ -n "${QUOTA_PROJECT-}" ]]; then
-    if gcloud projects describe "$QUOTA_PROJECT" --format="value(projectId)" >/dev/null 2>&1; then
-      enabled="$(gcloud services list --enabled --project="$QUOTA_PROJECT" --format="value(config.name)" 2>/dev/null || true)"
-      local missing_apis=()
-      for api in ${OP_QUOTA_APIS[$op]-}; do
-        grep -qx "$api" <<<"$enabled" || missing_apis+=("$api")
-      done
-      if (( ${#missing_apis[@]} )); then
-        problems+=("quota project $QUOTA_PROJECT is missing APIs: ${missing_apis[*]}  (fix: gcloud services enable ${missing_apis[*]} --project=$QUOTA_PROJECT)")
-      fi
-    else
-      problems+=("quota project $QUOTA_PROJECT not reachable by $account (check access, and that cloudresourcemanager.googleapis.com is enabled on it: gcloud services enable cloudresourcemanager.googleapis.com --project=$QUOTA_PROJECT)")
+  if [[ -n "${OP_QUOTA_APIS[$op]-}" && -n "${QUOTA_PROJECT-}" ]]; then
+    enabled="$(gcloud services list --enabled --project="$QUOTA_PROJECT" --format="value(config.name)" 2>/dev/null || true)"
+    for api in ${OP_QUOTA_APIS[$op]}; do
+      grep -qx "$api" <<<"$enabled" || missing_apis+=("$api")
+    done
+    if (( ${#missing_apis[@]} )); then
+      problems+=("quota project $QUOTA_PROJECT is missing APIs: ${missing_apis[*]}  (fix: gcloud services enable ${missing_apis[*]} --project=$QUOTA_PROJECT)")
     fi
   fi
+}
 
-  if [[ " ${OP_KEYS[$op]} " == *" BILLING_ACCOUNT_ID "* && -n "${BILLING_ACCOUNT_ID-}" ]]; then
-    gcloud billing accounts describe "$BILLING_ACCOUNT_ID" --format="value(name)" >/dev/null 2>&1 \
-      || problems+=("billing account $BILLING_ACCOUNT_ID not visible to $account")
-  fi
+# Full validation for one operation: shared checks + registry checks + validate_<Operation> hook.
+# Hooks add to the caller's problems / warnings arrays.
+validate() { # op
+  local op="$1" account="" problems=() warnings=() p
+  title "Validate ${C_MAGENTA}${op}${C_RESET}"
 
+  validate_common
+  validate_registry "$op"
+  if declare -F "validate_${op}" >/dev/null; then "validate_${op}"; fi
+
+  for p in "${warnings[@]}"; do warn "$p"; done
   if (( ${#problems[@]} )); then
     err "Validate failed (${#problems[@]} problem(s))"
     for p in "${problems[@]}"; do printf '%s\n' "      • $p" >&2; done
     printf '\n%s\n' "  Nothing was changed." >&2
     return 1
   fi
-  ok "account ${account}, quota project ${QUOTA_PROJECT}, all required settings present"
+  ok "account ${account}, quota project ${QUOTA_PROJECT}, all checks passed"
 }
 
 # ---------------------------------------------------------------------------
@@ -309,6 +328,34 @@ pre_init_ControlTowerProjectCreate() { # dir prefix
   fi
 }
 
+validate_ControlTowerProjectCreate() {
+  # Billing account visible to the admin
+  if [[ -n "${BILLING_ACCOUNT_ID-}" ]]; then
+    gcloud billing accounts describe "$BILLING_ACCOUNT_ID" --format="value(name)" >/dev/null 2>&1 \
+      || problems+=("billing account $BILLING_ACCOUNT_ID not visible to $account (needs Billing User or Viewer)")
+  fi
+  # Folder parent exists and is accessible
+  case "${CT_FOLDER_PARENT-}" in
+    folders/*)
+      gcloud resource-manager folders describe "${CT_FOLDER_PARENT#folders/}" --format="value(name)" >/dev/null 2>&1 \
+        || problems+=("CT_FOLDER_PARENT ${CT_FOLDER_PARENT} not found or not accessible by $account") ;;
+    organizations/*)
+      gcloud organizations describe "${CT_FOLDER_PARENT#organizations/}" --format="value(name)" >/dev/null 2>&1 \
+        || problems+=("CT_FOLDER_PARENT ${CT_FOLDER_PARENT} not found or not accessible by $account") ;;
+  esac
+  # Existing folder (when CT_FOLDER_ID is set) is accessible
+  if [[ -n "${CT_FOLDER_ID-}" ]]; then
+    gcloud resource-manager folders describe "$CT_FOLDER_ID" --format="value(name)" >/dev/null 2>&1 \
+      || problems+=("CT_FOLDER_ID ${CT_FOLDER_ID} not found or not accessible by $account")
+  fi
+  # Project ID and bucket name are global: warn if they already exist before this operation is DONE
+  if [[ "$(status_get ControlTowerProjectCreate STATUS)" != "DONE" && -n "${CT_PROJECT_ID-}" ]]; then
+    if gcloud projects describe "$CT_PROJECT_ID" --format="value(projectId)" >/dev/null 2>&1; then
+      warnings+=("project $CT_PROJECT_ID already exists: apply will fail unless it came from an interrupted earlier run of this operation")
+    fi
+  fi
+}
+
 post_apply_ControlTowerProjectCreate() { # dir prefix
   local dir="$1" prefix="$2" out
   if (( LOCAL_STATE )); then
@@ -318,7 +365,9 @@ post_apply_ControlTowerProjectCreate() { # dir prefix
     terraform -chdir="$dir" init -input=false -migrate-state -force-copy
     mkdir -p "$LOG_DIR/local-state-backup"
     for f in "$dir"/terraform.tfstate "$dir"/terraform.tfstate.backup; do
-      [[ -f "$f" ]] && mv "$f" "$LOG_DIR/local-state-backup/$(basename "$f").$(date -u +%Y%m%dT%H%M%SZ)"
+      if [[ -f "$f" ]]; then
+        mv "$f" "$LOG_DIR/local-state-backup/$(basename "$f").$(date -u +%Y%m%dT%H%M%SZ)"
+      fi
     done
     ok "state stored in gs://${TF_STATE_BUCKET}/${prefix}"
   fi
@@ -361,6 +410,11 @@ run_operation() { # op
   dir="$ROOT/${OP_DIR[$op]}"
   prefix="control-tower/${OP_DIR[$op]}"
 
+  if (( VALIDATE_ONLY )); then
+    validate "$op" || exit 2
+    return 0
+  fi
+
   describe "$op"
   (( DESCRIBE )) && return 0
 
@@ -394,10 +448,9 @@ run_operation() { # op
   tf_init "$dir"
 
   CURRENT_STEP="terraform plan"
-  set +e
-  terraform -chdir="$dir" plan -input=false -detailed-exitcode -out=tfplan
-  rc=$?
-  set -e
+  # Exit code 2 means "changes present". Capture it via || so neither errexit nor the ERR trap fires.
+  rc=0
+  terraform -chdir="$dir" plan -input=false -detailed-exitcode -out=tfplan || rc=$?
   case "$rc" in
     0) ok "No changes needed." ;;
     2) printf '\n'
@@ -441,7 +494,7 @@ op_status() {
       *)       sym="○"; color="$C_GRAY" ;;
     esac
     printf '  %s%s %d  %-28s %-12s%s %-18s %-30s %s\n' "$color" "$sym" "$((i + 1))" "$op" "$st" "$C_RESET" "${at:-}" "${by%%@*}${by:+@}" "${commit:-}"
-    [[ "$st" == "FAILED" && -n "$errm" ]] && printf '        %s\n' "${C_RED}${errm}${C_RESET}"
+    if [[ "$st" == "FAILED" && -n "$errm" ]]; then printf '        %s\n' "${C_RED}${errm}${C_RESET}"; fi
   done
   echo
 }
@@ -477,12 +530,9 @@ op_restore() {
 load_config
 
 case "$OP" in
-  Validate)
-    target="$(next_op)"; target="${target:-${BOOTSTRAP_OPS[-1]}}"
-    validate "$target" || exit 2 ;;
   Status)  op_status ;;
   Restore) op_restore ;;
   *)
-    op_index "$OP" >/dev/null || die "Unknown operation: $OP (known: Validate Status Restore ${BOOTSTRAP_OPS[*]})"
+    op_index "$OP" >/dev/null || die "Unknown operation: $OP (known: Status Restore ${BOOTSTRAP_OPS[*]})"
     run_operation "$OP" ;;
 esac

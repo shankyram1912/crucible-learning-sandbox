@@ -42,7 +42,7 @@ Each operation folder is its **own Terraform root** with its **own `terraform in
 ## 3. Configuration
 
 ### 3.1 `initialize.env` holds everything
-One file holds the quota project, every Terraform input, and the outputs written back by operations. Plain `KEY=value` lines, in two sections:
+One file holds the quota project, every Terraform input, and the outputs written back by operations. Plain `KEY=value` lines, in two sections. Because `initialize.sh` sources the file, a value can be derived from an earlier key (for example `CT_PROJECT_ID=lsb-control-tower-${ORG_SUFFIX}`).
 
 ```
 # ---- admin settings ----
@@ -84,13 +84,13 @@ Every key is also exported to Terraform as a lowercase `TF_VAR_` copy (for examp
 **Control Tower project**
 | Key | What it is | Example | Notes |
 |---|---|---|---|
-| `CT_PROJECT_ID` | Globally unique ID of the Control Tower project | `lsb-control-tower` | Hosts the Self Service APIs, Firestore, the state bucket and later Cloud Run. Cannot be changed once created. |
+| `CT_PROJECT_ID` | Globally unique ID of the Control Tower project | `lsb-control-tower-${ORG_SUFFIX}` (e.g. `lsb-control-tower-e26`) | Hosts the Self Service APIs, Firestore, the state bucket and later Cloud Run. Project IDs are unique across **all of Google Cloud** and never reusable after deletion, so the default adds `ORG_SUFFIX` (first 3 hex characters of a SHA-256 hash of `ORG_ID`, computed by `initialize.sh`): deterministic per org, 4,096 possible values, which makes a clash unlikely but not impossible (check in the Console New Project dialog). Cannot be changed once created. Availability can be checked in the Console New Project dialog (validation cannot detect IDs owned outside the org). |
 | `REGION` | Default region for regional resources | `asia-southeast1` | State bucket, Firestore, Artifact Registry, Cloud Run. Should match the allowed-locations org policy later. |
 
 **Platform resources**
 | Key | What it is | Example | Notes |
 |---|---|---|---|
-| `TF_STATE_BUCKET` | Bucket for all Terraform state and runner backups | `lsb-control-tower-bucket` | Created by `ControlTowerProjectCreate`. Names are global, so prefix with the project ID (for example `lsb-control-tower-bucket`). Also holds the `initialize.env`, status and log backups used by `Restore`. |
+| `TF_STATE_BUCKET` | Bucket for all Terraform state and runner backups | `${CT_PROJECT_ID}-bucket` (e.g. `lsb-control-tower-e26-bucket`) | Created by `ControlTowerProjectCreate`. Bucket names are global, so it is derived from the project ID. Also holds the `initialize.env`, status and log backups used by `Restore`. |
 | `FIRESTORE_DATABASE` | ID of the Firestore database used by the Self Service APIs | `lsb-control-tower-db` | Created by a later operation. 4 to 63 characters: lowercase letters, digits, hyphens. |
 
 #### Generated section (written by `run.sh`, do not edit)
@@ -101,7 +101,7 @@ Every key is also exported to Terraform as a lowercase `TF_VAR_` copy (for examp
 | `CT_PROJECT_NUMBER` | `ControlTowerProjectCreate` | Numeric project number (different from the project ID) | Later IAM operations, which need service agent emails such as `service-<number>@gcp-sa-...` |
 
 #### Minimum keys for the first two operations
-`ControlTowerProjectCreate` and `ControlTowerApisEnable` only need `QUOTA_PROJECT`, `ORG_ID`, `BILLING_ACCOUNT_ID`, `CT_FOLDER_NAME`, `CT_FOLDER_PARENT`, `CT_FOLDER_ID`, `CT_PROJECT_ID`, `REGION` and `TF_STATE_BUCKET`. The other keys can stay as placeholders until their operations exist; `Validate` only requires the keys used by the operation being run.
+`ControlTowerProjectCreate` and `ControlTowerApisEnable` only need `QUOTA_PROJECT`, `ORG_ID`, `BILLING_ACCOUNT_ID`, `CT_FOLDER_NAME`, `CT_FOLDER_PARENT`, `CT_FOLDER_ID`, `CT_PROJECT_ID`, `REGION` and `TF_STATE_BUCKET`. The other keys can stay as placeholders until their operations exist; validation only requires the keys used by the operation being run.
 
 ### 3.2 Outputs are written back to `initialize.env`
 - At the end of a successful operation, `run.sh` reads `terraform output` and **updates the matching keys in the generated section** of `initialize.env` (added if missing, replaced if present).
@@ -110,17 +110,18 @@ Every key is also exported to Terraform as a lowercase `TF_VAR_` copy (for examp
 
 ### 3.3 `initialize.sh`
 1. **Must be sourced** (`source ./initialize.sh`), never executed. If executed, it stops and prints the correct command.
-2. Loads `initialize.env`.
+2. Computes `ORG_SUFFIX` (first 3 hex characters of `sha256(ORG_ID)`), then loads `initialize.env`, so keys can use `${ORG_SUFFIX}`. A value set in the file overrides the computed one.
 3. **Validates** that every required key is set and non-empty, and lists all missing keys at once.
 4. Exports every key as-is, plus a lowercase **`TF_VAR_`** copy (for example `BILLING_ACCOUNT_ID` becomes `TF_VAR_billing_account_id`), using a generic loop. Adding a setting is one new line in `initialize.env`, with no script change.
 5. Sets the quota project for both tools, for this session only (global gcloud config is not changed): `CLOUDSDK_CORE_PROJECT` + `CLOUDSDK_BILLING_QUOTA_PROJECT` for gcloud, and `GOOGLE_BILLING_PROJECT` + `USER_PROJECT_OVERRIDE=true` for Terraform.
 6. Sets `TF_INPUT=0` so Terraform fails instead of prompting for a missing variable.
 7. Sets `TF_CLI_ARGS_init="-backend-config=bucket=$TF_STATE_BUCKET"` so every `terraform init` uses the state bucket. Each operation's backend block hardcodes only its own prefix (for example `control-tower/02-control-tower-apis-enable`).
-8. Prints a short summary of what was loaded and adds a prompt prefix such as `[ct: lsb-control-tower]`.
+8. Prints a short summary of what was loaded and adds a prompt prefix such as `[ct: lsb-control-tower-e26]`.
 
 #### Variables set automatically by `initialize.sh` (not in the file)
 | Variable | Purpose |
 |---|---|
+| `ORG_SUFFIX` | First 3 hex characters of `sha256(ORG_ID)`, used to make global names unique (for example `e26`) |
 | `TF_VAR_*` | Lowercase copies of every key, read by Terraform |
 | `CLOUDSDK_CORE_PROJECT` + `CLOUDSDK_BILLING_QUOTA_PROJECT` | Make gcloud use `QUOTA_PROJECT` for this session only |
 | `GOOGLE_BILLING_PROJECT` + `USER_PROJECT_OVERRIDE=true` | Make Terraform bill API calls to `QUOTA_PROJECT` |
@@ -134,12 +135,11 @@ Every key is also exported to Terraform as a lowercase `TF_VAR_` copy (for examp
 
 ## 4. `run.sh`
 
-Usage: `./run.sh --operation=<OperationName> [--yes] [--force] [--describe]`
+Usage: `./run.sh --operation=<OperationName> [--validate-only] [--describe] [--yes] [--force]`
 
 ### 4.1 Operations
 | Operation | Kind | Does |
 |---|---|---|
-| `Validate` | utility | Environment and config checks (section 6.1), no changes |
 | `Status` | utility | Table of all operations: status, time, who ran it, git commit |
 | `Restore` | utility | In a fresh Cloud Shell, pulls `initialize.env`, `controltower.status` and logs back from the state bucket |
 | `ControlTowerProjectCreate` | bootstrap (order 1) | Control Tower folder (or existing), project, billing link, state bucket |
@@ -178,17 +178,17 @@ $ ./run.sh --operation=ControlTowerProjectCreate
  Inputs (initialize.env)
    ORG_ID              69296271958
    CT_FOLDER_ID        (empty)  -> folder "Control Tower" will be created
-   CT_FOLDER_PARENT    organizations/69296271958
-   CT_PROJECT_ID       lsb-control-tower
+   CT_FOLDER_PARENT    folders/361218745460
+   CT_PROJECT_ID       lsb-control-tower-e26
    BILLING_ACCOUNT_ID  XXXXXX-XXXXXX-XXXXXX
    REGION              asia-southeast1
-   TF_STATE_BUCKET     lsb-control-tower-bucket
+   TF_STATE_BUCKET     lsb-control-tower-e26-bucket
 
  What will happen
-   1. Create folder "Control Tower" under organizations/69296271958
-   2. Create project lsb-control-tower in that folder
+   1. Create folder "Control Tower" under folders/361218745460 (Learning Sandbox)
+   2. Create project lsb-control-tower-e26 in that folder
    3. Link billing account XXXXXX-XXXXXX-XXXXXX
-   4. Create bucket gs://lsb-control-tower-bucket (asia-southeast1, versioned)
+   4. Create bucket gs://lsb-control-tower-e26-bucket (asia-southeast1, versioned)
    5. Move this operation's Terraform state into the bucket
    6. Wait until the project is ACTIVE and billing is enabled
    7. Write CT_FOLDER_ID and CT_PROJECT_NUMBER back to initialize.env
@@ -202,7 +202,7 @@ $ ./run.sh --operation=ControlTowerProjectCreate
 ```
 
 ### 4.3 What a bootstrap operation does, in one go
-1. Loads config (`initialize.sh`) and runs `Validate`.
+1. Loads config (`initialize.sh`) and validates the operation (section 4.4). Any problem stops the run before anything changes.
 2. Prints the long description (section 4.2).
 3. Checks the previous operation is `DONE`.
 4. Marks the operation `RUNNING`.
@@ -213,8 +213,21 @@ $ ./run.sh --operation=ControlTowerProjectCreate
 9. Writes outputs back to `initialize.env`.
 10. Marks the operation `DONE` (or `FAILED` on any error).
 
-- `--yes` skips the confirmation prompt; `--force` runs an operation even if the previous one is not `DONE`; `--describe` only prints the description.
+- `--validate-only` runs the operation's validation and stops; `--describe` only prints the description; `--yes` skips the confirmation prompt; `--force` runs an operation even if the previous one is not `DONE`.
 - There is **no destroy operation**.
+
+### 4.4 Validation is built into every operation
+Validation is not a separate operation. Every bootstrap operation validates itself first, and `--validate-only` runs just that part. It has three layers:
+
+| Layer | Checks | Applies to |
+|---|---|---|
+| **Shared** | Required tools and versions (terraform, gcloud, jq, envsubst, git); active gcloud account; quota project reachable | Every operation |
+| **Registry** | The `initialize.env` keys the operation declares; the APIs it declares as required on the quota project | Each operation, from its registry entry in `run.sh` |
+| **Operation hook** | `validate_<OperationName>` function for checks specific to that operation (for example billing account visible, folder parent accessible, project ID already taken) | Operations that define a hook |
+
+- All problems are listed at once, and nothing changes if any problem is found.
+- Hooks can also raise **warnings** (shown, but not blocking), for example "project already exists".
+- Adding an operation means adding its registry entry (keys, quota APIs) and, if needed, its `validate_<OperationName>` hook. No change to the validation code itself.
 
 ---
 
@@ -249,7 +262,7 @@ ControlTowerApisEnable_ERROR="firestore.googleapis.com: billing not ready"
 
 ### 5.4 Status output
 ```
- Control Tower Day-0                         project lsb-control-tower
+ Control Tower Day-0                         project lsb-control-tower-e26
 
   ✔ 1  ControlTowerProjectCreate   DONE         2026-11-08 12:30  admin@  67f86fe
   ✖ 2  ControlTowerApisEnable      FAILED       2026-11-08 12:41  billing not ready
@@ -260,7 +273,7 @@ Colors follow [apiservices-spec.md](apiservices-spec.md) section 5.1.
 
 ## 6. Best practices
 
-1. **`Validate` before every operation:** required tools and versions; gcloud account is the expected admin; quota project reachable with Resource Manager and Service Usage enabled; billing account visible; all required `initialize.env` keys filled.
+1. **Validate before every operation** (built in, section 4.4): shared, registry and operation-specific checks; all problems listed at once; nothing changes on failure.
 2. **Apply exactly what was planned:** the plan is saved, shown, confirmed, then applied as-is.
 3. **Pin versions:** `required_version`, pinned providers, and committed `.terraform.lock.hcl`.
 4. **Log every run** to `logs/<OperationName>-<timestamp>.log` in Cloud Shell (never in the repo), and copy logs to the state bucket.
