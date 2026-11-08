@@ -42,7 +42,7 @@ gcloud services enable cloudresourcemanager.googleapis.com serviceusage.googleap
    cp initialize.env.example initialize.env
    ```
    Required for the first operation: `QUOTA_PROJECT`, `ORG_ID`, `BILLING_ACCOUNT_ID`, `CT_FOLDER_NAME`, `CT_FOLDER_PARENT`, `CT_PROJECT_ID`, `REGION`, `TF_STATE_BUCKET`.
-   Billing labels (`LABEL_COST_CENTER_BU`, `LABEL_COST_CENTER`, `LABEL_CATEGORY`, `LABEL_SUBCATEGORY`) are required; they are applied to the Control Tower project, which attributes all its costs in billing.
+   Billing labels (`LABEL_COST_CENTER_BU`, `LABEL_COST_CENTER_CODE`, `LABEL_COST_CATEGORY`, `LABEL_BU_TRACKING_CODE`, `LABEL_BU_SUBCATEGORY`) are required; they are applied to the Control Tower project, which attributes all its costs in billing.
    `CT_PROJECT_ID` and `TF_STATE_BUCKET` default to names derived from the org ID (for example `lsb-control-tower-e26`); leave them as they are unless you need different names.
 4. Check everything before changing anything:
    ```bash
@@ -73,11 +73,12 @@ gcloud services enable cloudresourcemanager.googleapis.com serviceusage.googleap
 | `ControlTowerApisEnable` | Baseline APIs on the Control Tower project (platform, observability, billing, Firestore, storage, Cloud Run, Artifact Registry, Cloud Build, Secret Manager, Cloud Identity, Directory) and the Cloud Run, Cloud Build and Artifact Registry service agents. Compute is not enabled (networking comes later) |
 | `ControlTowerFirestoreCreate` | Firestore database `FIRESTORE_DATABASE` (Native mode, in `REGION`) with point-in-time recovery and delete protection, used by the Self Service APIs |
 | `PlaygroundGroupsCreate` | Locked playground service groups `IT_ADMINS_GROUP` and `BU_ADMINS_GROUP` (IT Admins nested in BU Admins), plus the initial IT Admins from `IT_ADMINS_INITIAL_MEMBERS`. Needs a Super Admin (or Groups Admin able to manage locked groups) and the Cloud Identity API on the quota project |
+| `PlaygroundTagsCreate` | Five dynamic playground tag keys at org level (`cost-center-bu`, `cost-center-code`, `cost-category`, `bu-tracking-code`, `bu-subcategory`, allowed-values pattern, no values) and Tag User on them: the first three for `IT_ADMINS_GROUP`, `bu-tracking-code` and `bu-subcategory` for `BU_ADMINS_GROUP`. Needs Tag Administrator (or Organization Administrator) on the org. Uses google provider `~> 8.0` |
 | `RunAll` | Runs bootstrap operations in order: `--from=<Operation>` (default: first) `--to=<Operation>` (default: last). Each operation still shows its description, validates, shows its plan and asks to proceed (unless `--yes`). Stops at the first failure and prints a summary |
 | `Status` | Progress of all operations: status, time, who ran it, git commit |
 | `Restore` | In a fresh Cloud Shell: pulls `initialize.env`, `controltower.status` and logs back from the state bucket |
 
-Run them in order: `ControlTowerProjectCreate`, `ControlTowerApisEnable`, `ControlTowerFirestoreCreate`, `PlaygroundGroupsCreate`, or use `RunAll`:
+Run them in order: `ControlTowerProjectCreate`, `ControlTowerApisEnable`, `ControlTowerFirestoreCreate`, `PlaygroundGroupsCreate`, `PlaygroundTagsCreate`, or use `RunAll`:
 ```bash
 ./run.sh --operation=RunAll                                   # all operations, first to last
 ./run.sh --operation=RunAll --from=ControlTowerApisEnable      # from an operation to the end
@@ -113,6 +114,7 @@ Run them in order: `ControlTowerProjectCreate`, `ControlTowerApisEnable`, `Contr
 | `02-control-tower-apis-enable/` | Terraform for the second operation, plus [operation.md](02-control-tower-apis-enable/operation.md) | Yes |
 | `03-control-tower-firestore-create/` | Terraform for the third operation, plus [operation.md](03-control-tower-firestore-create/operation.md) | Yes |
 | `04-playground-groups-create/` | Terraform for the fourth operation, plus [operation.md](04-playground-groups-create/operation.md) | Yes |
+| `05-playground-tags-create/` | Terraform for the fifth operation, plus [operation.md](05-playground-tags-create/operation.md) | Yes |
 
 After each successful operation, `initialize.env`, `controltower.status` and `logs/` are copied to `gs://<TF_STATE_BUCKET>/control-tower/_runner/`.
 

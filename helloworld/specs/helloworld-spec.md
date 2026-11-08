@@ -65,33 +65,36 @@ Full pipeline behavior (triggering, identities, secured source, reliability): [t
 ### 1.7 Billing labels
 1. **Billing labels go on projects.** Every project the platform creates is labeled for billing. Project labels attribute all of a project's costs in the billing export, including resources that cannot be labeled (Firestore databases, folders, service accounts), so copying the same labels onto every resource adds nothing.
 2. **Resource labels only where values differ within a project**, for example per student or app in shared playground projects later, to split that project's cost.
-3. **Label set:** `cost-center-bu`, `cost-center`, `category`, `subcategory`. No `owner` label. `environment` is added only if multiple environments exist.
-4. **Control Tower values:** `cost-center-bu=central-it`, `cost-center=lsb-control-tower`, `category=lsb-control-tower`, `subcategory=lsb-control-tower`.
-5. **School-specific:** playground projects use the same keys with school values (for example `cost-center-bu=<school>`), so costs can be split per school, category and playground (see section 1.8).
+3. **Label set:** the playground tag key names (section 1.8): `cost-center-bu`, `cost-center-code`, `cost-category`, `bu-tracking-code`, `bu-subcategory`. Every project carries all five: the Control Tower from `LABEL_*` configuration, playground projects copied from their tags. No `owner` label. `environment` is added only if multiple environments exist.
+4. **Control Tower values:** `cost-center-bu=central-it`, `cost-center-code=it-shared`, `cost-category=learning-sandbox`, `bu-tracking-code=it-100-1001`, `bu-subcategory=lsb-control-tower`.
+5. **School-specific:** playground projects use the playground tag keys (section 1.8) with school values (for example `cost-center-bu=<school>`), so costs can be split per school, category and playground (see section 1.8).
 6. **Mechanism:** labels come from configuration (`LABEL_*` keys) and are applied to the project by the operation that creates it, never hand-written.
 7. **Reporting** needs Cloud Billing export to BigQuery enabled on the billing account.
 
 ### 1.8 Playground tags (folder-level, inherited)
 Folders cannot carry labels, and labels are never inherited. To cover every project under a playground folder (including projects humans create in the Console), the billing keys are also defined as **playground tags**: Resource Manager tags bound on folders and inherited by everything below. They are named for playgrounds because playgrounds are what they exist for. **They are not applied to the Control Tower**, which keeps its project labels only (left unchanged for posterity).
 
-| Tag key | Values | Maintained by | Usable in IAM conditions / org policies |
+| Tag key | Kind | Allowed values | Who binds it (Tag User on the key) |
 |---|---|---|---|
-| `cost-center-bu` | **Predefined list** (for example `central-it`, one per school) | IT Admins through the platform; initial values from Day-0 configuration | Yes |
-| `cost-center` | **Predefined list** | Same | Yes |
-| `category` | **Predefined list** | Same | Yes |
-| `subcategory` | **Flexible**, set per playground at creation | Whoever creates the playground | No (dynamic values are for billing and inventory) |
+| `cost-center-bu` | Dynamic | Pattern, plus the **catalog list** (for example `central-it`, one per school) checked by the API | IT Admins |
+| `cost-center-code` | Dynamic | Pattern, plus the catalog list | IT Admins |
+| `cost-category` | Dynamic | Pattern, plus the catalog list | IT Admins |
+| `bu-tracking-code` | Dynamic | Pattern only, free value: the BU's own tracking code (for example a grant, project or course code) under the school's cost center | BU Admins (and IT Admins, nested) |
+| `bu-subcategory` | Dynamic | Pattern only, free value set per playground | BU Admins (and IT Admins, nested) |
 
-1. **Tag keys are created once at org level**; predefined values are added as new schools or categories are onboarded.
-2. **Where they are bound:** the **Playground Folder** carries the three predefined tags and a default `subcategory`; a **playground** may override `subcategory` with its own value (a direct binding overrides the inherited value). Predefined keys are never overridden at playground level. Every project and resource below inherits the effective values.
-3. **Defined vs dynamic tags:** `cost-center-bu`, `cost-center` and `category` are **defined tags** (values created up front from the Firestore catalog). `subcategory` is a **dynamic tag**: its key has an allowed-values pattern (`^[a-z][a-z0-9-]{0,62}$`), so any matching value can be bound directly without pre-creating it (no per-key value cap; not usable in IAM conditions or org policies). If dynamic values are not available, the platform creates `subcategory` values on demand instead (limit 1,000 values per key). The two kinds are created by separate Day-0 operations (`PlaygroundDefinedTagsCreate`, `PlaygroundDynamicTagsCreate`).
-4. **One value format for tags and labels:** lowercase letters, digits and hyphens, max 63 characters, so the same value is valid as a project label.
-5. **Every playground project carries labels copied from its playground's tags** (decided). Tags give inheritance (everything under the folder, including Console-created projects); labels keep label-based billing views consistent with the Control Tower. Folder tags never turn into project labels on their own, so the platform sets them:
+1. **All five keys are dynamic tags, created once at org level** by one Day-0 operation (`PlaygroundTagsCreate`). Each key has the allowed-values pattern `^[a-z]([a-z0-9-]{0,61}[a-z0-9])?$`, so any matching value can be bound without creating it first. No tag values are created in GCP, there is no per-key value cap, and GCP tag state needs no maintenance when schools or categories are onboarded.
+2. **Where they are bound:** the **Playground Folder** carries `cost-center-bu`, `cost-center-code`, `cost-category` and defaults for `bu-tracking-code` and `bu-subcategory`; a **playground** may override `bu-tracking-code` and `bu-subcategory` with its own values (a direct binding overrides the inherited value). The three IT-governed keys are never overridden at playground level. Every project and resource below inherits the effective values.
+3. **The Firestore catalog is the only list of allowed values** for `cost-center-bu`, `cost-center-code` and `cost-category`. IT Admins maintain it through the platform, and the API checks a value against it before binding. GCP itself only checks the pattern, so a binding made outside the platform (Console, gcloud) is limited to people with Tag User on the key: IT Admins for the three governed keys. `bu-tracking-code` and `bu-subcategory` have no catalog list: BU Admins choose them freely within the pattern, so a BU can split its costs under the IT-assigned cost center without changing who pays.
+4. **Why tags at all, when labels are copied:** tags on the folder are inherited by every project and resource below, including Console-created projects, and project owners cannot remove or override them. Labels are per project and editable by project owners. Tags are the source of truth; labels are a copy for label-based billing views.
+5. **Not used in IAM conditions or org policies:** dynamic tag values cannot be used there. Policy switches that need tags (for example enabling GPUs per playground) get their own small **defined** key with fixed values, designed with the guardrails operation (`PlaygroundGuardrailsCreate`), separate from these billing keys.
+6. **One value format for tags and labels:** starts with a lowercase letter, then lowercase letters, digits and hyphens, ends with a letter or digit, max 63 characters (the pattern above), so the same value is valid as a tag value and a project label.
+7. **Every playground project carries labels copied from its playground's tags** (decided). Tags give inheritance (everything under the folder, including Console-created projects); labels keep label-based billing views consistent with the Control Tower. Folder tags never turn into project labels on their own, so the platform sets them:
    - **Platform-created projects:** labeled at creation with the playground folder's tag values.
    - **Console-created projects:** an event-driven auto-labeler (project-creation audit log event → small function in the Control Tower) copies the folder's tag values onto the new project within seconds.
    - **Re-tagging a playground** updates the folder's tag bindings **and** the labels on all its projects in the same job, so tags and labels never drift.
-6. **No separate `playground` key** for now: the playground folder identifies the playground in inventory.
-7. **Control Tower:** not tagged. It keeps its project labels (`cost-center-bu=central-it`, `cost-center` / `category` / `subcategory` = `lsb-control-tower`) as they are.
-8. **Limits** (to verify against the official quotas): 1,000 tag keys per org, 1,000 values per key (dynamic values unlimited), 50 tags attached directly per resource, short names up to 256 characters.
+8. **No separate `playground` key** for now: the playground folder identifies the playground in inventory.
+9. **Control Tower:** not tagged. It keeps its project labels (`cost-center-bu=central-it`, `cost-center-code=it-shared`, `cost-category=learning-sandbox`, `bu-tracking-code=it-100-1001`, `bu-subcategory=lsb-control-tower`), using the same key names as the playground tags.
+10. **Limits** (to verify against the official quotas): 1,000 tag keys per org, dynamic values unlimited (the 1,000 values per key limit applies only to defined keys), 50 tags attached directly per resource, short names up to 256 characters.
 
 ---
 
@@ -112,10 +115,10 @@ Folders cannot carry labels, and labels are never inherited. To cover every proj
 ### 2.2 Service groups and responsibilities
 | Group | Members | Configures | Also |
 |---|---|---|---|
-| `grp-lsb-it-admins@<domain>` | IT Admins | **Playground Folders** (create, defined tags, name the BU Admin controllers) | Only IT Admins add or remove members of both groups; control of every Playground Folder and playground by default |
-| `grp-lsb-bu-admins@<domain>` | BU Admins, plus `grp-lsb-it-admins@` nested | **Playgrounds** inside the Playground Folders they control (owners, `subcategory` override, template, services) | |
+| `grp-lsb-it-admins@<domain>` | IT Admins | **Playground Folders** (create, set the IT-governed tags, name the BU Admin controllers) | Only IT Admins add or remove members of both groups; control of every Playground Folder and playground by default |
+| `grp-lsb-bu-admins@<domain>` | BU Admins, plus `grp-lsb-it-admins@` nested | **Playgrounds** inside the Playground Folders they control (owners, `bu-tracking-code` and `bu-subcategory` overrides, template, services) | |
 
-- Both are created in Day-0 step 4 (`PlaygroundGroupsCreate`, before the tag operations that grant them Tag User) as **locked groups** (`cloudidentity.googleapis.com/groups.locked` plus the security label): only Super Admins and Groups Admins can change membership; group owners, managers and self-join are blocked.
+- Both are created in Day-0 step 4 (`PlaygroundGroupsCreate`, before the tag operation that grants them Tag User) as **locked groups** (`cloudidentity.googleapis.com/groups.locked` plus the security label): only Super Admins and Groups Admins can change membership; group owners, managers and self-join are blocked.
 - Membership changes go through the platform, which enforces "IT Admins only". No human owners or managers on these groups.
 - Drift detection: Admin audit log alert on membership changes not made through the platform; platform-recorded intended membership compared periodically.
 
@@ -133,8 +136,8 @@ Folders cannot carry labels, and labels are never inherited. To cover every proj
 | Principal | Granted on | Roles | Why |
 |---|---|---|---|
 | `grp-lsb-it-admins@` | Common ancestor of the school folders (for example University Sandbox) | Folder Admin, Tag User, Project Creator | IT Admins create and configure Playground Folders in any school |
-| `grp-lsb-it-admins@` | Defined tag keys (`cost-center-bu`, `cost-center`, `category`) | Tag User | Only IT Admins set the governed cost codes |
-| `grp-lsb-bu-admins@` | Dynamic tag key (`subcategory`) | Tag User | BU Admins set or override `subcategory` on playgrounds |
+| `grp-lsb-it-admins@` | Tag keys `cost-center-bu`, `cost-center-code`, `cost-category` | Tag User | Only IT Admins set the governed cost codes |
+| `grp-lsb-bu-admins@` | Tag keys `bu-tracking-code`, `bu-subcategory` | Tag User | BU Admins set their tracking code and subcategory on their Playground Folders and playgrounds; the cost center itself stays with IT |
 
 **Per Playground Folder and playground (bound by the platform at creation):**
 | Principal | Playground Folder | Playground folder | Projects in the playground |

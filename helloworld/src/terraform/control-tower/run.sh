@@ -12,6 +12,7 @@
 #   ControlTowerApisEnable      (order 2) baseline APIs + service agents on the Control Tower project
 #   ControlTowerFirestoreCreate (order 3) Firestore database for the Self Service APIs
 #   PlaygroundGroupsCreate      (order 4) locked playground service groups (IT Admins nested in BU Admins)
+#   PlaygroundTagsCreate        (order 5) five dynamic playground tag keys + Tag User grants
 #
 # Flags (bootstrap operations):
 #   --validate-only   run the operation's validation and stop (no changes)
@@ -35,24 +36,27 @@ MIN_TERRAFORM="1.5.0"
 # ---------------------------------------------------------------------------
 # Operation registry (order = position in BOOTSTRAP_OPS)
 # ---------------------------------------------------------------------------
-BOOTSTRAP_OPS=(ControlTowerProjectCreate ControlTowerApisEnable ControlTowerFirestoreCreate PlaygroundGroupsCreate)
+BOOTSTRAP_OPS=(ControlTowerProjectCreate ControlTowerApisEnable ControlTowerFirestoreCreate PlaygroundGroupsCreate PlaygroundTagsCreate)
 declare -A OP_DIR=(
   [ControlTowerProjectCreate]="01-control-tower-project-create"
   [ControlTowerApisEnable]="02-control-tower-apis-enable"
   [ControlTowerFirestoreCreate]="03-control-tower-firestore-create"
   [PlaygroundGroupsCreate]="04-playground-groups-create"
+  [PlaygroundTagsCreate]="05-playground-tags-create"
 )
 declare -A OP_TITLE=(
   [ControlTowerProjectCreate]="Control Tower folder + project + state bucket"
   [ControlTowerApisEnable]="Baseline APIs + service agents on the Control Tower project"
   [ControlTowerFirestoreCreate]="Firestore database for the Self Service APIs"
   [PlaygroundGroupsCreate]="Locked playground service groups (IT Admins nested in BU Admins)"
+  [PlaygroundTagsCreate]="Dynamic playground tag keys + Tag User grants"
 )
 declare -A OP_KEYS=(
   [ControlTowerProjectCreate]="QUOTA_PROJECT ORG_ID BILLING_ACCOUNT_ID CT_FOLDER_NAME CT_FOLDER_PARENT CT_PROJECT_ID REGION TF_STATE_BUCKET"
   [ControlTowerApisEnable]="QUOTA_PROJECT CT_PROJECT_ID CT_PROJECT_NUMBER REGION TF_STATE_BUCKET"
   [ControlTowerFirestoreCreate]="QUOTA_PROJECT CT_PROJECT_ID REGION TF_STATE_BUCKET FIRESTORE_DATABASE"
   [PlaygroundGroupsCreate]="QUOTA_PROJECT REGION TF_STATE_BUCKET DIRECTORY_CUSTOMER_ID DOMAIN IT_ADMINS_GROUP BU_ADMINS_GROUP IT_ADMINS_INITIAL_MEMBERS"
+  [PlaygroundTagsCreate]="QUOTA_PROJECT ORG_ID REGION TF_STATE_BUCKET IT_ADMINS_GROUP BU_ADMINS_GROUP"
 )
 # APIs that must be enabled on QUOTA_PROJECT for the operation's calls
 declare -A OP_QUOTA_APIS=(
@@ -60,6 +64,7 @@ declare -A OP_QUOTA_APIS=(
   [ControlTowerApisEnable]="serviceusage.googleapis.com storage.googleapis.com"
   [ControlTowerFirestoreCreate]="firestore.googleapis.com storage.googleapis.com"
   [PlaygroundGroupsCreate]="cloudidentity.googleapis.com storage.googleapis.com"
+  [PlaygroundTagsCreate]="cloudresourcemanager.googleapis.com cloudidentity.googleapis.com storage.googleapis.com"
 )
 
 # ---------------------------------------------------------------------------
@@ -262,7 +267,7 @@ validate_common() {
     [[ "$lname" =~ ^[a-z][a-z0-9_-]{0,62}$ ]] || problems+=("initialize.env: label key from $lkey ('$lname') is not a valid GCP label key")
     [[ "$lval" =~ ^[a-z0-9_-]{0,63}$ ]] || problems+=("initialize.env: $lkey='$lval' is not a valid GCP label value (lowercase letters, digits, '-', '_', max 63)")
   done < <(grep -E '^LABEL_[A-Z0-9_]+=' "$LSB_ENV_FILE" | cut -d= -f1 | sort -u || true)
-  (( nlabels > 0 )) || problems+=("initialize.env: no billing labels (add LABEL_COST_CENTER_BU, LABEL_COST_CENTER, LABEL_CATEGORY, LABEL_SUBCATEGORY)")
+  (( nlabels > 0 )) || problems+=("initialize.env: no billing labels (add LABEL_COST_CENTER_BU, LABEL_COST_CENTER_CODE, LABEL_COST_CATEGORY, LABEL_BU_TRACKING_CODE, LABEL_BU_SUBCATEGORY)")
 
   if [[ -n "${QUOTA_PROJECT-}" ]]; then
     gcloud projects describe "$QUOTA_PROJECT" --format="value(projectId)" >/dev/null 2>&1 \
@@ -566,6 +571,78 @@ post_apply_PlaygroundGroupsCreate() { # dir prefix
   out="$(terraform -chdir="$dir" output -json)"
   env_write_back IT_ADMINS_GROUP_ID "$(jq -r '.it_admins_group_id.value' <<<"$out")"
   env_write_back BU_ADMINS_GROUP_ID "$(jq -r '.bu_admins_group_id.value' <<<"$out")"
+}
+
+# ---------------------------------------------------------------------------
+# PlaygroundTagsCreate
+# ---------------------------------------------------------------------------
+PLAYGROUND_TAG_KEYS=(cost-center-bu cost-center-code cost-category bu-tracking-code bu-subcategory)
+PLAYGROUND_TAG_KEYS_BU=(bu-tracking-code bu-subcategory) # Tag User for BU Admins; the rest for IT Admins
+
+# Permissions the caller holds on the org, from the given list (Resource Manager testIamPermissions).
+org_permissions_held() { # permission...
+  local body
+  body="$(jq -cn '{permissions: $ARGS.positional}' --args "$@")"
+  curl -fsS -X POST \
+    -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+    -H "x-goog-user-project: ${QUOTA_PROJECT}" \
+    -H "Content-Type: application/json" \
+    -d "$body" \
+    "https://cloudresourcemanager.googleapis.com/v3/organizations/${ORG_ID}:testIamPermissions" \
+    | jq -r '.permissions[]?'
+}
+
+# Groups exist, caller can create tag keys and set their IAM policy on the org,
+# and warn if any key already exists before this operation is DONE.
+validate_PlaygroundTagsCreate() {
+  local g k held perm existing
+  for g in "${IT_ADMINS_GROUP-}" "${BU_ADMINS_GROUP-}"; do
+    [[ -z "$g" ]] && continue
+    gcloud identity groups describe "$g" --format="value(name)" >/dev/null 2>&1 \
+      || problems+=("group $g not found (run PlaygroundGroupsCreate first)")
+  done
+  [[ -z "${ORG_ID-}" || -z "${QUOTA_PROJECT-}" ]] && return 0
+  if held="$(org_permissions_held resourcemanager.tagKeys.create resourcemanager.tagKeys.setIamPolicy 2>/dev/null)"; then
+    for perm in resourcemanager.tagKeys.create resourcemanager.tagKeys.setIamPolicy; do
+      grep -qx "$perm" <<<"$held" || problems+=("${account:-caller} lacks $perm on organizations/${ORG_ID} (grant Tag Administrator: roles/resourcemanager.tagAdmin)")
+    done
+  else
+    warnings+=("could not check tag permissions on organizations/${ORG_ID} (testIamPermissions call failed)")
+  fi
+  if [[ "$(status_get PlaygroundTagsCreate STATUS)" != "DONE" ]]; then
+    existing="$(gcloud resource-manager tags keys list --parent="organizations/${ORG_ID}" --format="value(shortName)" 2>/dev/null || true)"
+    for k in "${PLAYGROUND_TAG_KEYS[@]}"; do
+      grep -qx "$k" <<<"$existing" && warnings+=("tag key ${ORG_ID}/$k already exists: apply will fail unless it came from an interrupted earlier run of this operation")
+    done
+  fi
+  return 0
+}
+
+post_apply_PlaygroundTagsCreate() { # dir prefix
+  local dir="$1" out pattern k id regex group var
+  out="$(terraform -chdir="$dir" output -json)"
+  pattern="$(jq -r '.value_pattern.value' <<<"$out")"
+
+  CURRENT_STEP="readiness check"
+  for k in "${PLAYGROUND_TAG_KEYS[@]}"; do
+    id="$(jq -r --arg k "$k" '.tag_key_ids.value[$k]' <<<"$out")"
+    wait_for "tag key ${ORG_ID}/$k ($id)" 120 \
+      gcloud resource-manager tags keys describe "$id" --format="value(name)"
+    regex="$(gcloud resource-manager tags keys describe "$id" --format="value(allowedValuesRegex)" 2>/dev/null || true)"
+    if [[ "$regex" != "$pattern" ]]; then
+      err "tag key ${ORG_ID}/$k has allowed-values pattern '${regex}', expected '${pattern}'"
+      return 1
+    fi
+    if [[ " ${PLAYGROUND_TAG_KEYS_BU[*]} " == *" $k "* ]]; then group="$BU_ADMINS_GROUP"; else group="$IT_ADMINS_GROUP"; fi
+    wait_for "Tag User on $k for $group" 120 \
+      bash -c 'gcloud resource-manager tags keys get-iam-policy "$1" --format=json | jq -e --arg m "group:$2" '"'"'.bindings[]? | select(.role=="roles/resourcemanager.tagUser") | .members | index($m)'"'"' >/dev/null' _ "$id" "$group"
+  done
+
+  CURRENT_STEP="writing outputs back to initialize.env"
+  for k in "${PLAYGROUND_TAG_KEYS[@]}"; do
+    var="TAG_KEY_${k^^}_ID"; var="${var//-/_}"
+    env_write_back "$var" "$(jq -r --arg k "$k" '.tag_key_ids.value[$k]' <<<"$out")"
+  done
 }
 
 # ---------------------------------------------------------------------------

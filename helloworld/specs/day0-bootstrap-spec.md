@@ -38,7 +38,10 @@ helloworld/src/terraform/control-tower/
 ├── 03-control-tower-firestore-create/
 │   ├── operation.md
 │   └── *.tf
-└── 04-playground-groups-create/
+├── 04-playground-groups-create/
+│   ├── operation.md
+│   └── *.tf
+└── 05-playground-tags-create/
     ├── operation.md
     └── *.tf
 ```
@@ -115,9 +118,10 @@ Every key is also exported to Terraform as a lowercase `TF_VAR_` copy (for examp
 | Key | Label | Control Tower value | Notes |
 |---|---|---|---|
 | `LABEL_COST_CENTER_BU` | `cost-center-bu` | `central-it` | Business unit paying |
-| `LABEL_COST_CENTER` | `cost-center` | `lsb-control-tower` | Cost center |
-| `LABEL_CATEGORY` | `category` | `lsb-control-tower` | Category |
-| `LABEL_SUBCATEGORY` | `subcategory` | `lsb-control-tower` | Subcategory |
+| `LABEL_COST_CENTER_CODE` | `cost-center-code` | `it-shared` | Cost center code |
+| `LABEL_COST_CATEGORY` | `cost-category` | `learning-sandbox` | Cost category |
+| `LABEL_BU_TRACKING_CODE` | `bu-tracking-code` | `it-100-1001` | BU tracking code |
+| `LABEL_BU_SUBCATEGORY` | `bu-subcategory` | `lsb-control-tower` | BU subcategory |
 
 Any `LABEL_<NAME>` key becomes label `<name>` (lowercased, `_` to `-`); adding a label is one new line. Values: lowercase letters, digits, `-`, `_`, max 63 characters. At least one label is required.
 
@@ -127,6 +131,8 @@ Any `LABEL_<NAME>` key becomes label `<name>` (lowercased, `_` to `-`); adding a
 | `CT_FOLDER_ID` | `ControlTowerProjectCreate` (when it creates the folder) | ID of the created folder | Re-runs reuse it; later operations reference it |
 | `CT_FOLDER_MANAGED` | `ControlTowerProjectCreate` | `true` when this operation created the folder and keeps managing it | Keeps Terraform from planning to remove the folder once `CT_FOLDER_ID` is filled in |
 | `CT_PROJECT_NUMBER` | `ControlTowerProjectCreate` | Numeric project number (different from the project ID) | Later IAM operations, which need service agent emails such as `service-<number>@gcp-sa-...` |
+| `IT_ADMINS_GROUP_ID`, `BU_ADMINS_GROUP_ID` | `PlaygroundGroupsCreate` | Cloud Identity group resource names (`groups/<id>`) | Membership calls by the Self Service APIs |
+| `TAG_KEY_COST_CENTER_BU_ID`, `TAG_KEY_COST_CENTER_CODE_ID`, `TAG_KEY_COST_CATEGORY_ID`, `TAG_KEY_BU_TRACKING_CODE_ID`, `TAG_KEY_BU_SUBCATEGORY_ID` | `PlaygroundTagsCreate` | Tag key resource names (`tagKeys/<id>`) | Binding tag values on Playground Folders and playgrounds |
 
 #### Minimum keys for the first two operations
 `ControlTowerProjectCreate` and `ControlTowerApisEnable` only need `QUOTA_PROJECT`, `ORG_ID`, `BILLING_ACCOUNT_ID`, `CT_FOLDER_NAME`, `CT_FOLDER_PARENT`, `CT_FOLDER_ID`, `CT_PROJECT_ID`, `REGION` and `TF_STATE_BUCKET`. The other keys can stay as placeholders until their operations exist; validation only requires the keys used by the operation being run.
@@ -178,18 +184,19 @@ Usage: `./run.sh --operation=<OperationName> [--validate-only] [--describe] [--y
 | `ControlTowerApisEnable` | bootstrap (order 2) | Enables the baseline APIs on the Control Tower project, creates the Cloud Run, Cloud Build and Artifact Registry service agents |
 | `ControlTowerFirestoreCreate` | bootstrap (order 3) | Creates the Firestore database for the Self Service APIs |
 | `PlaygroundGroupsCreate` | bootstrap (order 4) | Creates the two locked playground service groups (IT Admins nested in BU Admins) and adds the initial IT Admins |
+| `PlaygroundTagsCreate` | bootstrap (order 5) | Creates the five dynamic playground tag keys at org level and grants Tag User on them to the two groups |
 
 New bootstrap operations are added as new numbered folders with a PascalCase operation name.
 
 #### Naming convention
 Bootstrap operation names are PascalCase **Scope + Object + Verb**:
 - **Scope:** `ControlTower` when the resources live in the Control Tower project (or its folder); `Playground` when they are org-level resources that exist to govern playgrounds (groups, tags, guardrails).
-- **Object:** the resource, adjective before noun (`DefinedTags`, not `TagsDefined`); plural when the operation creates several of a kind (`Groups`, `Pipelines`).
+- **Object:** the resource, adjective before noun (`ApiService`, not `ServiceApi`); plural when the operation creates several of a kind (`Groups`, `Pipelines`).
 - **Verb:** `Create`; `Enable` only for turning on APIs.
-- **Folder:** two-digit order plus the kebab-case name, e.g. `05-playground-defined-tags-create`.
+- **Folder:** two-digit order plus the kebab-case name, e.g. `05-playground-tags-create`.
 - Utilities (`RunAll`, `Status`, `Restore`) are runner commands, not operations, and do not follow this pattern.
 
-Planned names: `PlaygroundDefinedTagsCreate`, `PlaygroundDynamicTagsCreate`, `ControlTowerIdentityCreate`, `ControlTowerRegistryCreate`, `ControlTowerApiServiceCreate`, `ControlTowerPipelinesCreate`, `ControlTowerNetworkCreate`, `PlaygroundGuardrailsCreate`.
+Planned names: `ControlTowerIdentityCreate`, `ControlTowerRegistryCreate`, `ControlTowerApiServiceCreate`, `ControlTowerPipelinesCreate`, `ControlTowerNetworkCreate`, `PlaygroundGuardrailsCreate`.
 
 ### 4.2 Long description before every bootstrap operation
 Before anything runs, `run.sh` prints the operation's **`operation.md`** in full, filled in with the actual values from `initialize.env`. Every `operation.md` has the same sections:
@@ -386,10 +393,23 @@ Long description printed before the run: [operation.md](../src/terraform/control
 6. **Validation:** group emails and initial members belong to `DOMAIN`; warns if a group already exists before this operation is `DONE`.
 7. **Readiness:** both groups are found, the nesting exists, and the locked label is present (warning if the API did not accept it, with the manual fix printed).
 8. **Written back:** `IT_ADMINS_GROUP_ID`, `BU_ADMINS_GROUP_ID` (Cloud Identity group resource names).
-9. **To verify on first run:** that the locked label is accepted at creation through Terraform, and that locked groups are available in the Workspace / Cloud Identity edition.
+9. **Verified on first run (2026-11-08):** the locked label is accepted at creation through Terraform, and locked groups are available in this Cloud Identity edition.
+
+### 5. `PlaygroundTagsCreate` (`05-playground-tags-create`)
+Long description printed before the run: [operation.md](../src/terraform/control-tower/05-playground-tags-create/operation.md)
+
+1. Own root and state (`control-tower/05-playground-tags-create`). **Provider pinned to `hashicorp/google ~> 8.0`** in its own `versions.tf`, because `allowed_values_regex` on `google_tags_tag_key` needs 7.20 or later (verified 2026-11-08: absent in 7.10, present in 7.20, 8.0, 8.10). Operations 1 to 4 stay on `~> 6.0`.
+2. **Tag keys (Terraform, `google_tags_tag_key`):** `cost-center-bu`, `cost-center-code`, `cost-category`, `bu-tracking-code`, `bu-subcategory` under `organizations/<ORG_ID>`, each with `allowed_values_regex = ^[a-z]([a-z0-9-]{0,61}[a-z0-9])?$` (dynamic values, see [helloworld-spec.md](helloworld-spec.md) section 1.8); descriptions say they are managed by the platform; `prevent_destroy`. **No tag values are created**; the key names and the pattern are fixed in the module, not in `initialize.env`.
+3. **Tag User (Terraform, `google_tags_tag_key_iam_member`, additive):** `roles/resourcemanager.tagUser` on `cost-center-bu`, `cost-center-code` and `cost-category` for `IT_ADMINS_GROUP`; on `bu-tracking-code` and `bu-subcategory` for `BU_ADMINS_GROUP`.
+4. **Not bound anywhere:** nothing is attached to the Control Tower or any folder. Bindings happen later, on Playground Folders and playgrounds, through the Self Service APIs.
+5. **Runs as the admin** in Cloud Shell with their own credentials; needs `resourcemanager.tagKeys.create` and `resourcemanager.tagKeys.setIamPolicy` on the org (Tag Administrator or Organization Administrator). Calls are billed to `QUOTA_PROJECT`.
+6. **Validation:** both groups exist (step 4 done); the caller holds the two permissions above on the org (`organizations.testIamPermissions`); warns if any of the five keys already exists before this operation is `DONE`.
+7. **Readiness:** all five keys are found with the expected pattern, and each key's IAM policy shows the expected group as Tag User.
+8. **Written back:** `TAG_KEY_COST_CENTER_BU_ID`, `TAG_KEY_COST_CENTER_CODE_ID`, `TAG_KEY_COST_CATEGORY_ID`, `TAG_KEY_BU_TRACKING_CODE_ID`, `TAG_KEY_BU_SUBCATEGORY_ID` (`tagKeys/<id>`), used later by the Self Service APIs to bind values.
+9. **To verify after step 6:** that Tag User on a dynamic key (plus Tag User on the folder) is enough for a non-admin member of the group to bind a matching value (see to-do list step 5).
 
 ### Later operations
-To be defined one by one, in this order (after step 4): **`PlaygroundDefinedTagsCreate`** (defined playground tags: org-level keys `cost-center-bu`, `cost-center`, `category` with values from the catalog, Terraform) and **`PlaygroundDynamicTagsCreate`** (dynamic playground tag `subcategory` with an allowed-values pattern; the pinned google provider v6.50 lacks `allowed_values_regex`, so a newer provider or `gcloud`/API), used on playground folders only, not on the Control Tower (see [helloworld-spec.md](helloworld-spec.md) section 1.8), service accounts and IAM (`sa-lsb-api`, `sa-control-tower`, `sa-lsb-build`, plus the manual Groups Admin grant), Artifact Registry, the Self Service APIs Cloud Run service, build and deploy pipelines, org guardrails (`PlaygroundGuardrailsCreate`). For the hello world MVP, the Self Service APIs are first built and run locally against the real Firestore (ADC), so these follow once the API exists.
+To be defined one by one, in this order (after step 5): service accounts and IAM (`sa-lsb-api`, `sa-control-tower`, `sa-lsb-build`, plus the manual Groups Admin grant), Artifact Registry, the Self Service APIs Cloud Run service, build and deploy pipelines, org guardrails (`PlaygroundGuardrailsCreate`). For the hello world MVP, the Self Service APIs are first built and run locally against the real Firestore (ADC), so these follow once the API exists.
 
 **`ControlTowerNetworkCreate` (networking, service-specific, after services are enabled):** owns everything network-related for the Control Tower, so no earlier operation makes network decisions:
 - Decides the access model for exposing Cloud Run university-wide: `*.run.app` with Google sign-in or IAP on Cloud Run (no Compute needed); custom domain through an external HTTPS load balancer; campus-only or WAF via Cloud Armor; or internal-only via VPC.
