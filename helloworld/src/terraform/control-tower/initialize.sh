@@ -61,6 +61,14 @@ export GOOGLE_BILLING_PROJECT="$QUOTA_PROJECT"
 export USER_PROJECT_OVERRIDE=true
 
 # 6. Terraform: fail instead of prompting; every init uses the state bucket.
+#    Prefer a Terraform installed by install-terraform.sh (~/.local/bin) over any preinstalled one.
+if [[ -x "${HOME}/.local/bin/terraform" ]]; then
+  case ":${PATH}:" in
+    *":${HOME}/.local/bin:"*) ;;
+    *) export PATH="${HOME}/.local/bin:${PATH}" ;;
+  esac
+  hash -r 2>/dev/null || true
+fi
 export TF_INPUT=0
 if [[ -n "${TF_STATE_BUCKET-}" ]]; then
   export TF_CLI_ARGS_init="-backend-config=bucket=${TF_STATE_BUCKET}"

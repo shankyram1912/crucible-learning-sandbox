@@ -224,7 +224,7 @@ validate_common() {
   if command -v terraform >/dev/null 2>&1; then
     tfv="$(terraform_version)"
     if [[ -z "$tfv" ]]; then
-      problems+=("could not determine terraform version (output of 'terraform version': $(terraform version 2>&1 | head -n1))")
+      problems+=("could not determine terraform version from $(command -v terraform) (output: '$(terraform version 2>&1 | head -n1)'). This looks like a broken or placeholder terraform: run ./install-terraform.sh (installs to ~/.local/bin, which run.sh then prefers)")
     elif ! version_ge "$tfv" "$MIN_TERRAFORM"; then
       problems+=("terraform $tfv is older than $MIN_TERRAFORM (upgrade with: ./install-terraform.sh)")
     fi

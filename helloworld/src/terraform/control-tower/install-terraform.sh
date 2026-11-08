@@ -100,3 +100,10 @@ case ":${PATH}:" in
 esac
 
 "$TARGET" version | head -n1
+
+# Warn if a different terraform comes first on PATH (for example a broken preinstalled one).
+FIRST="$(command -v terraform 2>/dev/null || true)"
+if [[ -n "$FIRST" && "$FIRST" != "$TARGET" ]]; then
+  printf '%s\n' "  ${R}!${N} Another terraform comes first on PATH: ${FIRST}"
+  info "run.sh prefers ${TARGET} automatically. For ad-hoc use in this shell:  export PATH=\"${INSTALL_DIR}:\$PATH\"; hash -r"
+fi
