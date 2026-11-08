@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Learning Sandbox Day-0 Control Tower bootstrap runner.
 #
-#   ./run.sh --operation=<OperationName> [--validate-only] [--describe] [--yes] [--force]
+#   ./run.sh --operation=<OperationName> [--validate-only] [--describe] [--yes] [--force] [--no-tmux]
 #
 # Operations:
 #   Status                      progress of all bootstrap operations
@@ -13,6 +13,7 @@
 #   --describe        print the operation's long description and stop
 #   --yes             skip the confirmation prompt
 #   --force           run even if the previous operation is not DONE
+#   --no-tmux         do not relaunch inside the tmux session (default: interactive runs use tmux session lsb-day0)
 #
 # See helloworld/specs/day0-bootstrap-spec.md
 
@@ -62,14 +63,14 @@ die()   { err "$*"; exit 2; }
 title() { printf '\n%s\n\n' " ${C_BOLD}$*${C_RESET}"; }
 
 usage() {
-  sed -n '2,19p' "$0" | sed 's/^# \{0,1\}//'
+  sed -n '2,20p' "$0" | sed 's/^# \{0,1\}//'
   exit "${1:-0}"
 }
 
 # ---------------------------------------------------------------------------
 # Arguments
 # ---------------------------------------------------------------------------
-OP=""; YES=0; FORCE=0; DESCRIBE=0; VALIDATE_ONLY=0
+OP=""; YES=0; FORCE=0; DESCRIBE=0; VALIDATE_ONLY=0; NO_TMUX=0
 for arg in "$@"; do
   case "$arg" in
     --operation=*) OP="${arg#*=}" ;;
@@ -77,11 +78,41 @@ for arg in "$@"; do
     --force)       FORCE=1 ;;
     --describe)    DESCRIBE=1 ;;
     --validate-only) VALIDATE_ONLY=1 ;;
+    --no-tmux)     NO_TMUX=1 ;;
     -h|--help)     usage 0 ;;
     *)             err "Unknown argument: $arg"; usage 2 ;;
   esac
 done
 [[ -n "$OP" ]] || { err "Missing --operation=<OperationName>"; usage 2; }
+
+# ---------------------------------------------------------------------------
+# tmux: bootstrap operations relaunch themselves inside a tmux session so a
+# closed browser tab or dropped connection does not kill a running apply.
+# Skipped for Status/Restore, --describe, --validate-only, --no-tmux,
+# non-interactive runs, when already inside tmux, or when tmux is missing.
+# ---------------------------------------------------------------------------
+TMUX_SESSION="${LSB_TMUX_SESSION:-lsb-day0}"
+maybe_relaunch_in_tmux() {
+  case "$OP" in Status|Restore) return 0 ;; esac
+  (( DESCRIBE || VALIDATE_ONLY || NO_TMUX )) && return 0
+  [[ -n "${TMUX-}" ]] && return 0
+  [[ -t 0 && -t 1 ]] || return 0
+  command -v tmux >/dev/null 2>&1 || { warn "tmux not found: running without it (a disconnect can interrupt the run)"; return 0; }
+
+  if tmux has-session -t "$TMUX_SESSION" 2>/dev/null; then
+    err "A tmux session '$TMUX_SESSION' already exists (a run may be in progress)."
+    err "Reattach:  tmux attach -t $TMUX_SESSION     or close it:  tmux kill-session -t $TMUX_SESSION"
+    exit 2
+  fi
+
+  local cmd q
+  cmd="$(printf '%q ' "$ROOT/run.sh" "$@")"
+  q="echo; read -r -p '  Run finished. Press Enter to close this tmux session. ' _"
+  info "Starting in tmux session ${C_BOLD}${TMUX_SESSION}${C_RESET}  (detach: Ctrl-b then d   reattach: tmux attach -t ${TMUX_SESSION})"
+  sleep 1
+  exec tmux new-session -s "$TMUX_SESSION" -c "$ROOT" "$cmd; $q"
+}
+maybe_relaunch_in_tmux "$@"
 
 # ---------------------------------------------------------------------------
 # Config
@@ -293,8 +324,15 @@ tf_init() { # dir
 
 confirm() {
   (( YES )) && return 0
-  local ans
-  read -r -p "  Proceed? [y/N] " ans </dev/tty
+  local ans=""
+  # Prefer the terminal; fall back to stdin when there is no controlling terminal (e.g. piped/automated runs).
+  if { exec 3</dev/tty; } 2>/dev/null; then
+    read -r -p "  Proceed? [y/N] " ans <&3 || true
+    exec 3<&-
+  else
+    printf '  Proceed? [y/N] '
+    read -r ans || true
+  fi
   [[ "$ans" =~ ^[Yy]$ ]]
 }
 

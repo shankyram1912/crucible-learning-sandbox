@@ -21,6 +21,7 @@ Day-0 bootstrap creates the **Control Tower** foundation that everything else ru
 
 ```
 helloworld/src/terraform/control-tower/
+├── README.md                 admin runbook (how to run)
 ├── initialize.env.example    committed template
 ├── initialize.env            settings + generated outputs (gitignored)
 ├── initialize.sh             loads and validates settings (sourced)
@@ -135,7 +136,7 @@ Every key is also exported to Terraform as a lowercase `TF_VAR_` copy (for examp
 
 ## 4. `run.sh`
 
-Usage: `./run.sh --operation=<OperationName> [--validate-only] [--describe] [--yes] [--force]`
+Usage: `./run.sh --operation=<OperationName> [--validate-only] [--describe] [--yes] [--force] [--no-tmux]`
 
 ### 4.1 Operations
 | Operation | Kind | Does |
@@ -213,7 +214,8 @@ $ ./run.sh --operation=ControlTowerProjectCreate
 9. Writes outputs back to `initialize.env`.
 10. Marks the operation `DONE` (or `FAILED` on any error).
 
-- `--validate-only` runs the operation's validation and stops; `--describe` only prints the description; `--yes` skips the confirmation prompt; `--force` runs an operation even if the previous one is not `DONE`.
+- `--validate-only` runs the operation's validation and stops; `--describe` only prints the description; `--yes` skips the confirmation prompt; `--force` runs an operation even if the previous one is not `DONE`; `--no-tmux` runs in the current shell instead of the tmux session.
+- **tmux is built in:** in an interactive terminal, a bootstrap operation relaunches itself inside the tmux session `lsb-day0` (reattach with `tmux attach -t lsb-day0`). It is skipped for `Status`, `Restore`, `--describe`, `--validate-only`, `--no-tmux`, non-interactive runs, or when already inside tmux. If the session already exists, `run.sh` refuses to start a second run.
 - There is **no destroy operation**.
 
 ### 4.4 Validation is built into every operation
@@ -277,7 +279,7 @@ Colors follow [apiservices-spec.md](apiservices-spec.md) section 5.1.
 2. **Apply exactly what was planned:** the plan is saved, shown, confirmed, then applied as-is.
 3. **Pin versions:** `required_version`, pinned providers, and committed `.terraform.lock.hcl`.
 4. **Log every run** to `logs/<OperationName>-<timestamp>.log` in Cloud Shell (never in the repo), and copy logs to the state bucket.
-5. **Use `tmux` for long operations** so a Cloud Shell disconnect does not kill a running apply.
+5. **tmux built in** (section 4.3): interactive runs use the `lsb-day0` tmux session so a Cloud Shell disconnect does not kill a running apply.
 6. **Protect critical resources:** `prevent_destroy` on the project, state bucket and Firestore database, plus GCP deletion protection where available.
 7. **Label everything** with `managed-by=lsb-day0` and `operation=<operation-name>`.
 8. **Strict shell mode:** `set -euo pipefail` in scripts.
