@@ -5,6 +5,7 @@ Scope: guiding principles for the hello world prototype (one Playground Folder, 
 Related specs:
 - [../todolist.md](../todolist.md): build sequence and status (Day-0 steps, Self Service API operations)
 - [day0-bootstrap-spec.md](day0-bootstrap-spec.md): Day-0 Control Tower bootstrap (Cloud Shell, `initialize.env`, `run.sh`, steps)
+- [terraform-pipeline-spec.md](terraform-pipeline-spec.md): playground Terraform pipeline (identities, secured source, reliability)
 - [apiservices-spec.md](apiservices-spec.md): Learning Sandbox Self Service APIs (REST interface and `lsb` CLI mapping)
 - [gcpservices-spec.md](gcpservices-spec.md): GCP services
 
@@ -51,6 +52,8 @@ gs://lsb-control-tower-bucket/
 - Playground teardown archives `playgrounds/<playground>/` instead of deleting it.
 
 ### 1.6 Execution rules
+Full pipeline behavior (triggering, identities, secured source, reliability): [terraform-pipeline-spec.md](terraform-pipeline-spec.md).
+
 1. **Pre-check before every run:** template valid, prerequisites present, required groups defined with at least one member. Any failure stops the job before Terraform runs.
 2. **One active job per playground.**
 3. **Step by step with readiness:** each service step completes and its resources are ready before dependent services start. Progress is written to Firestore per task.
@@ -106,37 +109,48 @@ Folders cannot carry labels, and labels are never inherited. To cover every proj
 3. **No designation of existing folders.** Playground Folders and playgrounds are always created by the platform.
 4. **Ordinary folders stay outside the platform.** Creating folders for organization follows normal GCP folder IAM (ClickOps); the platform only reads them (for example in the folder picker).
 
-### 2.2 Service groups
-| Group | Members | Purpose |
-|---|---|---|
-| `grp-lsb-bu-admins@<domain>` | BU Admins, plus `grp-lsb-it-admins@` nested | May create Playground Folders and playgrounds (with the creation gate, section 2.3) |
-| `grp-lsb-it-admins@<domain>` | IT Admins | Everything BU Admins can do, plus: **only IT Admins can add or remove members of both groups**; control of every Playground Folder and playground by default |
+### 2.2 Service groups and responsibilities
+| Group | Members | Configures | Also |
+|---|---|---|---|
+| `grp-lsb-it-admins@<domain>` | IT Admins | **Playground Folders** (create, defined tags, name the BU Admin controllers) | Only IT Admins add or remove members of both groups; control of every Playground Folder and playground by default |
+| `grp-lsb-bu-admins@<domain>` | BU Admins, plus `grp-lsb-it-admins@` nested | **Playgrounds** inside the Playground Folders they control (owners, `subcategory` override, template, services) | |
 
 - Both are created in Day-0 (identity operation) as **locked groups** (`cloudidentity.googleapis.com/groups.locked` plus the security label): only Super Admins and Groups Admins can change membership; group owners, managers and self-join are blocked.
-- `sa-control-tower` holds **Groups Admin** (Admin console), so membership changes go through the platform, which enforces "IT Admins only". No human owners or managers on these groups.
-- Drift detection: Admin audit log alert on membership changes not made by `sa-control-tower`; platform-recorded intended membership compared periodically.
+- Membership changes go through the platform, which enforces "IT Admins only". No human owners or managers on these groups.
+- Drift detection: Admin audit log alert on membership changes not made through the platform; platform-recorded intended membership compared periodically.
 
-### 2.3 Creation gate (Playground Folders and playgrounds)
-The platform creates a Playground Folder or a playground only when **both** hold:
-1. The caller is in `grp-lsb-bu-admins@` (IT Admins included through nesting), checked as the platform.
-2. The caller holds **folder-create rights in standard GCP IAM on the parent folder** (`resourcemanager.folders.create`): the school folder for a Playground Folder, the Playground Folder for a playground. Checked with the **caller's own access token** (`testIamPermissions`), so GCP evaluates groups, inheritance and deny rules.
+### 2.3 Creation gates (checked with the caller's own access token)
+| Creating | Caller must be in | Caller's own GCP permissions on the parent (via `testIamPermissions`) |
+|---|---|---|
+| **Playground Folder** (parent: a school folder) | `grp-lsb-it-admins@` | `resourcemanager.folders.create`, `resourcemanager.folders.setIamPolicy`, `resourcemanager.tagValueBindings.create` |
+| **Playground** (parent: a Playground Folder) | `grp-lsb-bu-admins@` (IT Admins included) | Same three, on the Playground Folder |
 
-The folder picker likewise shows only folders the caller can browse with their own permissions.
+- GCP evaluates groups, inheritance and deny rules; all permissions are checked before anything is created, so a folder is never left half-configured.
+- The folder picker shows only folders the caller can browse with their own permissions.
 
 ### 2.4 Who gets what
+**Standing grants (outside individual playgrounds):**
+| Principal | Granted on | Roles | Why |
+|---|---|---|---|
+| `grp-lsb-it-admins@` | Common ancestor of the school folders (for example University Sandbox) | Folder Admin, Tag User, Project Creator | IT Admins create and configure Playground Folders in any school |
+| `grp-lsb-it-admins@` | Defined tag keys (`cost-center-bu`, `cost-center`, `category`) | Tag User | Only IT Admins set the governed cost codes |
+| `grp-lsb-bu-admins@` | Dynamic tag key (`subcategory`) | Tag User | BU Admins set or override `subcategory` on playgrounds |
+
+**Per Playground Folder and playground (bound by the platform at creation):**
 | Principal | Playground Folder | Playground folder | Projects in the playground |
 |---|---|---|---|
-| **Playground Folder controllers**: the creator plus additional users or groups (1..N) named at creation | **Control of the folder** (folder admin, including creating projects and playgrounds) | Inherited | Owner (inherited) |
-| `grp-lsb-it-admins@` (always, by default) | Control of the folder | Inherited | Owner (inherited) |
-| Anyone with roles on the parent school folder | Inherited from the school folder (GCP inheritance) | Inherited | Inherited |
+| **Playground Folder controllers**: BU Admin users or groups (1..N) named by the IT Admin at creation | **Folder Admin + Tag User + Project Creator** (create and configure playgrounds, create projects) | Inherited | Owner (inherited) |
+| `grp-lsb-it-admins@` | Inherited from the standing grant | Inherited | Inherited |
 | **Playground owners**: 1..N users or groups named at playground creation (editable later) | Nothing | **Browser** only; **no Project Creator** | **`roles/owner`**, bound **per project** |
 | Students and Student Admins (preset groups) | Nothing | Nothing | Per project (baseline usage roles) and per own resource only |
-| `sa-control-tower` | Folder IAM Admin + Project Creator (granted on the common ancestor of school folders) | Inherited | Owner (creator of platform-made projects) |
+| Terraform runner service account (pipeline stage, section 2.10) | Project Creator via the common ancestor | Inherited | Owner (creator of pipeline-made projects) |
 
-1. **Admin rights are inherited; student rights are not.** Controllers' rights are bound on folders and flow to everything below. Playground owners are bound on each project. Students are never bound on a folder.
-2. **Project creation** inside a playground is done only by Playground Folder controllers, IT Admins, or the platform. Playground owners work inside the projects they are given.
-3. **Isolation between schools:** BU Admins control only the Playground Folders they created or were named on (plus anything inherited from their school folder), not every Playground Folder.
-4. **Billing:** linking a new project to billing additionally requires Billing Account User on the billing account (account-wide; scoped per school only by using separate billing accounts).
+1. **BU Admins need no grants on school folders.** All their GCP rights come from the Playground Folders where an IT Admin named them as controllers.
+2. **Admin rights are inherited; student rights are not.** Controllers' rights are bound on the Playground Folder and flow to everything below. Playground owners are bound on each project. Students are never bound on a folder.
+3. **Project creation** inside a playground is done only by Playground Folder controllers, IT Admins, or the Terraform pipeline. Playground owners work inside the projects they are given.
+4. **Isolation between schools:** BU Admins control only the Playground Folders they were named on.
+5. **Folder Admin also includes `folders.delete` and `folders.move`**, so controllers could delete (empty) or move folders in the Console. Optional later hardening: an IAM deny on move/delete for non-IT principals, or a custom role without them.
+6. **Billing:** linking a new project to billing additionally requires Billing Account User on the billing account (account-wide; scoped per school only by using separate billing accounts).
 
 ### 2.5 Playground project hook
 An event-driven hook in the Control Tower (project-creation audit log event to a small function) runs for every project created in a playground, including projects created in the Console:
@@ -147,7 +161,7 @@ Platform-created projects get both at creation. Changing a playground's owners o
 
 ### 2.6 Principles
 1. **Prefer groups over individual users.** Named users are allowed only as Playground Folder controllers and playground owners; everything else is granted to groups.
-2. **Authorize the user, act as the platform.** The API verifies the caller, checks the creation gate, records `requested_by`, then provisioning runs as `sa-control-tower` (impersonated by the API's runtime identity). Portal rights grant no GCP access by themselves.
+2. **Config stage acts as the user; pipeline stage acts as the platform** (section 2.10). Portal membership grants no GCP access by itself.
 3. **Group-to-role bindings are structure and live in Terraform.** User-to-group membership is data, managed by a bulk Cloud Identity API operation (initial load and later changes), not Terraform.
 4. **Preset groups come from the playground template** (Student Admins, Students). The template's "admins" slot is filled by the playground owners. Enabling a new service reuses the existing playground groups.
 5. **Roles are service specific.** Each service in a template maps each preset group to a standard (predefined) role or a service-specific custom role.
@@ -173,3 +187,17 @@ Each service in a template declares its role per preset group. Example for GCS (
 ### 2.9 Guardrails
 1. Org policies set at Playground Folder level (or a common ancestor) are inherited by every playground project (allowed locations, no service account keys, uniform bucket-level access, Cloud SQL without public IP, domain-restricted sharing, skip default network).
 2. IAM deny rules use "deny everyone except platform SA and admins umbrella group", so they never need editing when new playground groups are created.
+
+### 2.10 Execution identities and pipeline security
+```
+User ── ID token + access token ──▶ Self Service APIs (Cloud Run)
+  ├─ CONFIG STAGE (no service account; acts as the user with the user's access token)
+  │    Playground Folders and playgrounds: create folders, bind controllers/owners, bind tags,
+  │    record configuration in Firestore. Audit logs show the real user.
+  └─ PIPELINE STAGE (only after a playground is configured)
+       Cloud Run's service account starts a predefined Cloud Build trigger;
+       Terraform runs as a dedicated runner service account (projects, billing, services, student bindings).
+```
+1. **Config stage uses the user's token, no service account.** The user's own permissions (section 2.3) are what make the change; nothing is created that the user could not create themselves.
+2. **Pipeline stage:** identities, secured source (variables only, predefined trigger, protected branch, pinned versions and image) and reliability are specified in [terraform-pipeline-spec.md](terraform-pipeline-spec.md).
+3. **Open:** membership changes of the two locked groups need a directory admin role; either IT Admins hold Groups Admin/Editor (user token) or a platform service account does it (the one exception to "no service account" in the config stage).
