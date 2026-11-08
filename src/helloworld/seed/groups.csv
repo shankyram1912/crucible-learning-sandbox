@@ -1,0 +1,9 @@
+email,display_name,type,scope
+grp-ls-project-admins@shankyram.altostrat.com,LS Project Admins,Umbrella (all admins),Learning Sandbox
+grp-ls-it-admins@shankyram.altostrat.com,LS IT Admins,Admin,Learning Sandbox
+grp-ls-biz-admins@shankyram.altostrat.com,LS Business School Admins,Admin,BU1 Business School
+grp-ls-cs-admins@shankyram.altostrat.com,LS Computer Science Admins,Admin,BU2 Computer Science
+grp-ls-cs-cs100-admins@shankyram.altostrat.com,LS CS 100 Admins,Admin,BU2 / UG / CS 100
+grp-ls-cs-ai303-admins@shankyram.altostrat.com,LS AI 303 Admins,Admin,BU2 / PG / AI 303
+grp-ls-cs-cs100-students@shankyram.altostrat.com,LS CS 100 Students,Students,BU2 / UG / CS 100
+grp-ls-cs-ai303-students@shankyram.altostrat.com,LS AI 303 Students,Students,BU2 / PG / AI 303

@@ -1,0 +1,14 @@
+group_email,member_email,member_type
+grp-ls-project-admins@shankyram.altostrat.com,grp-ls-it-admins@shankyram.altostrat.com,GROUP
+grp-ls-project-admins@shankyram.altostrat.com,grp-ls-biz-admins@shankyram.altostrat.com,GROUP
+grp-ls-project-admins@shankyram.altostrat.com,grp-ls-cs-admins@shankyram.altostrat.com,GROUP
+grp-ls-project-admins@shankyram.altostrat.com,grp-ls-cs-cs100-admins@shankyram.altostrat.com,GROUP
+grp-ls-project-admins@shankyram.altostrat.com,grp-ls-cs-ai303-admins@shankyram.altostrat.com,GROUP
+grp-ls-it-admins@shankyram.altostrat.com,admin@shankyram.altostrat.com,USER
+grp-ls-biz-admins@shankyram.altostrat.com,biz-admin@shankyram.altostrat.com,USER
+grp-ls-cs-admins@shankyram.altostrat.com,cs-admin@shankyram.altostrat.com,USER
+grp-ls-cs-cs100-admins@shankyram.altostrat.com,cs100-lecturer@shankyram.altostrat.com,USER
+grp-ls-cs-ai303-admins@shankyram.altostrat.com,ai303-lecturer@shankyram.altostrat.com,USER
+grp-ls-cs-cs100-students@shankyram.altostrat.com,cs100-student1@shankyram.altostrat.com,USER
+grp-ls-cs-cs100-students@shankyram.altostrat.com,cs100-student2@shankyram.altostrat.com,USER
+grp-ls-cs-ai303-students@shankyram.altostrat.com,ai303-student1@shankyram.altostrat.com,USER

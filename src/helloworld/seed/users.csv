@@ -1,0 +1,9 @@
+email,display_name,persona,scope
+admin@shankyram.altostrat.com,Sandbox Admin,IT Admin,Learning Sandbox
+biz-admin@shankyram.altostrat.com,Business School Admin,School Admin,BU1 Business School
+cs-admin@shankyram.altostrat.com,Computer Science Admin,School Admin,BU2 Computer Science
+cs100-lecturer@shankyram.altostrat.com,CS 100 Lecturer,Cohort Admin,BU2 / UG / CS 100
+ai303-lecturer@shankyram.altostrat.com,AI 303 Lecturer,Cohort Admin,BU2 / PG / AI 303
+cs100-student1@shankyram.altostrat.com,CS 100 Student 1,Student,BU2 / UG / CS 100
+cs100-student2@shankyram.altostrat.com,CS 100 Student 2,Student,BU2 / UG / CS 100
+ai303-student1@shankyram.altostrat.com,AI 303 Student 1,Student,BU2 / PG / AI 303
