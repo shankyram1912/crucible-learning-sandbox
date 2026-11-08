@@ -107,7 +107,8 @@ After each successful operation, `initialize.env`, `controltower.status` and `lo
 ## 5. Re-runs and recovery
 
 - **Re-running a `DONE` operation is safe.** Terraform shows no changes.
-- **Interrupted or failed run:** fix the cause shown in the error, then run the same operation again. Terraform continues from its state.
+- **Interrupted or failed run:** fix the cause shown in the error, then run the same operation again. Terraform continues from its state. An interruption (Ctrl-C, killed tmux session, recycled Cloud Shell VM) is recorded as `FAILED` with `interrupted (SIG...)`.
+- **Stale state lock:** if an interrupted run left a Terraform state lock in the bucket, the next run shows the lock (ID, who, age) and offers to remove it. It only does so when the previous run of that operation ended `FAILED` or interrupted; with `--yes` it removes it automatically only if the lock is older than 60 minutes.
 - **New Cloud Shell or another admin:** clone the repo, create `initialize.env` with at least `QUOTA_PROJECT` and `TF_STATE_BUCKET`, then:
   ```bash
   ./run.sh --operation=Restore
@@ -129,5 +130,6 @@ There is no destroy operation. The project, folder and bucket are protected from
 | `billing account ... not visible` | You need Billing User (or Viewer) on the billing account |
 | Project create fails with `already exists` | Project IDs are global and never reusable. Set a different `CT_PROJECT_ID` in `initialize.env` and re-run (the folder is kept) |
 | Bucket create fails right after project creation | Billing can take a minute to propagate. Re-run the operation |
+| `Error acquiring the state lock` / `State is locked but the previous run is not marked interrupted or failed` | Another run may be in progress. If you are sure it is stale: `terraform -chdir=<operation folder> force-unlock <lock ID>` (the message prints the exact command) |
 | `... must be DONE before ...` | Run the earlier operation first, or use `--force` deliberately |
 | `A tmux session 'lsb-day0' already exists` | A run may still be going: `tmux attach -t lsb-day0`. If it is finished or stale: `tmux kill-session -t lsb-day0` |

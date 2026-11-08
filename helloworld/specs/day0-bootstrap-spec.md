@@ -260,7 +260,7 @@ ControlTowerApisEnable_ERROR="firestore.googleapis.com: billing not ready"
 |---|---|
 | Operation starts | `STATUS=RUNNING`, `AT`, `BY` (gcloud account), `COMMIT` (git commit of the clone) |
 | Apply and readiness succeed | `STATUS=DONE`, `AT` |
-| Any command fails, or the script is interrupted | A shell `trap` sets `STATUS=FAILED`, `AT`, `ERROR` (last error line) |
+| Any command fails, or the script is interrupted (Ctrl-C, terminate, or hang-up from a killed tmux session or recycled Cloud Shell VM) | A shell `trap` sets `STATUS=FAILED`, `AT`, `ERROR` (`failed at: <step>` or `interrupted (SIG<name>) at: <step>`). The log writer ignores these signals so the status is always written |
 | After every update | The file is copied to the state bucket (from `ControlTowerProjectCreate` onward) |
 
 ### 5.3 Rules
@@ -269,6 +269,7 @@ ControlTowerApisEnable_ERROR="firestore.googleapis.com: billing not ready"
 3. An operation left `RUNNING` (for example Cloud Shell closed mid-apply) is shown as **interrupted** by `Status`; re-running it is safe because Terraform picks up from its state.
 4. **Shared through the state bucket**, so a new Cloud Shell or a second admin sees the same progress (`restore`).
 5. Re-running a `DONE` operation is safe: Terraform shows no changes, which also re-verifies it.
+6. **Stale state locks:** after `terraform init`, `run.sh` checks for a Terraform lock (`default.tflock`) in the operation's state prefix. It is treated as stale only if the operation's previous status was `RUNNING` (interrupted) or `FAILED`; the admin confirms removal (`terraform force-unlock`), or with `--yes` it is removed automatically only if older than 60 minutes. Otherwise the run stops without changing anything, printing the exact `force-unlock` command.
 
 ### 5.4 Status output
 ```

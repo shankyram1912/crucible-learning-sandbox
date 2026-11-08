@@ -333,15 +333,15 @@ tf_init() { # dir
   fi
 }
 
-confirm() {
+confirm() { # [prompt]
   (( YES )) && return 0
-  local ans=""
+  local ans="" prompt="${1:-Proceed?}"
   # Prefer the terminal; fall back to stdin when there is no controlling terminal (e.g. piped/automated runs).
   if { exec 3</dev/tty; } 2>/dev/null; then
-    read -r -p "  Proceed? [y/N] " ans <&3 || true
+    read -r -p "  ${prompt} [y/N] " ans <&3 || true
     exec 3<&-
   else
-    printf '  Proceed? [y/N] '
+    printf '  %s [y/N] ' "$prompt"
     read -r ans || true
   fi
   [[ "$ans" =~ ^[Yy]$ ]]
@@ -471,24 +471,82 @@ post_apply_ControlTowerApisEnable() { # dir prefix
 # ---------------------------------------------------------------------------
 # Run a bootstrap operation
 # ---------------------------------------------------------------------------
-CURRENT_OP=""; CURRENT_STEP=""
+CURRENT_OP=""; CURRENT_STEP=""; PREV_STATUS=""
 
+SIGNAL=""
+
+# Records FAILED for errors and for interruptions (Ctrl-C, terminate, and hang-up, which is what
+# a killed tmux session or a recycled Cloud Shell VM sends). Status is written first, before any
+# output, because the log pipe may already be gone when the session dies.
 on_fail() {
-  local rc=$?
-  trap - ERR INT TERM
+  local rc=$? reason
+  clear_fail_traps
+  trap '' PIPE
   if [[ -n "$CURRENT_OP" ]]; then
+    if [[ -n "$SIGNAL" ]]; then
+      reason="interrupted (SIG${SIGNAL}) at: ${CURRENT_STEP:-unknown step}"
+    else
+      reason="failed at: ${CURRENT_STEP:-unknown step} (exit $rc)"
+    fi
     status_set "$CURRENT_OP" STATUS FAILED
     status_set "$CURRENT_OP" AT "$(now_utc)"
-    status_set "$CURRENT_OP" ERROR "failed at: ${CURRENT_STEP:-unknown step} (exit $rc), see ${LOG_FILE-logs}"
+    status_set "$CURRENT_OP" ERROR "${reason}, see ${LOG_FILE-logs}"
     backup_runner_files || true
-    err "${CURRENT_OP} FAILED at: ${CURRENT_STEP:-unknown step}"
-    err "Log: ${LOG_FILE-}"
+    err "${CURRENT_OP} ${reason}" 2>/dev/null || true
+    err "Log: ${LOG_FILE-}" 2>/dev/null || true
   fi
   exit 1
 }
 
+set_fail_traps() {
+  trap on_fail ERR
+  trap 'SIGNAL=INT;  on_fail' INT
+  trap 'SIGNAL=TERM; on_fail' TERM
+  trap 'SIGNAL=HUP;  on_fail' HUP
+}
+clear_fail_traps() { trap - ERR INT TERM HUP; }
+
+# Stop without changing anything: restore the operation's previous status.
+abort_unchanged() { # message
+  clear_fail_traps
+  status_set "$CURRENT_OP" STATUS "${PREV_STATUS:-NOT_STARTED}"
+  CURRENT_OP=""
+  die "$1"
+}
+
+# A Terraform state lock left behind by an interrupted or failed run blocks every later run.
+# The lock is treated as stale only if the previous run of this operation ended RUNNING
+# (interrupted) or FAILED; otherwise another run may genuinely be in progress.
+check_stale_lock() { # dir prefix
+  local dir="$1" prefix="$2" lockpath lock id who op created age_min
+  [[ -f "$dir/backend.tf" ]] || return 0
+  lockpath="gs://${TF_STATE_BUCKET}/${prefix}/default.tflock"
+  lock="$(gcloud storage cat "$lockpath" 2>/dev/null || true)"
+  [[ -n "$lock" ]] || return 0
+  id="$(jq -r '.ID // empty' <<<"$lock" 2>/dev/null || true)"
+  who="$(jq -r '.Who // "unknown"' <<<"$lock" 2>/dev/null || echo unknown)"
+  op="$(jq -r '.Operation // "unknown"' <<<"$lock" 2>/dev/null || echo unknown)"
+  created="$(jq -r '.Created // empty' <<<"$lock" 2>/dev/null || true)"
+  age_min=$(( ( $(date -u +%s) - $(date -u -d "${created:-now}" +%s 2>/dev/null || date -u +%s) ) / 60 ))
+  warn "Terraform state lock found: ${lockpath}"
+  warn "  lock ID ${id:-?}, held by ${who}, ${op}, created ${created:-?} (${age_min} min ago)"
+  [[ -n "$id" ]] || abort_unchanged "Could not read the lock ID from ${lockpath}. Inspect it with: gcloud storage cat ${lockpath}"
+  if [[ "$PREV_STATUS" != "RUNNING" && "$PREV_STATUS" != "FAILED" ]]; then
+    abort_unchanged "State is locked but the previous run is not marked interrupted or failed: another run may be in progress. If you are sure it is stale: terraform -chdir=${dir} force-unlock ${id}"
+  fi
+  warn "The previous run of this operation ended ${PREV_STATUS}, so this lock is most likely stale."
+  if (( YES )); then
+    (( age_min >= 60 )) || abort_unchanged "Not removing a lock younger than 60 minutes automatically (--yes). Re-run without --yes to confirm interactively."
+  else
+    confirm "Remove the stale lock?" || abort_unchanged "Lock kept. Nothing was changed."
+  fi
+  CURRENT_STEP="removing stale state lock"
+  terraform -chdir="$dir" force-unlock -force "$id"
+  ok "stale lock ${id} removed"
+}
+
 run_operation() { # op
-  local op="$1" idx dir prefix prev rc prev_status
+  local op="$1" idx dir prefix prev rc
   idx="$(op_index "$op")"
   dir="$ROOT/${OP_DIR[$op]}"
   prefix="control-tower/${OP_DIR[$op]}"
@@ -513,11 +571,14 @@ run_operation() { # op
 
   mkdir -p "$LOG_DIR"
   LOG_FILE="$LOG_DIR/${op}-$(date -u +%Y%m%dT%H%M%SZ).log"
-  exec > >(tee -a "$LOG_FILE") 2>&1
+  # The log writer ignores hang-up/interrupt signals and keeps writing the log file even if the
+  # terminal is gone. Otherwise a killed tmux session would kill tee first, and bash would then die
+  # of SIGPIPE before on_fail could record the interruption.
+  exec > >(trap '' HUP INT TERM PIPE; exec tee -a --output-error=warn "$LOG_FILE") 2>&1
 
   CURRENT_OP="$op"
-  prev_status="$(status_get "$op" STATUS)"
-  trap on_fail ERR INT TERM
+  PREV_STATUS="$(status_get "$op" STATUS)"
+  set_fail_traps
   status_set "$op" STATUS RUNNING
   status_set "$op" AT "$(now_utc)"
   status_set "$op" BY "$(gcloud_account)"
@@ -529,6 +590,7 @@ run_operation() { # op
   CURRENT_STEP="terraform init"
   if declare -F "pre_init_${op}" >/dev/null; then "pre_init_${op}" "$dir" "$prefix"; fi
   tf_init "$dir"
+  check_stale_lock "$dir" "$prefix"
 
   CURRENT_STEP="terraform plan"
   # Exit code 2 means "changes present". Capture it via || so neither errexit nor the ERR trap fires.
@@ -539,8 +601,8 @@ run_operation() { # op
     2) printf '\n'
        if ! confirm; then
          warn "Cancelled. Nothing was changed."
-         status_set "$op" STATUS "${prev_status:-NOT_STARTED}"
-         CURRENT_OP=""; trap - ERR INT TERM; rm -f "$dir/tfplan"; exit 0
+         status_set "$op" STATUS "${PREV_STATUS:-NOT_STARTED}"
+         CURRENT_OP=""; clear_fail_traps; rm -f "$dir/tfplan"; exit 0
        fi
        CURRENT_STEP="terraform apply"
        terraform -chdir="$dir" apply -input=false tfplan ;;
@@ -556,7 +618,7 @@ run_operation() { # op
   load_config
   backup_runner_files
   CURRENT_OP=""
-  trap - ERR INT TERM
+  clear_fail_traps
   title "${C_GREEN}✔ ${op} DONE${C_RESET}"
 }
 
