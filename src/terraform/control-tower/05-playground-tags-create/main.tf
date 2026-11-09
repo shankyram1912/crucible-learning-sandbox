@@ -1,7 +1,7 @@
 # PlaygroundTagsCreate
 # Five dynamic playground tag keys at org level. No tag values are created: any value matching
 # the pattern can be bound directly. Allowed values for the IT-governed keys live in the Firestore
-# catalog and are checked by the Self Service APIs before binding (helloworld-spec 1.8).
+# catalog and are checked by the Self Service APIs before binding (control-tower-spec 1.8).
 
 locals {
   # One value format for tags and labels: starts with a letter, lowercase letters, digits and

@@ -35,7 +35,7 @@ gcloud services enable cloudresourcemanager.googleapis.com serviceusage.googleap
 2. Clone the repo and go to this folder:
    ```bash
    git clone https://github.com/shankyram1912/learning-sandbox.git
-   cd learning-sandbox/helloworld/src/terraform/control-tower
+   cd learning-sandbox/src/terraform/control-tower
    ```
 3. Create your settings file and fill it in:
    ```bash

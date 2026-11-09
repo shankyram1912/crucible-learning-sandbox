@@ -1,6 +1,6 @@
-# Hello World Spec: Terraform and IAM Principles
+# LSB Control Tower Spec: Terraform and IAM Principles
 
-Scope: guiding principles for the hello world prototype (one Playground Folder, one playground, a few services). These principles carry forward into the main `specs/` once validated.
+Scope: guiding principles for the LSB Control Tower. These specs supersede the earlier BRS and TDD, which are kept for reference in `specs-reference/`.
 
 Related specs:
 - [../todolist.md](../todolist.md): build sequence and status (Day-0 steps, Self Service API operations)

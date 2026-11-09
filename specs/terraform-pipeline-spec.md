@@ -1,6 +1,6 @@
-# Hello World Spec: Playground Terraform Pipeline
+# LSB Control Tower Spec: Playground Terraform Pipeline
 
-> Parent: [helloworld-spec.md](helloworld-spec.md)
+> Parent: [control-tower-spec.md](control-tower-spec.md)
 
 How playground Terraform runs: when it is triggered, which identities it uses, how its source is secured, and how every run is made predictable, safe to retry and visible. Day-0 Terraform (run by hand with `run.sh`) is covered by [day0-bootstrap-spec.md](day0-bootstrap-spec.md); both share one runner core (section 6).
 
@@ -10,7 +10,7 @@ How playground Terraform runs: when it is triggered, which identities it uses, h
 
 ## 1. Purpose and stages
 
-1. **Config stage (no Terraform):** Playground Folders and playgrounds are created by the Self Service APIs with the **user's own token** ([helloworld-spec.md](helloworld-spec.md) section 2.10).
+1. **Config stage (no Terraform):** Playground Folders and playgrounds are created by the Self Service APIs with the **user's own token** ([control-tower-spec.md](control-tower-spec.md) section 2.10).
 2. **Pipeline stage (Terraform):** only after a playground is **configured** (template, services, owners, groups), the API starts the pipeline for that playground and config version.
 3. **Tasks:** each Terraform module of the playground (project creation, then each enabled service in dependency order) is one task in the job, with its own state and readiness check.
 
@@ -43,7 +43,7 @@ The internet-facing service never holds provisioning rights.
 3. **Pinned source:** the trigger is bound to one repo and one protected branch (required reviews, no force-push); modules referenced by tag or commit SHA; providers pinned and the lock file committed.
 4. **Pinned builder image:** the Terraform image is referenced by digest (`@sha256:...`), never `:latest`.
 5. **Small admin circle:** only a small group can change the trigger, the repo protections or the runner's IAM; changes are audited.
-6. **Repo for production:** an org-owned private repo (protected GitHub org repo or Secure Source Manager). The public hello world repo is acceptable only with a protected `main`.
+6. **Repo for production:** an org-owned private repo (protected GitHub org repo or Secure Source Manager). This public repo is acceptable only with a protected `main`.
 
 ---
 

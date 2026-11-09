@@ -1,4 +1,4 @@
-# Hello World Seed Data (proposal)
+# LSB Control Tower Seed Data (proposal)
 
 Status: proposed 2026-11-08. Users in [users.csv](users.csv) (Admin console bulk upload format). Not created yet. Replaces the defunct seed in `seed/backup/` (old cohort model).
 
@@ -55,7 +55,7 @@ Prerequisite: `lsb-it-admin1@` and `lsb-bu-biz1@` are in their service groups, a
 
 Outcomes:
 - All as expected: no spec change.
-- IT Admin cannot bind: Tag User on the key is not enough for dynamic values; helloworld-spec section 2 needs Tag User higher up.
+- IT Admin cannot bind: Tag User on the key is not enough for dynamic values; control-tower-spec section 2 needs Tag User higher up.
 - BU Admin can remove IT's binding: needs an IAM deny on binding removal, or a narrower role than Tag User on Playground Folders.
 
 Teardown: remove the bindings, the test memberships and the folder.
@@ -67,7 +67,7 @@ Teardown: remove the bindings, the test memberships and the folder.
 [users.csv](users.csv) keeps only the Admin console template columns we need (Directory > Users > Bulk update users): the five required ones (first name, last name, email, password, org unit `/`), Employee Title (persona) and Change Password at Next Sign-In (`False`). Header names must match the template exactly; optional columns can be left out. If an upload is ever rejected for missing columns, use the full template header instead. **The Password column is empty in the repo**; fill it in a copy outside the repo just before uploading:
 
 ```bash
-cd ~/learning-sandbox/helloworld/seed
+cd ~/learning-sandbox/seed
 read -r -s -p "Seed password (min 8 chars): " PW; echo
 awk -F, -v OFS=, -v pw="$PW" 'NR>1{$4=pw}1' users.csv > ~/lsb-users-upload.csv; unset PW
 # Admin console > Directory > Users > Bulk update users > upload ~/lsb-users-upload.csv

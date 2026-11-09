@@ -21,7 +21,7 @@
 #   --force           run even if the previous operation is not DONE
 #   --no-tmux         do not relaunch inside the tmux session (default: interactive runs use tmux session lsb-day0)
 #
-# See helloworld/specs/day0-bootstrap-spec.md
+# See specs/day0-bootstrap-spec.md
 
 set -Eeuo pipefail
 

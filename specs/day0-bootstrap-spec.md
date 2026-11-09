@@ -1,6 +1,6 @@
-# Hello World Spec: Day-0 Bootstrap
+# LSB Control Tower Spec: Day-0 Bootstrap
 
-> Parent: [helloworld-spec.md](helloworld-spec.md)
+> Parent: [control-tower-spec.md](control-tower-spec.md)
 
 Day-0 bootstrap creates the **Control Tower** foundation that everything else runs on. It is run **once, by a human org admin**, one operation at a time. This spec covers the execution model, configuration, the `run.sh` runner, progress tracking, and the baseline steps.
 
@@ -20,7 +20,7 @@ Day-0 bootstrap creates the **Control Tower** foundation that everything else ru
 ## 2. Layout
 
 ```
-helloworld/src/terraform/control-tower/
+src/terraform/control-tower/
 ├── README.md                 admin runbook (how to run)
 ├── initialize.env.example    committed template
 ├── initialize.env            settings + generated outputs (gitignored)
@@ -112,10 +112,10 @@ Every key is also exported to Terraform as a lowercase `TF_VAR_` copy (for examp
 | Key | What it is | Example | Notes |
 |---|---|---|---|
 | `TF_STATE_BUCKET` | Bucket for all Terraform state and runner backups | `${CT_PROJECT_ID}-bucket` (e.g. `lsb-control-tower-e26-bucket`) | Created by `ControlTowerProjectCreate`. Bucket names are global, so it is derived from the project ID. Also holds the `initialize.env`, status and log backups used by `Restore`. |
-| `FIRESTORE_CONFIG_DATABASE` | Firestore database for config, the desired state (helloworld-spec 1.9) | `lsb-control-tower-config-db` | Created by `ControlTowerFirestoreCreate`. 4 to 63 characters: lowercase letters, digits, hyphens. Must differ from `FIRESTORE_DATABASE`. |
-| `FIRESTORE_DATABASE` | Firestore database for runtime state and jobs (helloworld-spec 1.9) | `lsb-control-tower-db` | Created by `ControlTowerFirestoreCreate`. 4 to 63 characters: lowercase letters, digits, hyphens. |
+| `FIRESTORE_CONFIG_DATABASE` | Firestore database for config, the desired state (control-tower-spec 1.9) | `lsb-control-tower-config-db` | Created by `ControlTowerFirestoreCreate`. 4 to 63 characters: lowercase letters, digits, hyphens. Must differ from `FIRESTORE_DATABASE`. |
+| `FIRESTORE_DATABASE` | Firestore database for runtime state and jobs (control-tower-spec 1.9) | `lsb-control-tower-db` | Created by `ControlTowerFirestoreCreate`. 4 to 63 characters: lowercase letters, digits, hyphens. |
 
-**Billing labels** ([helloworld-spec.md](helloworld-spec.md) section 1.7)
+**Billing labels** ([control-tower-spec.md](control-tower-spec.md) section 1.7)
 | Key | Label | Control Tower value | Notes |
 |---|---|---|---|
 | `LABEL_COST_CENTER_BU` | `cost-center-bu` | `central-it` | Business unit paying |
@@ -384,11 +384,11 @@ Long description printed before the run: [operation.md](../src/terraform/control
 Long description printed before the run: [operation.md](../src/terraform/control-tower/03-control-tower-firestore-create/operation.md)
 
 1. Own root and state (`control-tower/03-control-tower-firestore-create`).
-2. **Databases** on `CT_PROJECT_ID`, both `FIRESTORE_NATIVE` in `REGION` (`asia-southeast1`), see [helloworld-spec.md](helloworld-spec.md) section 1.9:
+2. **Databases** on `CT_PROJECT_ID`, both `FIRESTORE_NATIVE` in `REGION` (`asia-southeast1`), see [control-tower-spec.md](control-tower-spec.md) section 1.9:
    - `FIRESTORE_CONFIG_DATABASE` (`lsb-control-tower-config-db`): config, the desired state.
    - `FIRESTORE_DATABASE` (`lsb-control-tower-db`): runtime state and jobs. Created by the first run of this operation (2026-11-08); the config database was added later.
 3. **Protection:** both have delete protection, `prevent_destroy` and point-in-time recovery (7-day window). Config also has a **weekly backup** (Sunday, kept 14 weeks, the maximum).
-4. **No TTL policies:** job history is kept indefinitely (helloworld-spec 1.9). TTL policies created by an earlier version of this operation (2026-11-09) were removed from the configuration, so the next apply **destroys them through Terraform** (plan: 2 to destroy). **Long-running (best practice 11):** each deletion is a Firestore index operation of often 10 to 20 minutes; the delete timeout is the provider default of about 20 minutes (recorded in state at creation), so if it is exceeded the run is `FAILED` and a re-run finishes the deletion.
+4. **No TTL policies:** job history is kept indefinitely (control-tower-spec 1.9). TTL policies created by an earlier version of this operation (2026-11-09) were removed from the configuration, so the next apply **destroys them through Terraform** (plan: 2 to destroy). **Long-running (best practice 11):** each deletion is a Firestore index operation of often 10 to 20 minutes; the delete timeout is the provider default of about 20 minutes (recorded in state at creation), so if it is exceeded the run is `FAILED` and a re-run finishes the deletion.
 5. **Access:** server-side only for the CLI-first MVP. Per-database IAM (API read/write on both, runner read-only on config) is granted in step 6. Firebase enablement, Firebase Auth and security rules for a future UI's read-only listeners belong to a later UI operation ([apiservices-spec.md](apiservices-spec.md) section 3.5); the databases do not change for that.
 6. **Validation:** Firestore API enabled; the two database IDs differ; warns if a database exists before this operation is `DONE`.
 7. **Readiness:** both databases are reported by `gcloud firestore databases describe`.
@@ -413,7 +413,7 @@ Long description printed before the run: [operation.md](../src/terraform/control
 Long description printed before the run: [operation.md](../src/terraform/control-tower/05-playground-tags-create/operation.md)
 
 1. Own root and state (`control-tower/05-playground-tags-create`). **Provider pinned to `hashicorp/google ~> 8.0`** in its own `versions.tf`, because `allowed_values_regex` on `google_tags_tag_key` needs 7.20 or later (verified 2026-11-08: absent in 7.10, present in 7.20, 8.0, 8.10). Operations 1 to 4 stay on `~> 6.0`.
-2. **Tag keys (Terraform, `google_tags_tag_key`):** `cost-center-bu`, `cost-center-code`, `cost-category`, `bu-tracking-code`, `bu-subcategory` under `organizations/<ORG_ID>`, each with `allowed_values_regex = ^[a-z]([a-z0-9-]{0,61}[a-z0-9])?$` (dynamic values, see [helloworld-spec.md](helloworld-spec.md) section 1.8); descriptions say they are managed by the platform; `prevent_destroy`. **No tag values are created**; the key names and the pattern are fixed in the module, not in `initialize.env`.
+2. **Tag keys (Terraform, `google_tags_tag_key`):** `cost-center-bu`, `cost-center-code`, `cost-category`, `bu-tracking-code`, `bu-subcategory` under `organizations/<ORG_ID>`, each with `allowed_values_regex = ^[a-z]([a-z0-9-]{0,61}[a-z0-9])?$` (dynamic values, see [control-tower-spec.md](control-tower-spec.md) section 1.8); descriptions say they are managed by the platform; `prevent_destroy`. **No tag values are created**; the key names and the pattern are fixed in the module, not in `initialize.env`.
 3. **Tag User (Terraform, `google_tags_tag_key_iam_member`, additive):** `roles/resourcemanager.tagUser` on `cost-center-bu`, `cost-center-code` and `cost-category` for `IT_ADMINS_GROUP`; on `bu-tracking-code` and `bu-subcategory` for `BU_ADMINS_GROUP`.
 4. **Not bound anywhere:** nothing is attached to the Control Tower or any folder. Bindings happen later, on Playground Folders and playgrounds, through the Self Service APIs.
 5. **Runs as the admin** in Cloud Shell with their own credentials; needs `resourcemanager.tagKeys.create` and `resourcemanager.tagKeys.setIamPolicy` on the org (Tag Administrator or Organization Administrator). Calls are billed to `QUOTA_PROJECT`.
@@ -423,7 +423,7 @@ Long description printed before the run: [operation.md](../src/terraform/control
 9. **To verify after step 6:** that Tag User on a dynamic key (plus Tag User on the folder) is enough for a non-admin member of the group to bind a matching value (see to-do list step 5).
 
 ### Later operations
-To be defined one by one, in this order (after step 5): service accounts and IAM (`sa-lsb-api`, `sa-control-tower`, `sa-lsb-build`, plus the manual Groups Admin grant), Artifact Registry, the Self Service APIs Cloud Run service, build and deploy pipelines, org guardrails (`PlaygroundGuardrailsCreate`). For the hello world MVP, the Self Service APIs are first built and run locally against the real Firestore (ADC), so these follow once the API exists.
+To be defined one by one, in this order (after step 5): service accounts and IAM (`sa-lsb-api`, `sa-control-tower`, `sa-lsb-build`, plus the manual Groups Admin grant), Artifact Registry, the Self Service APIs Cloud Run service, build and deploy pipelines, org guardrails (`PlaygroundGuardrailsCreate`). For the first release, the Self Service APIs are first built and run locally against the real Firestore (ADC), so these follow once the API exists.
 
 **`ControlTowerNetworkCreate` (networking, service-specific, after services are enabled):** owns everything network-related for the Control Tower, so no earlier operation makes network decisions:
 - Decides the access model for exposing Cloud Run university-wide: `*.run.app` with Google sign-in or IAP on Cloud Run (no Compute needed); custom domain through an external HTTPS load balancer; campus-only or WAF via Cloud Armor; or internal-only via VPC.
