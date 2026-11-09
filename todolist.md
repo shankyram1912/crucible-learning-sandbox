@@ -38,12 +38,13 @@ Built one operation at a time per [tdd-apis-master.md](specs/tdd-apis/tdd-apis-m
 |---|---|---|
 | 01 | `health api` (`GET /v1/health/api`, `lsb health api`): the API process is up, no dependencies (liveness). Spec: [tdd-apis-health.md](specs/tdd-apis/tdd-apis-health.md) | ⬜ To do (spec written) |
 | 02 | `health db` (`GET /v1/health/db`, `lsb health db`): one small read on each Firestore database (`lsb-control-tower-config-db`, `lsb-control-tower-db`) with a short timeout; reports status and latency per database. Spec: [tdd-apis-health.md](specs/tdd-apis/tdd-apis-health.md) | ⬜ To do (spec written) |
-| 03 | `jobs` (list, show, watch) | ⬜ To do |
-| 04 | `templates` (list, show) | ⬜ To do |
-| 05 | `playground-folder create` / list / show (creation gate, controllers, playground tags) | ⬜ To do |
-| 06 | `playground create` (creation gate, owners, bu-tracking-code, bu-subcategory, template, N projects) | ⬜ To do |
-| 07 | `group members` (get / set; IT Admins only for the two service groups) | ⬜ To do |
-| 08 | `service enable` (GCS) | ⬜ To do |
+| 03 | `health service` (`GET /v1/health/service`, `lsb health service`): same data check as health db, answered only as `OK` / `NOT_OK` for the service, `config` and `runtime_jobs`; no database IDs, latency or error codes. Spec: [tdd-apis-health.md](specs/tdd-apis/tdd-apis-health.md) | ⬜ To do (spec written) |
+| 04 | `jobs` (list, show, watch) | ⬜ To do |
+| 05 | `templates` (list, show) | ⬜ To do |
+| 06 | `playground-folder create` / list / show (creation gate, controllers, playground tags) | ⬜ To do |
+| 07 | `playground create` (creation gate, owners, bu-tracking-code, bu-subcategory, template, N projects) | ⬜ To do |
+| 08 | `group members` (get / set; IT Admins only for the two service groups) | ⬜ To do |
+| 09 | `service enable` (GCS) | ⬜ To do |
 
 ---
 

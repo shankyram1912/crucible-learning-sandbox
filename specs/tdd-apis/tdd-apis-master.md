@@ -28,6 +28,7 @@ The **Learning Sandbox Self Service APIs** are the single entry point for every 
 | [tdd-apis-common-auth.md](tdd-apis-common-auth.md) | Authentication, authorization, tokens; read-only Firestore path for a future UI |
 | [tdd-apis-common-models.md](tdd-apis-common-models.md) | Conventions, request headers (including session ID), RequestContext, response headers, Accepted, Page, Error, Job, Task |
 | [tdd-apis-common-cli.md](tdd-apis-common-cli.md) | Terminal output, global options, exit codes |
+| [tdd-apis-common-config.md](tdd-apis-common-config.md) | Every API and CLI setting in one place (platform keys from `initialize.env`, `LSB_` API keys, CLI keys) |
 
 Naming: `tdd-apis-common-<topic>.md` for cross-cutting specs, `tdd-apis-<domain>.md` for domain specs. This master stays an index (principles, common specs, domain table).
 
@@ -39,13 +40,13 @@ Operations are grouped into **domains**. Each domain has its own spec in this fo
 
 | Domain | Operations (build #) | CLI group | Spec | Status |
 |---|---|---|---|---|
-| Health | api (01), db (02) | `lsb health` | [tdd-apis-health.md](tdd-apis-health.md) | Spec written |
-| Jobs | list, show, watch (03) | `lsb jobs` | `tdd-apis-jobs.md` (to write) | To do |
-| Templates | list, show (04) | `lsb templates` | `tdd-apis-templates.md` (to write) | To do |
-| Playground Folders | create, list, show (05) | `lsb playground-folder` | `tdd-apis-playground-folders.md` (to write) | To do |
-| Playgrounds | create (06), later show and configure | `lsb playground` | `tdd-apis-playgrounds.md` (to write) | To do |
-| Groups | members get, set (07) | `lsb group members` | `tdd-apis-groups.md` (to write) | To do |
-| Services | enable, GCS first (08) | `lsb service` | `tdd-apis-services.md` (to write) | To do |
+| Health | api (01), db (02), service (03) | `lsb health` | [tdd-apis-health.md](tdd-apis-health.md) | Spec written |
+| Jobs | list, show, watch (04) | `lsb jobs` | `tdd-apis-jobs.md` (to write) | To do |
+| Templates | list, show (05) | `lsb templates` | `tdd-apis-templates.md` (to write) | To do |
+| Playground Folders | create, list, show (06) | `lsb playground-folder` | `tdd-apis-playground-folders.md` (to write) | To do |
+| Playgrounds | create (07), later show and configure | `lsb playground` | `tdd-apis-playgrounds.md` (to write) | To do |
+| Groups | members get, set (08) | `lsb group members` | `tdd-apis-groups.md` (to write) | To do |
+| Services | enable, GCS first (09) | `lsb service` | `tdd-apis-services.md` (to write) | To do |
 
 > The first API draft (REST and CLI reference, cohort model) is frozen in [apis-v0-interface.md](../../specs-reference/apis-v0-interface.md); each domain spec states which of its rows it replaces. Each domain spec follows [tdd-master.md](../tdd-master.md) section 2.
 

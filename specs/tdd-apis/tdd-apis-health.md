@@ -2,23 +2,27 @@
 
 > Parent: [tdd-apis-master.md](tdd-apis-master.md)
 
-Health tells an operator whether the Self Service APIs are up and whether they can reach their data. It has two operations: **`health api`** (the API process itself, no dependencies) and **`health db`** (one small read on each Firestore database). They replace the single `GET /v1/health` / `lsb health` row (1) in [apis-v0-interface.md](../../specs-reference/apis-v0-interface.md) A.2 and B.
+Health tells an operator whether the Self Service APIs are up and whether they can reach their data. It has three operations: **`health api`** (the API process itself, no dependencies), **`health db`** (one small read on each Firestore database, with database names, latency and error codes for operators) and **`health service`** (the same data check, answered only as OK or NOT_OK per data area, so it reveals nothing about the databases). They replace the single `GET /v1/health` / `lsb health` row (1) in [apis-v0-interface.md](../../specs-reference/apis-v0-interface.md) A.2 and B.
 
 | # (build order) | Operation | REST | CLI | Status |
 |---|---|---|---|---|
 | 01 | Health api | `GET /v1/health/api` | `lsb health api` | To do |
 | 02 | Health db | `GET /v1/health/db` | `lsb health db` | To do |
+| 03 | Health service | `GET /v1/health/service` | `lsb health service` | To do |
 
 ---
 
 ## 1. Common rules
 
-1. **Authentication is required** for both, like every other call ([tdd-apis-master.md](tdd-apis-master.md) principle 9, [tdd-apis-common-auth.md](tdd-apis-common-auth.md)). Both also get the common request and response headers and the RequestContext ([tdd-apis-common-models.md](tdd-apis-common-models.md)). There is no unauthenticated health endpoint. On Cloud Run later, the service uses the default TCP startup probe, so no HTTP probe needs to call these endpoints.
-2. **Authorization:** any authenticated user of the org domain may call both. Responses contain no secrets and no internal error text, only status, timings and error codes.
-3. **Read-only.** Neither operation writes anything, anywhere.
-4. **Synchronous.** Both return the result directly (`200` or `503`), never a job.
-5. **Platform identity for data checks.** `health db` reads Firestore with the API's own runtime identity (locally the developer's ADC, on Cloud Run `sa-lsb-api`), not the caller's access token, because it checks the platform's access, not the caller's.
-6. **Configuration** comes from the same keys as `initialize.env`: `CT_PROJECT_ID`, `FIRESTORE_CONFIG_DATABASE`, `FIRESTORE_DATABASE`.
+1. **Authentication is required** for all three, like every other call ([tdd-apis-master.md](tdd-apis-master.md) principle 9, [tdd-apis-common-auth.md](tdd-apis-common-auth.md)). Both also get the common request and response headers and the RequestContext ([tdd-apis-common-models.md](tdd-apis-common-models.md)). There is no unauthenticated health endpoint. On Cloud Run later, the service uses the default TCP startup probe, so no HTTP probe needs to call these endpoints.
+2. **Authorization:**
+   - `health api` and `health service`: any authenticated user of the org domain.
+   - `health db`: **`PLATFORM_ADMIN` only** (member of any group in `LSB_PLATFORM_ADMIN_GROUPS`, today `grp-lsb-bu-admins@`, which includes IT Admins; [tdd-apis-common-config.md](tdd-apis-common-config.md), [tdd-apis-common-models.md](tdd-apis-common-models.md) section 3). Others get `403 PERMISSION_DENIED` and should use `health service`.
+   - No response contains secrets or internal error text.
+3. **Read-only.** No operation writes anything, anywhere.
+4. **Synchronous.** All return the result directly (`200` or `503`), never a job.
+5. **Platform identity for data checks.** `health db` and `health service` read Firestore with the API's own runtime identity (locally the developer's ADC, on Cloud Run `sa-lsb-api`), not the caller's access token, because it checks the platform's access, not the caller's.
+6. **Configuration:** settings used here are defined in [tdd-apis-common-config.md](tdd-apis-common-config.md): `CT_PROJECT_ID`, `FIRESTORE_CONFIG_DATABASE`, `FIRESTORE_DATABASE`, `LSB_PLATFORM_ADMIN_GROUPS`, `LSB_API_VERSION`, `LSB_HEALTH_DB_READ_TIMEOUT_SECONDS`, `LSB_HEALTH_DB_TOTAL_TIMEOUT_SECONDS`, `LSB_HEALTH_SERVICE_CACHE_SECONDS`.
 
 ---
 
@@ -63,12 +67,12 @@ $ lsb health api
 
 ## 3. Operation 02: health db
 
-**Purpose:** readiness of the data layer. The API can reach both Firestore databases with its own identity.
+**Purpose:** readiness of the data layer, with details for operators. The API can reach both Firestore databases with its own identity. **Platform Admins only** (section 1).
 
 **Request:** `GET /v1/health/db`, no body, no parameters.
 
-**Check per database** (both run in parallel, overall limit 5 seconds):
-1. Read the document `_health/ping` with a 2-second timeout. The document does not need to exist: a "not found" document still proves network path, credentials, IAM and that the database exists. Cost: one document read per database.
+**Check per database** (both run in parallel, overall limit `LSB_HEALTH_DB_TOTAL_TIMEOUT_SECONDS`, default 5):
+1. Read the document `_health/ping` with a timeout of `LSB_HEALTH_DB_READ_TIMEOUT_SECONDS` (default 2). The document does not need to exist: a "not found" document still proves network path, credentials, IAM and that the database exists. Cost: one document read per database.
 2. Record status, latency, and on failure the error code only.
 
 | Database | Role |
@@ -104,7 +108,7 @@ On failure a database entry carries `"status": "FAIL"` and `"error"`, one of:
 |---|---|---|
 | `PERMISSION_DENIED` | The API identity has no read access to this database | Firestore IAM for the API identity (Day-0 step 6) |
 | `DATABASE_NOT_FOUND` | The database ID is wrong or the database does not exist | Check `FIRESTORE_CONFIG_DATABASE` / `FIRESTORE_DATABASE`, Day-0 step 3 |
-| `DEADLINE_EXCEEDED` | No answer within 2 seconds | Network, or Firestore degraded |
+| `DEADLINE_EXCEEDED` | No answer within the read timeout (`LSB_HEALTH_DB_READ_TIMEOUT_SECONDS`) | Network, or Firestore degraded |
 | `UNAVAILABLE` | Firestore or the network is temporarily unavailable | Retry |
 | `UNKNOWN` | Anything else (details only in the API log) | API log |
 
@@ -131,22 +135,64 @@ $ lsb health db
 
 ---
 
-## 4. CLI exit codes
+## 4. Operation 03: health service
 
-| Code | `health api` | `health db` |
-|---|---|---|
-| `0` | API ok | All databases ok |
-| `1` | n/a | At least one database failed (`503`) |
-| `2` | `401` (not signed in or token rejected) | `401` |
-| `3` | API unreachable or `500` | API unreachable or `500` |
+**Purpose:** a data-layer check that is safe to show anyone signed in, the counterpart of `health db` for non-admins. It runs the same check as `health db` (one read per database, through the API's own Firestore client), but answers only whether the service and each data area are OK. No database IDs, latency, error codes or project details are returned.
 
-`--json` prints the raw response for both commands ([tdd-apis-common-cli.md](tdd-apis-common-cli.md) section 2). Exit code `1` for a failing `health db` is the one addition to the common exit codes (section 3 there).
+**Request:** `GET /v1/health/service`, no body, no parameters.
+
+**Check:** the same per-database read as operation 02 (section 3), mapped to data areas: `config` from `FIRESTORE_CONFIG_DATABASE`, `runtime_jobs` from `FIRESTORE_DATABASE`. Failure details go only to the API log (with the request ID), never to the response.
+
+**Response `200`** (everything OK) or **`503`** (anything NOT_OK), same body shape:
+```json
+{
+  "status": "OK",
+  "config": "OK",
+  "runtime_jobs": "OK"
+}
+```
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `status` | enum | yes | `OK` if `config` and `runtime_jobs` are both `OK`, otherwise `NOT_OK` |
+| `config` | enum | yes | `OK` or `NOT_OK`: the config data area (desired state) can be read |
+| `runtime_jobs` | enum | yes | `OK` or `NOT_OK`: the runtime and jobs data area can be read |
+
+Pydantic model: `HealthServiceResponse` in `src/api/models/health.py`.
+
+**Result caching:** the result is cached in the API process for `LSB_HEALTH_SERVICE_CACHE_SECONDS` (default 10), so frequent callers cost at most two Firestore reads per period per API instance.
+
+**CLI:** `lsb health service`
+```
+$ lsb health service
+
+  ✔ Service OK    CONFIG OK    RUNTIME JOBS OK
+```
+```
+$ lsb health service
+
+  ✖ Service NOT OK    CONFIG NOT OK    RUNTIME JOBS OK
+```
 
 ---
 
-## 5. Test in the live environment
+## 5. CLI exit codes
+
+| Code | `health api` | `health db` | `health service` |
+|---|---|---|---|
+| `0` | API ok | All databases ok | Service OK |
+| `1` | n/a | At least one database failed (`503`) | Service NOT_OK (`503`) |
+| `2` | `401` (not signed in or token rejected) | `401`, or `403` if not a Platform Admin | `401` |
+| `3` | API unreachable or `500` | API unreachable or `500` | API unreachable or `500` |
+
+`--json` prints the raw response for all three commands ([tdd-apis-common-cli.md](tdd-apis-common-cli.md) section 2). Exit code `1` for a failing `health db` or `health service` is the one addition to the common exit codes (section 3 there).
+
+---
+
+## 6. Test in the live environment
 
 1. `lsb health api` as any seed user: `0`, with the caller's email shown.
 2. `lsb health api` with no login: `2` (`401`).
-3. `lsb health db` with the API's identity able to read both databases: `0`.
+3. `lsb health db` as a Platform Admin (for example `lsb-it-admin1@`, once in its group) with the API's identity able to read both databases: `0`. As a student (`lsb-student1@`): `2` (`403`).
 4. Temporarily point `FIRESTORE_CONFIG_DATABASE` at a wrong ID: `1`, `DATABASE_NOT_FOUND` on the config row only.
+5. `lsb health service` in the same two states: `0` with `CONFIG OK`, then `1` with `CONFIG NOT OK`; the `--json` output contains no database ID, latency or error code.

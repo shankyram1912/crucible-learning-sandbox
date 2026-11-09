@@ -43,7 +43,15 @@ Built once per request by middleware from the verified token and the headers abo
 | `caller.token_type` | Verified token issuer | `GOOGLE` or `FIREBASE` |
 | `client.id` | Verified token (`aud` / `azp`) | OAuth client the token was issued to, so the CLI and a future UI are told apart |
 | `client.name`, `client.version` | `User-Agent` | For example `lsb-cli`, `0.1.0` |
-| `personas` | Group membership, resolved on demand | `IT_ADMIN`, `BU_ADMIN`; looked up only by operations that need them |
+| `personas` | Group membership (transitive), resolved on demand | `IT_ADMIN`, `BU_ADMIN`, `PLATFORM_ADMIN` (definitions below); looked up only by operations that need them |
+
+**Personas resolved from groups** (transitive membership, so nested groups count):
+
+| Persona | Member of | Notes |
+|---|---|---|
+| `IT_ADMIN` | `IT_ADMINS_GROUP` (`grp-lsb-it-admins@`) | |
+| `BU_ADMIN` | `BU_ADMINS_GROUP` (`grp-lsb-bu-admins@`) | Includes every IT Admin (nested) |
+| `PLATFORM_ADMIN` | **any group in `LSB_PLATFORM_ADMIN_GROUPS`** ([tdd-apis-common-config.md](tdd-apis-common-config.md)). Today: `grp-lsb-bu-admins@` | Platform-level diagnostics such as `health db`. Today this means every IT Admin and BU Admin. Support or operations staff who are neither can be added later by adding their group to the list (no code change) |
 
 ---
 
