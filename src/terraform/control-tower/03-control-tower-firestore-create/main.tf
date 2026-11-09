@@ -1,5 +1,5 @@
 # ControlTowerFirestoreCreate
-# Two Firestore (Native mode) databases for the Self Service APIs (control-tower-spec 1.9):
+# Two Firestore (Native mode) databases for the Self Service APIs (tdd-master 1.9):
 #   - FIRESTORE_CONFIG_DATABASE: config (desired state): tag catalog, Playground Folders, playgrounds,
 #     immutable config versions. Written only by the API; the Terraform runner reads it.
 #   - FIRESTORE_DATABASE: runtime (observed state) and jobs (jobs, tasks, locks). Written by the API
@@ -65,7 +65,7 @@ resource "google_firestore_backup_schedule" "config_weekly" {
   }
 }
 
-# Job history is kept indefinitely: no TTL policies (control-tower-spec 1.9). The TTL policies created by an
+# Job history is kept indefinitely: no TTL policies (tdd-master 1.9). The TTL policies created by an
 # earlier version of this operation (google_firestore_field.ttl["jobs"], ["tasks"]) are no longer in this
 # configuration, so the next apply destroys them, which disables TTL on jobs.expireAt and tasks.expireAt.
 # LONG-RUNNING: each deletion is a Firestore index operation, often 10-20 minutes. Their delete timeout is

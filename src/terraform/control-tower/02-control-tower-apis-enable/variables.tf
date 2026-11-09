@@ -10,7 +10,7 @@ variable "region" {
   type        = string
 }
 
-# Baseline APIs for the Control Tower's own services (day0-bootstrap-spec.md, operation 2).
+# Baseline APIs for the Control Tower's own services (tdd-control-tower-master.md, operation 2).
 # compute.googleapis.com is deliberately excluded: its first enablement creates a permissive
 # default VPC. Compute and networking belong to the later networking operation.
 variable "control_tower_apis" {

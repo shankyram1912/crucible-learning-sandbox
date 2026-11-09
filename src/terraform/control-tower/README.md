@@ -2,7 +2,7 @@
 
 Creates the Learning Sandbox **Control Tower** foundation, one operation at a time. Run once by an org admin.
 
-Full design: [day0-bootstrap-spec.md](../../../specs/day0-bootstrap-spec.md)
+Full design: [tdd-control-tower-master.md](../../../specs/tdd-control-tower/tdd-control-tower-master.md)
 
 ---
 

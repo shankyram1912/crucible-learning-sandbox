@@ -7,11 +7,11 @@ The **LSB Control Tower** manages Google Cloud learning sandboxes for a universi
 ```text
 learning-sandbox/
 ├── specs/                          Current specs (source of truth)
-│   ├── control-tower-spec.md       Principles: Terraform, billing labels, playground tags, data split, IAM and access model
-│   ├── day0-bootstrap-spec.md      Day-0 Control Tower bootstrap (run.sh and its operations)
-│   ├── apiservices-spec.md         Self Service APIs and the lsb CLI
-│   ├── terraform-pipeline-spec.md  Playground Terraform pipeline (Cloud Build)
-│   └── gcpservices-spec.md         GCP services offered in playgrounds
+│   ├── tdd-master.md       Principles: Terraform, billing labels, playground tags, data split, IAM and access model
+│   ├── tdd-control-tower-master.md      Day-0 Control Tower bootstrap (run.sh and its operations)
+│   ├── tdd-apis-master.md         Self Service APIs and the lsb CLI
+│   ├── tdd-playground-master.md  Playground Terraform pipeline (Cloud Build)
+│   └── tdd-playground-services.md         GCP services offered in playgrounds
 ├── src/
 │   └── terraform/control-tower/    Day-0 bootstrap: run.sh, initialize.sh, one folder per operation
 ├── seed/                           Test users and seed data proposal (seed.md, users.csv)
@@ -21,7 +21,7 @@ learning-sandbox/
 
 ## Getting started
 
-Day-0 bootstrap runs in Cloud Shell as an org admin. See [src/terraform/control-tower/README.md](src/terraform/control-tower/README.md) and [specs/day0-bootstrap-spec.md](specs/day0-bootstrap-spec.md).
+Day-0 bootstrap runs in Cloud Shell as an org admin. See [src/terraform/control-tower/README.md](src/terraform/control-tower/README.md) and [specs/tdd-control-tower-master.md](specs/tdd-control-tower/tdd-control-tower-master.md).
 
 ## Conventions
 

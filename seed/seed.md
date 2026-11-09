@@ -55,7 +55,7 @@ Prerequisite: `lsb-it-admin1@` and `lsb-bu-biz1@` are in their service groups, a
 
 Outcomes:
 - All as expected: no spec change.
-- IT Admin cannot bind: Tag User on the key is not enough for dynamic values; control-tower-spec section 2 needs Tag User higher up.
+- IT Admin cannot bind: Tag User on the key is not enough for dynamic values; tdd-master section 2 needs Tag User higher up.
 - BU Admin can remove IT's binding: needs an IAM deny on binding removal, or a narrower role than Tag User on Playground Folders.
 
 Teardown: remove the bindings, the test memberships and the folder.

@@ -1,13 +1,13 @@
-# LSB Control Tower Spec: Terraform and IAM Principles
+# LSB Control Tower TDD: Terraform and IAM Principles
 
 Scope: guiding principles for the LSB Control Tower. These specs supersede the earlier BRS and TDD, which are kept for reference in `specs-reference/`.
 
-Related specs:
+Specs (one master per folder; longer designs split into `tdd-<folder>-<topic>.md` sub-files under it):
 - [../todolist.md](../todolist.md): build sequence and status (Day-0 steps, Self Service API operations)
-- [day0-bootstrap-spec.md](day0-bootstrap-spec.md): Day-0 Control Tower bootstrap (Cloud Shell, `initialize.env`, `run.sh`, steps)
-- [terraform-pipeline-spec.md](terraform-pipeline-spec.md): playground Terraform pipeline (identities, secured source, reliability)
-- [apiservices-spec.md](apiservices-spec.md): Learning Sandbox Self Service APIs (REST interface and `lsb` CLI mapping)
-- [gcpservices-spec.md](gcpservices-spec.md): GCP services
+- [tdd-control-tower/tdd-control-tower-master.md](tdd-control-tower/tdd-control-tower-master.md): builds the Control Tower: Day-0 bootstrap (Cloud Shell, `initialize.env`, `run.sh`, steps)
+- [tdd-playground/tdd-playground-master.md](tdd-playground/tdd-playground-master.md): builds playgrounds: Terraform pipeline (identities, secured source, reliability), with [tdd-playground-services.md](tdd-playground/tdd-playground-services.md) for the GCP service modules
+- [tdd-apis/tdd-apis-master.md](tdd-apis/tdd-apis-master.md): Learning Sandbox Self Service APIs (REST interface and `lsb` CLI mapping)
+- [tdd-data/tdd-data-master.md](tdd-data/tdd-data-master.md): Firestore data design (config, runtime, jobs)
 
 ---
 
@@ -52,7 +52,7 @@ gs://lsb-control-tower-bucket/
 - Playground teardown archives `playgrounds/<playground>/` instead of deleting it.
 
 ### 1.6 Execution rules
-Full pipeline behavior (triggering, identities, secured source, reliability): [terraform-pipeline-spec.md](terraform-pipeline-spec.md).
+Full pipeline behavior (triggering, identities, secured source, reliability): [tdd-playground-master.md](tdd-playground/tdd-playground-master.md).
 
 1. **Pre-check before every run:** template valid, prerequisites present, required groups defined with at least one member. Any failure stops the job before Terraform runs.
 2. **One active job per playground.**
@@ -235,5 +235,5 @@ User ── ID token + access token ──▶ Self Service APIs (Cloud Run)
        Terraform runs as a dedicated runner service account (projects, billing, services, student bindings).
 ```
 1. **Config stage uses the user's token, no service account.** The user's own permissions (section 2.3) are what make the change; nothing is created that the user could not create themselves.
-2. **Pipeline stage:** identities, secured source (variables only, predefined trigger, protected branch, pinned versions and image) and reliability are specified in [terraform-pipeline-spec.md](terraform-pipeline-spec.md).
+2. **Pipeline stage:** identities, secured source (variables only, predefined trigger, protected branch, pinned versions and image) and reliability are specified in [tdd-playground-master.md](tdd-playground/tdd-playground-master.md).
 3. **Open:** membership changes of the two locked groups need a directory admin role; either IT Admins hold Groups Admin/Editor (user token) or a platform service account does it (the one exception to "no service account" in the config stage).

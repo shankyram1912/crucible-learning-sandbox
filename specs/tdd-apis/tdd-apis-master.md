@@ -1,6 +1,6 @@
-# LSB Control Tower Spec: Learning Sandbox Self Service APIs
+# LSB Control Tower TDD: Learning Sandbox Self Service APIs
 
-> Parent: [control-tower-spec.md](control-tower-spec.md)
+> Parent: [tdd-master.md](../tdd-master.md)
 
 The **Learning Sandbox Self Service APIs** are the single entry point for every playground action. There is no web UI yet. Every action is exposed as a **REST endpoint**, and every endpoint has a matching **command line (CLI) command** that renders human-readable, multi-color output in a Linux terminal.
 
@@ -11,11 +11,11 @@ The **Learning Sandbox Self Service APIs** are the single entry point for every 
 1. **REST first, CLI as a thin client.** The CLI never talks to GCP or Firestore directly. It only calls the REST API, so the same API can later back a web UI.
 2. **All changes go through the API; a UI may read live state directly.** Every change (define cohort, set members, enable service) is a REST call. A future web UI may additionally read live state (job and task progress, cohort status, lists) **directly from Firestore with real-time listeners**, under security rules that deny all client writes (section 3.5). The CLI keeps reading through the API.
 3. **One endpoint, one command.** Every REST operation has exactly one CLI command (Appendix B).
-4. **Async by default.** Mutating calls (define cohort, set members, enable service) return `202 Accepted` with a `job_id`. The work runs as a provisioning job with tasks (see [control-tower-spec.md](control-tower-spec.md) section 1.6).
+4. **Async by default.** Mutating calls (define cohort, set members, enable service) return `202 Accepted` with a `job_id`. The work runs as a provisioning job with tasks (see [tdd-master.md](../tdd-master.md) section 1.6).
 5. **The CLI follows jobs live.** Mutating commands watch their job until it finishes and show each task's progress. `--no-wait` returns immediately with the `job_id`.
 6. **Human output by default, machine output on request.** Default output is colored tables, trees and live progress. `--json` prints the raw API response for scripting.
 7. **Fail fast and clearly.** Pre-check failures are returned before any job starts, with every problem listed, not just the first.
-8. **Add-only services.** There is no endpoint or command to disable a service (control-tower-spec 1.6.4).
+8. **Add-only services.** There is no endpoint or command to disable a service (tdd-master 1.6.4).
 9. **Authentication is always required.** Every API call, including from the same machine (localhost), must carry a verified Google identity (Google ID token or Firebase ID token, section 3.1). There is no unauthenticated or dev bypass mode.
 
 ---
@@ -25,8 +25,8 @@ The **Learning Sandbox Self Service APIs** are the single entry point for every 
 | Part | Choice | Why |
 |---|---|---|
 | **REST API** | Python 3.12 + **FastAPI** | Same language as the provisioning code (Terraform runner, Cloud Identity, Firestore SDKs). Typed request/response models (Pydantic) with validation built in. Generates OpenAPI docs at `/docs` for free, which is the contract for the CLI now and a UI later. Native async fits long-running jobs. |
-| **State** | **Firestore**, two databases in `lsb-control-tower`: `lsb-control-tower-config-db` (config, desired state) and `lsb-control-tower-db` (runtime state and jobs), see [control-tower-spec.md](control-tower-spec.md) section 1.9 | Serverless, no instance to run. Document model fits playgrounds, jobs and tasks. A transaction in the runtime and jobs database enforces one active job per playground. Real-time listeners let a future UI show live job progress without polling (read-only, section 3.5). |
-| **Provisioning** | **Terraform** (seed cohort, enable service) + **Google Cloud SDKs** (membership, readiness checks) | Per [control-tower-spec.md](control-tower-spec.md): Terraform only where it adds value; fast directory and data operations use the APIs directly. |
+| **State** | **Firestore**, two databases in `lsb-control-tower`: `lsb-control-tower-config-db` (config, desired state) and `lsb-control-tower-db` (runtime state and jobs), see [tdd-master.md](../tdd-master.md) section 1.9 | Serverless, no instance to run. Document model fits playgrounds, jobs and tasks. A transaction in the runtime and jobs database enforces one active job per playground. Real-time listeners let a future UI show live job progress without polling (read-only, section 3.5). |
+| **Provisioning** | **Terraform** (seed cohort, enable service) + **Google Cloud SDKs** (membership, readiness checks) | Per [tdd-master.md](../tdd-master.md): Terraform only where it adds value; fast directory and data operations use the APIs directly. |
 | **CLI commands** | Python + **Typer** | Same author and style as FastAPI: plain functions with type hints become commands. Can reuse the API's Pydantic models so CLI and API cannot drift. Built-in `--help`, nested commands and shell completion. Built on Click, the mature Python CLI standard. |
 | **CLI output** | **Rich** | Colors, tables, trees, live in-place updates and spinners (needed for `job watch`), pretty JSON and error panels. Disables color automatically when output is not a terminal or `NO_COLOR` is set. Typer uses Rich for help formatting, so they fit together. |
 | **CLI HTTP + auth** | **httpx** + **google-auth** | Small, modern HTTP client. `google-auth` obtains Google ID tokens from the user's gcloud login / ADC without needing the Google Cloud client libraries in the CLI. |
@@ -44,11 +44,11 @@ The **Learning Sandbox Self Service APIs** are the single entry point for every 
    - **Firebase ID token** (issuer `securetoken.google.com/<project>`), used by a future UI signed in with Firebase Auth (Google sign-in).
 2. For either type, the API verifies the token signature, issuer, expiry, allowed audience (configured list), and that the user belongs to the org domain (`shankyram.altostrat.com`). The caller's identity is the **email in the verified token**; the rest of the API does not care which type it was.
 3. The API **never trusts identity claimed by the client** (for example an `X-User` header).
-4. **Authorization** is decided by the API from the verified email, its group memberships and, for creation, the caller's own GCP rights ([control-tower-spec.md](control-tower-spec.md) section 2). Failing it returns `403`.
+4. **Authorization** is decided by the API from the verified email, its group memberships and, for creation, the caller's own GCP rights ([tdd-master.md](../tdd-master.md) section 2). Failing it returns `403`.
    - **Personas:** IT Admin (`grp-lsb-it-admins@`), BU Admin (`grp-lsb-bu-admins@`, IT Admins included through nesting), Playground Folder controller, playground owner, student.
    - **Creation gates:** Playground Folders: caller in `grp-lsb-it-admins@`; playgrounds: caller in `grp-lsb-bu-admins@` (IT Admins included). In both cases the caller must also hold `resourcemanager.folders.create`, `resourcemanager.folders.setIamPolicy` and `resourcemanager.tagValueBindings.create` on the parent folder in standard GCP IAM.
    - **Group membership changes** for `grp-lsb-it-admins@` and `grp-lsb-bu-admins@`: IT Admins only.
-5. **User access token.** Alongside the ID token, the client sends the caller's Google OAuth **access token** in `X-LSB-Access-Token` (CLI: from the gcloud login / ADC; UI: from Google sign-in with the `cloud-platform` scope). The API uses it, as the user, for the **config stage**: the creation-gate checks (`testIamPermissions`), the folder picker, and creating Playground Folders and playgrounds (folders, IAM bindings, tags). It is used only within the request and never stored. The **pipeline stage** (Terraform after a playground is configured) runs as the platform: Cloud Run's service account starts a predefined Cloud Build trigger that runs as the Terraform runner ([control-tower-spec.md](control-tower-spec.md) section 2.10).
+5. **User access token.** Alongside the ID token, the client sends the caller's Google OAuth **access token** in `X-LSB-Access-Token` (CLI: from the gcloud login / ADC; UI: from Google sign-in with the `cloud-platform` scope). The API uses it, as the user, for the **config stage**: the creation-gate checks (`testIamPermissions`), the folder picker, and creating Playground Folders and playgrounds (folders, IAM bindings, tags). It is used only within the request and never stored. The **pipeline stage** (Terraform after a playground is configured) runs as the platform: Cloud Run's service account starts a predefined Cloud Build trigger that runs as the Terraform runner ([tdd-master.md](../tdd-master.md) section 2.10).
 
 ### 3.2 Clients get tokens differently, the API treats them the same
 | Client | Where the token comes from |
@@ -96,7 +96,7 @@ What the direct read path requires (added by a later UI operation, not needed fo
 
 Each resource operation from Appendix A, together with its CLI command from Appendix B, gets its own spec before it is built.
 
-> Appendices A and B predate the playground model: "cohort" there means **playground**, and playgrounds live inside **Playground Folders** created by the platform (no designation of existing folders). Each operation spec follows [control-tower-spec.md](control-tower-spec.md) section 2. Workflow per operation:
+> Appendices A and B predate the playground model: "cohort" there means **playground**, and playgrounds live inside **Playground Folders** created by the platform (no designation of existing folders). Each operation spec follows [tdd-master.md](../tdd-master.md) section 2. Workflow per operation:
 
 1. **Write** the operation spec (request, response, validation, pre-checks, job tasks, auth rule, CLI command and output).
 2. **Implement** it in the API and the CLI.
