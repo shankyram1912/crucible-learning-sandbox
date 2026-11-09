@@ -1,7 +1,7 @@
 # ControlTowerFirestoreCreate
 
 ## Summary
-Creates the two Firestore databases of the Self Service APIs in the Control Tower project ${CT_PROJECT_ID}. ${FIRESTORE_CONFIG_DATABASE} holds config, the desired state: tag catalog, Playground Folders, playgrounds and their immutable config versions; only the API writes it and the Terraform runner reads it. ${FIRESTORE_DATABASE} holds runtime state (what exists in GCP) and jobs (jobs, tasks, locks); job history expires through TTL policies. For the CLI-first MVP only service accounts read and write; a future UI adds Firebase Auth and read-only security rules without changing these databases.
+Creates the two Firestore databases of the Self Service APIs in the Control Tower project ${CT_PROJECT_ID}. ${FIRESTORE_CONFIG_DATABASE} holds config, the desired state: tag catalog, Playground Folders, playgrounds and their immutable config versions; only the API writes it and the Terraform runner reads it. ${FIRESTORE_DATABASE} holds runtime state (what exists in GCP) and jobs (jobs, tasks, locks); job history is kept indefinitely (no TTL policies). For the CLI-first MVP only service accounts read and write; a future UI adds Firebase Auth and read-only security rules without changing these databases.
 
 ## Prerequisites
 - ControlTowerApisEnable is DONE (firestore.googleapis.com enabled on ${CT_PROJECT_ID}).
@@ -22,14 +22,13 @@ Creates the two Firestore databases of the Self Service APIs in the Control Towe
    - point-in-time recovery enabled (7-day window), delete protection enabled
    - weekly backup every Sunday, kept 14 weeks
 2. Create Firestore database ${FIRESTORE_DATABASE} (runtime and jobs) with the same settings (unchanged if it already exists)
-3. Add TTL policies on ${FIRESTORE_DATABASE}: documents in the jobs and tasks collection groups are deleted after their expireAt time
+3. Delete the TTL policies an earlier version of this operation created on ${FIRESTORE_DATABASE} (jobs.expireAt, tasks.expireAt), so job history is kept indefinitely
 4. Store this operation's Terraform state in gs://${TF_STATE_BUCKET}/control-tower/03-control-tower-firestore-create
 5. Wait until both databases are reported by Firestore
 
 ## Resources created or changed
 - Firestore database projects/${CT_PROJECT_ID}/databases/${FIRESTORE_CONFIG_DATABASE} and its weekly backup schedule
 - Firestore database projects/${CT_PROJECT_ID}/databases/${FIRESTORE_DATABASE}
-- TTL policies on jobs.expireAt and tasks.expireAt in ${FIRESTORE_DATABASE}
 
 ## Written back to initialize.env
 Nothing (both database IDs are already set).
@@ -38,7 +37,8 @@ Nothing (both database IDs are already set).
 gcloud firestore databases describe returns both databases on ${CT_PROJECT_ID}.
 
 ## Expected duration
-About 1 to 2 minutes. TTL policies can take a few minutes more to become active.
+LONG-RUNNING on the first re-run after the TTL removal: 20 to 40 minutes, because deleting each TTL policy is a Firestore index operation of often 10 to 20 minutes (they may run one after the other). If Terraform times out (about 20 minutes per policy), the run is recorded FAILED and a re-run finishes the deletion. Progress: gcloud firestore fields ttls list --database=${FIRESTORE_DATABASE} --project=${CT_PROJECT_ID}
+Otherwise about 1 to 2 minutes.
 
 ## Re-run behavior
 Safe. Existing databases with the same settings show no changes.

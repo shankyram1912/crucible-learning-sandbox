@@ -337,6 +337,14 @@ Colors follow [apiservices-spec.md](apiservices-spec.md) section 5.1.
 8. **Strict shell mode:** `set -euo pipefail` in scripts.
 9. **Gitignore** `initialize.env`, `controltower.status`, `logs/`, `.terraform/`, `*.tfplan`.
 10. **Idempotent operations:** every operation can be re-run safely.
+11. **Flag long-running resources.** Any resource whose create or update usually takes more than about 5 minutes is marked `LONG-RUNNING` in a comment in the Terraform, gets an explicit `timeouts` block well above its normal duration, and the operation's `operation.md` states the realistic duration under "Expected duration" with a command to watch progress. The spec section for the operation says the same. Known cases for this platform:
+
+| Resource | Typical duration | Where |
+|---|---|---|
+| Firestore TTL policy (`google_firestore_field` with `ttl_config`), create or delete | 10 to 20 minutes each, may queue | Step 3 (created, then deleted; not used going forward) |
+| Firestore composite index (`google_firestore_index`) | Minutes to tens of minutes | API operations, if indexes are managed in Terraform |
+| Google-managed SSL certificate for a load balancer | 15 to 60 minutes after DNS points at the load balancer (longer if DNS is wrong) | Step 10, networking, if a custom domain is used |
+| Org policy and IAM changes | Apply is fast, but take effect over up to several minutes | Steps 6 and 11: handled by readiness checks, not timeouts |
 
 ---
 
@@ -380,12 +388,12 @@ Long description printed before the run: [operation.md](../src/terraform/control
    - `FIRESTORE_CONFIG_DATABASE` (`lsb-control-tower-config-db`): config, the desired state.
    - `FIRESTORE_DATABASE` (`lsb-control-tower-db`): runtime state and jobs. Created by the first run of this operation (2026-11-08); the config database was added later.
 3. **Protection:** both have delete protection, `prevent_destroy` and point-in-time recovery (7-day window). Config also has a **weekly backup** (Sunday, kept 14 weeks, the maximum).
-4. **Job history expiry:** TTL policies on `FIRESTORE_DATABASE` for the `jobs` and `tasks` collection groups, field `expireAt`. The API sets `expireAt` when it creates a job or task, so the retention period is an API setting, not Terraform.
+4. **No TTL policies:** job history is kept indefinitely (helloworld-spec 1.9). TTL policies created by an earlier version of this operation (2026-11-09) were removed from the configuration, so the next apply **destroys them through Terraform** (plan: 2 to destroy). **Long-running (best practice 11):** each deletion is a Firestore index operation of often 10 to 20 minutes; the delete timeout is the provider default of about 20 minutes (recorded in state at creation), so if it is exceeded the run is `FAILED` and a re-run finishes the deletion.
 5. **Access:** server-side only for the CLI-first MVP. Per-database IAM (API read/write on both, runner read-only on config) is granted in step 6. Firebase enablement, Firebase Auth and security rules for a future UI's read-only listeners belong to a later UI operation ([apiservices-spec.md](apiservices-spec.md) section 3.5); the databases do not change for that.
 6. **Validation:** Firestore API enabled; the two database IDs differ; warns if a database exists before this operation is `DONE`.
 7. **Readiness:** both databases are reported by `gcloud firestore databases describe`.
 8. **Written back to `initialize.env`:** nothing (both IDs are already set).
-9. **Re-run after adding the config database:** plan shows 4 to add (config database, its backup schedule, two TTL policies) and no change to `FIRESTORE_DATABASE`.
+9. **Re-run:** plan shows no changes to the databases; the first re-run after the TTL removal shows 2 to destroy (the TTL policies).
 10. **Cannot be undone:** the location cannot change after creation, and a deleted database ID cannot be reused for a period.
 
 ### 4. `PlaygroundGroupsCreate` (`04-playground-groups-create`)

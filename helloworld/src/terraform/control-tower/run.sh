@@ -531,7 +531,7 @@ post_apply_ControlTowerFirestoreCreate() { # dir prefix
       gcloud firestore databases describe --database="$db" --project="$CT_PROJECT_ID" --format="value(name)"
   done
   ok "location $(terraform -chdir="$1" output -raw location), point-in-time recovery and delete protection enabled on both"
-  ok "config: weekly backup (Sunday, kept 14 weeks); runtime + jobs: TTL on jobs.expireAt and tasks.expireAt"
+  ok "config: weekly backup (Sunday, kept 14 weeks); runtime + jobs: kept indefinitely (no TTL)"
 }
 
 # PlaygroundGroupsCreate: group emails and initial members in DOMAIN; warn if groups already exist.

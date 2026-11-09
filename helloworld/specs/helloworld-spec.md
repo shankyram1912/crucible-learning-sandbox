@@ -105,13 +105,14 @@ The Self Service APIs keep three kinds of data in Firestore, split over two data
 | Written by | The API only (on behalf of a user) | Runner (`sa-control-tower`), project hook, reconciler | Created by the API, updated by the runner |
 | Rebuildable | No: source of truth | Yes, from GCP | Not needed: history |
 | Database | `lsb-control-tower-config-db` (`FIRESTORE_CONFIG_DATABASE`) | `lsb-control-tower-db` (`FIRESTORE_DATABASE`) | `lsb-control-tower-db` (`FIRESTORE_DATABASE`) |
-| Protection | PITR, delete protection, weekly backups kept 14 weeks | PITR, delete protection | Same database; documents expire through TTL (`expireAt`) |
+| Protection | PITR, delete protection, weekly backups kept 14 weeks | PITR, delete protection | Same database; kept indefinitely (no TTL) |
 
 1. **The runner reads config, never writes it.** Database-level IAM: `sa-lsb-api` read/write on both; `sa-control-tower` read-only on config, read/write on runtime and jobs (granted in Day-0 step 6 with IAM conditions on the database name).
 2. **Runtime and jobs share a database** because the same actors update them at the same moment (a task becomes `READY` as a project is recorded), so both commit in one transaction.
 3. **No cross-database transaction is needed:** config versions are immutable; the API writes version N first, then creates the job and takes the playground lock in one transaction in the runtime and jobs database. A version without a successful job is simply not applied.
 4. **Desired vs applied:** a playground's current config is the latest version with a successful job, recorded in runtime as the applied version. Desired version (config) not equal to applied version (runtime) means pending or drifted.
-5. **Layout:**
+5. **Job history is kept indefinitely** (decided): jobs are small, old documents do not slow queries, and the history doubles as an audit trail. There are **no TTL policies** (the ones briefly created on 2026-11-09 are deleted through Terraform). If a records or privacy policy ever requires a retention, it would be added then (a TTL policy plus an `expireAt` written by the API, and a one-off backfill for older jobs). Large logs go to the state bucket, not Firestore.
+6. **Layout:**
 
 ```
 lsb-control-tower-config-db
@@ -124,7 +125,7 @@ lsb-control-tower-db
   runtime/playgroundFolders/{id}         GCP folder ID, effective tags, IAM bound
   runtime/playgrounds/{id}               folder ID, projects, applied version, services
   runtime/projects/{projectId}           labels synced, owners bound, last reconcile
-  jobs/{jobId}, jobs/{jobId}/tasks/{id}  type, target, config version, status, requested by, expireAt
+  jobs/{jobId}, jobs/{jobId}/tasks/{id}  type, target, config version, status, requested by
   locks/{playgroundId}                   one active job per playground
 ```
 

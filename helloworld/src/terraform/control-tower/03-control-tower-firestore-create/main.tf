@@ -17,10 +17,6 @@ locals {
 
   # Weekly backups of config, kept 14 weeks (the maximum). PITR already covers the last 7 days.
   config_backup_retention = "8467200s"
-
-  # Job history expires through a TTL policy on this field (the API sets it when it creates a job or task).
-  ttl_field             = "expireAt"
-  ttl_collection_groups = ["jobs", "tasks"]
 }
 
 # Runtime + jobs (existing database, unchanged).
@@ -69,14 +65,9 @@ resource "google_firestore_backup_schedule" "config_weekly" {
   }
 }
 
-# TTL policies on the runtime + jobs database: documents in jobs and tasks are deleted after expireAt.
-resource "google_firestore_field" "ttl" {
-  for_each = toset(local.ttl_collection_groups)
-
-  project    = var.ct_project_id
-  database   = google_firestore_database.ct.name
-  collection = each.key
-  field      = local.ttl_field
-
-  ttl_config {}
-}
+# Job history is kept indefinitely: no TTL policies (helloworld-spec 1.9). The TTL policies created by an
+# earlier version of this operation (google_firestore_field.ttl["jobs"], ["tasks"]) are no longer in this
+# configuration, so the next apply destroys them, which disables TTL on jobs.expireAt and tasks.expireAt.
+# LONG-RUNNING: each deletion is a Firestore index operation, often 10-20 minutes. Their delete timeout is
+# the provider default (about 20 minutes, recorded in state when they were created); if it is exceeded,
+# run.sh records FAILED and a re-run finishes the deletion.
