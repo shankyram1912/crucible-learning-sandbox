@@ -16,7 +16,8 @@ Tracks the build sequence for the LSB Control Tower. Specs: [tdd-master.md](spec
 | 3c | Re-run `ControlTowerProjectCreate` to rename billing labels | ✅ Done (2026-11-08) | Align the Control Tower labels with the playground tag key names: `cost-center` → `cost-center-code`, `category` → `cost-category`, `subcategory` → `bu-subcategory` (rename the three `LABEL_*` keys in `initialize.env`), and add `bu-tracking-code`. New values: `cost-center-code=it-shared`, `cost-category=learning-sandbox`, `bu-tracking-code=it-100-1001`, `bu-subcategory=lsb-control-tower`. Expected plan: 1 in-place change on the project; the three old labels are removed, four labels added, `cost-center-bu=central-it` unchanged |
 | 3d | Re-run `ControlTowerFirestoreCreate` to add the config database | ✅ Done (2026-11-09) | Add `FIRESTORE_CONFIG_DATABASE=lsb-control-tower-config-db` to `initialize.env`. Expected plan: 4 to add (config database `lsb-control-tower-config-db`, weekly backup schedule, TTL on `jobs.expireAt` and `tasks.expireAt` in `lsb-control-tower-db`, later removed, see 3e), existing database unchanged. Spec: tdd-master 1.9, tdd-control-tower-master step 3 |
 | 3e | Remove the TTL policies (keep job history forever) | ✅ Done (2026-11-09) | Re-run `ControlTowerFirestoreCreate`. Expected plan: 0 to add, 0 to change, **2 to destroy** (`google_firestore_field.ttl["jobs"]`, `["tasks"]`). LONG-RUNNING: 20 to 40 minutes; if Terraform times out, re-run to finish. Check with `gcloud firestore fields ttls list --database=lsb-control-tower-db --project=lsb-control-tower-e26` |
-| 4 | `PlaygroundGroupsCreate` | ✅ Done (2026-11-08) | Both groups created as locked security groups (locked label accepted through Terraform). Creates `grp-lsb-it-admins@` and `grp-lsb-bu-admins@` as **locked security groups** (Terraform, `initial_group_config = EMPTY`, no human owners), nests it-admins in bu-admins (Terraform), adds `IT_ADMINS_INITIAL_MEMBERS` (Cloud Identity API in post-apply hook). Runs before the tag step, which grants Tag User to these groups. Spec: tdd-control-tower-master step 4 |
+| 4 | `PlaygroundGroupsCreate` | ✅ Done (2026-11-08) | Both groups created (first as locked security groups, locked label accepted through Terraform; to be unlocked, see 4a). Creates `grp-lsb-it-admins@` and `grp-lsb-bu-admins@` as security groups (Terraform, `initial_group_config = EMPTY`, no human owners), nests it-admins in bu-admins (Terraform), adds `IT_ADMINS_INITIAL_MEMBERS` (Cloud Identity API in post-apply hook). Runs before the tag step, which grants Tag User to these groups. Spec: tdd-control-tower-master step 4 |
+| 4a | Re-run `PlaygroundGroupsCreate` to unlock the two groups | ⬜ To do (coded) | Decided 2026-11-09: the platform never changes group membership (people with directory rights do, in the Admin console), so the locked label is removed. Expected plan: 2 in-place changes (labels). If the API refuses to remove the label, unlock in the Admin console (Groups > group > Group settings) and re-run |
 | 5 | `PlaygroundTagsCreate` | ✅ Done (2026-11-08) | Five **dynamic** playground tag keys at org level: `cost-center-bu`, `cost-center-code`, `cost-category`, `bu-tracking-code`, `bu-subcategory`, each with the allowed-values pattern `^[a-z]([a-z0-9-]{0,61}[a-z0-9])?$`, so no tag values are created in GCP. Grants **Tag User on `cost-center-bu`, `cost-center-code`, `cost-category` to `grp-lsb-it-admins@`** and **on `bu-tracking-code` and `bu-subcategory` to `grp-lsb-bu-admins@`**. Allowed values for the three IT-governed keys live in the Firestore catalog, checked by the API before binding. Terraform only: `google_tags_tag_key.allowed_values_regex` exists from google provider 7.20 (verified 2026-11-08: absent in 7.10, present in 7.20, 8.0, 8.10), so this operation pins `~> 8.0` in its own `versions.tf`; ops 1-4 stay on `~> 6.0`. Tag User on a dynamic key is assumed to be enough to bind any matching value (the key is the only IAM resource for a dynamic value); verify live after step 6 (which grants IT Admins Tag User on the school-folder ancestor) and before API op 05, using a test user who is in `grp-lsb-it-admins@` but holds no org-level roles; the Day-0 admin cannot prove it because its org-level roles would allow the binding anyway. Not applied to the Control Tower. Needs Tag Admin at org level. Spec: tdd-master 1.8 |
 | 6 | `ControlTowerIdentityCreate` | ⬜ To design (section 3) | Service accounts and least-privilege IAM |
 | 6a | Playground project hook | ⬜ To do (after step 6) | For every project in a playground (platform- or Console-created): copies the effective playground tags onto the project as labels, and binds the playground owners as `roles/owner`. Event-driven (project-creation audit log → function in the Control Tower); re-tag / owner-change jobs update all projects. Spec: tdd-master 1.8 rule 5, 2.5 |
@@ -43,7 +44,7 @@ Built one operation at a time per [tdd-apis-master.md](specs/tdd-apis/tdd-apis-m
 | 05 | `templates` (list, show) | ⬜ To do |
 | 06 | `playground-folder create` / list / show (creation gate, controllers, playground tags) | ⬜ To do |
 | 07 | `playground create` (creation gate, owners, bu-tracking-code, bu-subcategory, template, N projects) | ⬜ To do |
-| 08 | `group members` (get / set; IT Admins only for the two service groups) | ⬜ To do |
+| 08 | `platform-users list` (who has which persona, read-only; membership itself is managed in the Admin console) | ⬜ To do |
 | 09 | `service enable` (GCS) | ⬜ To do |
 
 ---
@@ -60,7 +61,7 @@ Access model: [tdd-master.md](specs/tdd-master.md) section 2.
 
 **Standing grant:** `grp-lsb-it-admins@` gets Folder Admin + Tag User + Project Creator on the common ancestor of the school folders. BU Admins need no school-folder grants (their rights come from the Playground Folders where IT names them as controllers).
 
-Step 4 creates them as **locked security groups** (no human owners or managers) with the initial IT Admins; step 6 only adds the IT Admins' standing grant.
+Step 4 creates them as security groups (no human owners or managers, not locked) with the initial IT Admins; step 6 only adds the IT Admins' standing grant. Membership is managed outside the platform.
 
 ### 3.2 Service accounts (in the Control Tower project)
 | Service account | Purpose | Proposed roles |
@@ -76,16 +77,16 @@ Step 4 creates them as **locked security groups** (no human owners or managers) 
 4. **Firestore IAM per database** (tdd-master 1.9), using IAM conditions on the database name: `sa-lsb-api` read/write on both databases; `sa-control-tower` **read-only on `lsb-control-tower-config-db`**, read/write on `lsb-control-tower-db`. Verify that Firestore IAM conditions on the database name work as expected.
 
 ### 3.4 Manual steps (cannot be done in Terraform)
-Membership changes of the two locked groups need a directory admin role: **open decision**: grant IT Admins Groups Admin/Editor (user token) or assign Groups Admin to a platform service account (the one exception to "no SA" in the config stage).
+Decided (2026-11-09): no platform identity gets a directory admin role; group membership is managed by people in the Admin console.
 
 ### 3.5 Readiness
-Groups exist and are locked; service accounts exist; IAM bindings visible (allow a few minutes for propagation).
+Groups exist; service accounts exist; IAM bindings visible (allow a few minutes for propagation).
 
 ### 3.6 Written back to `initialize.env`
 `CT_SA_API`, `CT_SA_PROVISIONER`, `CT_SA_BUILD` (service account emails).
 
 ### 3.7 Open decisions
 1. **Common ancestor** for the IT Admins' and `sa-control-tower`'s grants: University Sandbox (`600433119916`) or the org.
-2. **Locked-group membership changes:** IT Admins as Groups Admins/Editors (user token) or a platform service account.
+2. ~~Locked-group membership changes~~ **Decided:** managed outside the platform by people with directory rights.
 3. **Pipeline source for now:** this public repo with a protected `main`, or a private repo now.
 4. **Local API runs:** developer ADC impersonates `sa-lsb-api` (closest to production) or uses the admin's own permissions.

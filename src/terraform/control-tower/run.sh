@@ -11,7 +11,7 @@
 #   ControlTowerProjectCreate   (order 1) Control Tower folder, project, billing link, state bucket
 #   ControlTowerApisEnable      (order 2) baseline APIs + service agents on the Control Tower project
 #   ControlTowerFirestoreCreate (order 3) Firestore databases for the Self Service APIs (config; runtime + jobs)
-#   PlaygroundGroupsCreate      (order 4) locked playground service groups (IT Admins nested in BU Admins)
+#   PlaygroundGroupsCreate      (order 4) playground service groups (IT Admins nested in BU Admins)
 #   PlaygroundTagsCreate        (order 5) five dynamic playground tag keys + Tag User grants
 #
 # Flags (bootstrap operations):
@@ -48,7 +48,7 @@ declare -A OP_TITLE=(
   [ControlTowerProjectCreate]="Control Tower folder + project + state bucket"
   [ControlTowerApisEnable]="Baseline APIs + service agents on the Control Tower project"
   [ControlTowerFirestoreCreate]="Firestore databases: config, and runtime + jobs"
-  [PlaygroundGroupsCreate]="Locked playground service groups (IT Admins nested in BU Admins)"
+  [PlaygroundGroupsCreate]="Playground service groups (IT Admins nested in BU Admins)"
   [PlaygroundTagsCreate]="Dynamic playground tag keys + Tag User grants"
 )
 declare -A OP_KEYS=(
@@ -573,14 +573,6 @@ post_apply_PlaygroundGroupsCreate() { # dir prefix
   CURRENT_STEP="readiness check"
   wait_for "$IT_ADMINS_GROUP nested in $BU_ADMINS_GROUP" 120 \
     bash -c 'gcloud identity groups memberships check-transitive-membership --group-email="$1" --member-email="$2" --format="value(hasMembership)" | grep -qi true' _ "$BU_ADMINS_GROUP" "$IT_ADMINS_GROUP"
-  for g in "$IT_ADMINS_GROUP" "$BU_ADMINS_GROUP"; do
-    labels="$(gcloud identity groups describe "$g" --format="json(labels)" 2>/dev/null || true)"
-    if grep -q 'groups.locked' <<<"$labels"; then
-      ok "$g is a locked security group"
-    else
-      warn "$g does not carry the locked label: lock it in the Admin console (Groups > group > Group settings) or with the Cloud Identity API"
-    fi
-  done
 
   CURRENT_STEP="writing outputs back to initialize.env"
   out="$(terraform -chdir="$dir" output -json)"

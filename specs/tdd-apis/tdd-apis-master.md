@@ -46,7 +46,7 @@ Operations are grouped into **domains**. Each domain has its own spec in this fo
 | Templates | list, show (05) | `lsb templates` | `tdd-apis-templates.md` (to write) | To do |
 | Playground Folders | create, list, show (06) | `lsb playground-folder` | `tdd-apis-playground-folders.md` (to write) | To do |
 | Playgrounds | create (07), later show and configure | `lsb playground` | `tdd-apis-playgrounds.md` (to write) | To do |
-| Groups | members get, set (08) | `lsb group members` | `tdd-apis-groups.md` (to write) | To do |
+| Platform users | list (08): who has which persona, read-only | `lsb platform-users` | `tdd-apis-platform-users.md` (to write) | To do |
 | Services | enable, GCS first (09) | `lsb service` | `tdd-apis-services.md` (to write) | To do |
 
 > The first API draft (REST and CLI reference, cohort model) is frozen in [apis-v0-interface.md](../../specs-reference/apis-v0-interface.md); each domain spec states which of its rows it replaces. Each domain spec follows [tdd-master.md](../tdd-master.md) section 2.

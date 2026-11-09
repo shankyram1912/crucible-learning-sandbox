@@ -18,7 +18,7 @@ Domain: `shankyram.altostrat.com`. All users are Cloud Identity Free users with 
 | `lsb-owner-cs100@` | Playground owner | none | Owner of the CS 100 playground's projects |
 | `lsb-student1@` to `lsb-student4@` | Student | none | Students 1 and 2 in BA 101, 3 and 4 in CS 100 (API op 08) |
 
-**The seed creates users only; it never adds group memberships.** Membership of the locked service groups is changed only by IT Admins through the platform (API op 08, `group members`); the only bootstrapped member is `IT_ADMINS_INITIAL_MEMBERS` (Day-0 step 4). All other access also comes from the platform.
+**The seed creates users only; it never adds group memberships.** All group membership (service groups, student and TA groups) is managed outside the platform by people with directory rights, in the Admin console; the platform only reads it. The only bootstrapped member is `IT_ADMINS_INITIAL_MEMBERS` (Day-0 step 4). All other access comes from the platform.
 
 ## 2. Tag value catalog (`seed/catalog.csv`, loaded into Firestore)
 
@@ -46,7 +46,7 @@ School folders are created once by IT as setup. Negative checks:
 
 ## 4. Tag binding test (needs only the first three users; can run before step 6)
 
-Prerequisite: `lsb-it-admin1@` and `lsb-bu-biz1@` are in their service groups, added **through the platform** (API op 08, `group members`), so the test runs after that operation exists. Setup as admin@: scratch folder `lsb-tag-test` under University Sandbox, Tag User on it for both users (stands in for the folder-level grants from step 6 and Playground Folder creation).
+Prerequisite: `lsb-it-admin1@` and `lsb-bu-biz1@` are in their service groups, added by an admin in the Admin console (the platform never changes membership), so the test can run now. Setup as admin@: scratch folder `lsb-tag-test` under University Sandbox, Tag User on it for both users (stands in for the folder-level grants from step 6 and Playground Folder creation).
 
 | User | Bind `cost-center-bu` | Bind `bu-subcategory` | Remove IT's `cost-center-bu` binding |
 |---|---|---|---|
@@ -78,7 +78,7 @@ rm ~/lsb-users-upload.csv
 
 [make-upload-csv.sh](make-upload-csv.sh) fills the Password column from `LSB_SEED_PASSWORD` (or a prompt), refuses to write inside the repo, and rejects passwords shorter than 8 characters or containing a comma. Setting the variable with `export` leaves it in your shell history; prefix the line with a space (if `HISTCONTROL` ignores spaces) or use the prompt to avoid that.
 
-Group memberships are **not** part of the seed: IT Admins add them through the platform (API op 08).
+Group memberships are **not** part of the seed: an admin adds them in the Admin console.
 
 Notes:
 - **Licences:** users go into the root org unit. If the domain auto-assigns Google Workspace licences, each user takes one; otherwise they are Cloud Identity Free users.
@@ -89,4 +89,4 @@ Notes:
 1. Trim the set or keep all 9 users (the tag test needs only the first three).
 2. Delete or keep `seed/backup/`.
 3. Generate `catalog.csv` and `scenarios.md` (`users.csv` is done).
-4. Tag binding test timing: it now needs API op 08 for the memberships; move it before API op 06 in the to-do list.
+4. Tag binding test: memberships are added in the Admin console, so it no longer waits for an API operation.

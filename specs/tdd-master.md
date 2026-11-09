@@ -151,7 +151,7 @@ lsb-control-tower-db
 | `grp-lsb-it-admins@<domain>` | IT Admins | **Playground Folders** (create, set the IT-governed tags, name the BU Admin controllers) | Only IT Admins add or remove members of both groups; control of every Playground Folder and playground by default |
 | `grp-lsb-bu-admins@<domain>` | BU Admins, plus `grp-lsb-it-admins@` nested | **Playgrounds** inside the Playground Folders they control (owners, `bu-tracking-code` and `bu-subcategory` overrides, template, services) | |
 
-- Both are created in Day-0 step 4 (`PlaygroundGroupsCreate`, before the tag operation that grants them Tag User) as **locked groups** (`cloudidentity.googleapis.com/groups.locked` plus the security label): only Super Admins and Groups Admins can change membership; group owners, managers and self-join are blocked.
+- Both are created in Day-0 step 4 (`PlaygroundGroupsCreate`) as security groups with no owners or managers, **not locked**. **The platform never changes group membership** (decided 2026-11-09): people with directory rights (Super Admins, Groups Admins) manage these groups in the Admin console, as for student and TA groups. The platform only reads them.
 - Membership changes go through the platform, which enforces "IT Admins only". No human owners or managers on these groups.
 - Drift detection: Admin audit log alert on membership changes not made through the platform; platform-recorded intended membership compared periodically.
 
@@ -236,4 +236,4 @@ User ── ID token + access token ──▶ Self Service APIs (Cloud Run)
 ```
 1. **Config stage uses the user's token, no service account.** The user's own permissions (section 2.3) are what make the change; nothing is created that the user could not create themselves.
 2. **Pipeline stage:** identities, secured source (variables only, predefined trigger, protected branch, pinned versions and image) and reliability are specified in [tdd-playground-master.md](tdd-playground/tdd-playground-master.md).
-3. **Open:** membership changes of the two locked groups need a directory admin role; either IT Admins hold Groups Admin/Editor (user token) or a platform service account does it (the one exception to "no service account" in the config stage).
+3. **Decided (2026-11-09):** no platform identity has directory write rights. Group creation and membership (service groups, student and TA groups) are done by people with directory rights; playground admins map existing groups to playground slots as a JobSync IAM association.

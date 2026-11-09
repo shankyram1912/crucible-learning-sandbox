@@ -1,11 +1,11 @@
 # PlaygroundGroupsCreate
 
 ## Summary
-Creates the two playground service groups as locked security groups: ${IT_ADMINS_GROUP} (IT Admins, configure Playground Folders and manage membership of both groups) and ${BU_ADMINS_GROUP} (BU Admins, configure playgrounds). IT Admins are nested in BU Admins. Locked groups can only be changed by Super Admins or Groups Admins, so membership changes go through the platform. Runs before the tag operations, which grant these groups Tag User.
+Creates the two playground service groups as security groups (not locked): ${IT_ADMINS_GROUP} (IT Admins, configure Playground Folders and manage membership of both groups) and ${BU_ADMINS_GROUP} (BU Admins, configure playgrounds). IT Admins are nested in BU Admins. Membership is managed outside the platform by people with directory rights (Admin console); the groups have no owners or managers. Runs before the tag operations, which grant these groups Tag User.
 
 ## Prerequisites
 - ControlTowerFirestoreCreate is DONE (state bucket gs://${TF_STATE_BUCKET} exists).
-- Signed-in admin ${LSB_ACCOUNT} is a Super Admin, or a Groups Admin able to manage locked groups, in ${DOMAIN}.
+- Signed-in admin ${LSB_ACCOUNT} is a Super Admin or Groups Admin in ${DOMAIN}.
 - Quota project ${QUOTA_PROJECT} has the Cloud Identity API enabled.
 
 ## Inputs (initialize.env)
@@ -17,12 +17,12 @@ Creates the two playground service groups as locked security groups: ${IT_ADMINS
 - TF_STATE_BUCKET            ${TF_STATE_BUCKET}
 
 ## What will happen
-1. Create group ${IT_ADMINS_GROUP} ("LSB IT Admins") under customers/${DIRECTORY_CUSTOMER_ID}: security + locked labels, no owner
+1. Create group ${IT_ADMINS_GROUP} ("LSB IT Admins") under customers/${DIRECTORY_CUSTOMER_ID}: security label, no owner
 2. Create group ${BU_ADMINS_GROUP} ("LSB BU Admins") the same way
 3. Add ${IT_ADMINS_GROUP} as a member of ${BU_ADMINS_GROUP} (every IT Admin is a BU Admin)
 4. Store this operation's Terraform state in gs://${TF_STATE_BUCKET}/control-tower/04-playground-groups-create
 5. Add the initial IT Admins (${IT_ADMINS_INITIAL_MEMBERS}) to ${IT_ADMINS_GROUP}
-6. Check both groups exist, the nesting is in place and the locked label is present
+6. Check both groups exist and the nesting is in place
 7. Write IT_ADMINS_GROUP_ID and BU_ADMINS_GROUP_ID back to initialize.env
 
 ## Resources created or changed
@@ -35,7 +35,7 @@ Creates the two playground service groups as locked security groups: ${IT_ADMINS
 IT_ADMINS_GROUP_ID, BU_ADMINS_GROUP_ID
 
 ## Readiness check
-Both groups are found, ${IT_ADMINS_GROUP} is a member of ${BU_ADMINS_GROUP}, and both carry the locked label.
+Both groups are found, ${IT_ADMINS_GROUP} is a member of ${BU_ADMINS_GROUP}.
 
 ## Expected duration
 Under a minute.

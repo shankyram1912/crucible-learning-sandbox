@@ -1,14 +1,14 @@
 # PlaygroundGroupsCreate
-# Two locked security groups for the playground service, IT Admins nested in BU Admins.
+# Two security groups for the playground service, IT Admins nested in BU Admins.
+# Not locked (decided 2026-11-09): the platform never changes membership; people with directory rights do,
+# and the groups have no owners or managers, so only Super Admins / Groups Admins can change them anyway.
 # Initial IT Admin users are added by run.sh after apply (membership is data, not Terraform).
 
 locals {
   # discussion_forum: required for Google Groups; security: usable in IAM / security-sensitive;
-  # locked: membership changeable only by Super Admins / Groups Admins (not by group owners or users).
   group_labels = {
     "cloudidentity.googleapis.com/groups.discussion_forum" = ""
     "cloudidentity.googleapis.com/groups.security"         = ""
-    "cloudidentity.googleapis.com/groups.locked"           = ""
   }
 }
 
