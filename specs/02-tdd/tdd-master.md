@@ -259,6 +259,8 @@ Tracked here until each is decided or applied. Decisions they depend on are in [
 9. **2.6 rule 5 and 2.8:** roles map to groups inside each service's Terraform module; elevated privileges are a separate service.
 10. **2.7 rule 4:** BU Admins map existing groups to the template's group slots; the platform doesn't name groups.
 11. **2.9 rule 1:** guardrails are applied on each Playground Folder.
+12. **2.4 and 2.6 rule 1:** playground owners become the playground's optional **Playground Admin group** (at most one existing group per playground), bound `roles/owner` on every project, with the same platform rights as BU Admins for that playground (needs a playground-scoped check in the ACL).
+13. **1.3 and the template model:** a playground's project count is expected students (entered by the BU Admin) ÷ the template version's students per project, rounded up.
 
 ### 3.2 Open design items
 1. **2.8:** roles for Cloud SQL, Cloud Run and Vertex AI Search, decided as each service module is designed.
@@ -268,10 +270,8 @@ Tracked here until each is decided or applied. Decisions they depend on are in [
 
 ### 3.3 Open questions from the admin journeys
 1. **IT-01:** can a service be mandatory (always on)?
-2. **BU-01:** does the BU Admin enter the expected number of students, so the platform works out how many projects to create?
-3. **BU-01:** playground budget: none, optional or required?
-4. **BU-03:** can BU Admins adjust quotas per playground within the template's limits?
-5. **BU-03:** turning a service off; 1.6 rule 4 already says services are add-only and can never be turned off.
-6. **BU-03:** who can upgrade a playground to a newer template version?
-7. **BU-04:** adding projects to a playground (not designed).
-8. **BU-05:** decommissioning a playground (not designed).
+2. **BU-01:** playground budget: none, optional or required?
+3. **BU-03:** turning a service off; 1.6 rule 4 already says services are add-only and can never be turned off.
+4. **BU-03:** who can upgrade a playground to a newer template version?
+5. **BU-04:** adding projects to a playground (not designed).
+6. **BU-05:** decommissioning a playground (not designed).

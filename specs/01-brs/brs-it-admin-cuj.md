@@ -24,7 +24,7 @@ As an IT Admin, I want to add, version, update and retire GCP service definition
 As an IT Admin, I want to build playground templates from service versions, to accomplish ready-made playground shapes that BU Admins choose from.
 
 - Each template has versions, and one version is marked current. Every edit creates a new version.
-- A version holds: name and description, the service versions it includes (each on by default or optional), the project layout (students per project, or a fixed number of projects), the groups it expects, and quota and size settings within each service's limits.
+- A version holds: name and description, the service versions it includes (each on by default or optional), students per project (which, with the playground's expected students, decides how many projects a playground gets), the groups it expects, and quota and size settings within each service's limits.
 - A playground keeps the template version it was created with, until it's explicitly upgraded.
 - Every template is available in every Playground Folder.
 - Retire, don't delete, once in use.
@@ -58,7 +58,7 @@ As an IT Admin, I want to create a Playground Folder with a billing account, bud
 - **Budget:** required, in the billing account's currency. Alert levels 50, 75, 90 and 100% are platform-wide. No email notifications for now. The platform creates the budget.
 - **Cost tags:** cost center, cost center code and category, chosen from the lists in IT-03 and IT-04. Nothing else is tagged on the folder.
 - **BU Admin group:** exactly one group, which must already be inside the BU Admins group. People are added to it in the Admin console. It manages the playgrounds and their tags in the folder.
-- **Project owners:** on every playground project, the BU Admin group, the IT Admins group and the playground owners each get full owner access.
+- **Project owners:** on every playground project, the BU Admin group, the IT Admins group and the playground's Playground Admin group each get full owner access.
 - **Projects are created only by the pipeline,** which gets project-creation rights on the Playground Folder and links each project to its billing account.
 - **Prerequisite:** the platform has billing rights on every billing account used for playgrounds, granted by the platform setup.
 
