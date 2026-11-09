@@ -19,7 +19,7 @@ Replaces the `group members` rows (10 to 12) of [apis-v0-interface.md](../../spe
    - **Refreshed in the background** every `LSB_ADMIN_ROSTER_REFRESH_SECONDS` (default 300). A refresh replaces the roster only if every group was read; on failure the previous roster stays and the next cycle retries.
    - **Never loaded** (directory unreadable since startup): role and persona checks answer `500 INTERNAL` until a refresh succeeds.
    - **Staleness:** a membership change in the Admin console applies within one refresh period, unless live role checks are on (rule 6).
-2. **Only admins are cached.** Students and other users are never loaded; anyone not in the roster holds only `USER`. Student and playground checks are designed with the playground operations.
+2. **Only admins are cached.** Students and other users are never loaded; anyone not in the roster holds only `USER`, and the roles answer lists **only admin groups** (a student in `grp-ba101-students@` shows no groups). **Open, revisit with the playground operations (to-do list item 08):** reading and showing non-admin groups (for example a live `/{email}/groups` and `/me/groups` operation), and student and playground role checks.
 3. **Identity:** the roster is read as the API's own identity (ADC locally, `sa-lsb-api` deployed), which needs read access to group memberships. No directory write rights anywhere.
 4. **Synchronous, read-only;** not a job.
 5. **One implementation:** `roles_of()` in `src/api/lsb_api/context.py` is the only code that turns roster groups into roles. The ACL check and the platform roles API both use it, so they always agree. The caller's roles are computed once per request and cached on the request context.

@@ -8,6 +8,7 @@ Specs (one master per folder; longer designs split into `tdd-<folder>-<topic>.md
 - [tdd-playground/tdd-playground-master.md](tdd-playground/tdd-playground-master.md): builds playgrounds: Terraform pipeline (identities, secured source, reliability), with [tdd-playground-services.md](tdd-playground/tdd-playground-services.md) for the GCP service modules
 - [tdd-apis/tdd-apis-master.md](tdd-apis/tdd-apis-master.md): Learning Sandbox Self Service APIs (REST interface and `lsb` CLI mapping)
 - [tdd-data/tdd-data-master.md](tdd-data/tdd-data-master.md): Firestore data design (config, runtime, jobs)
+- [tdd-tags-labels/tdd-tags-labels-master.md](tdd-tags-labels/tdd-tags-labels-master.md): tag and label binding deep dive (permissions, who binds which key, validation, how GCP behaves)
 
 ---
 
@@ -94,7 +95,8 @@ Folders cannot carry labels, and labels are never inherited. To cover every proj
    - **Re-tagging a playground** updates the folder's tag bindings **and** the labels on all its projects in the same job, so tags and labels never drift.
 8. **No separate `playground` key** for now: the playground folder identifies the playground in inventory.
 9. **Control Tower:** not tagged. It keeps its project labels (`cost-center-bu=central-it`, `cost-center-code=it-shared`, `cost-category=learning-sandbox`, `bu-tracking-code=it-100-1001`, `bu-subcategory=lsb-control-tower`), using the same key names as the playground tags.
-10. **Limits** (to verify against the official quotas): 1,000 tag keys per org, dynamic values unlimited (the 1,000 values per key limit applies only to defined keys), 50 tags attached directly per resource, short names up to 256 characters.
+10. **Who can bind (verified live 2026-11-09):** Tag User on the key and on the resource; for dynamic values GCP checks the key, so the key grants above decide who binds which keys. Details: [tdd-tags-labels-master.md](tdd-tags-labels/tdd-tags-labels-master.md).
+11. **Limits** (to verify against the official quotas): 1,000 tag keys per org, dynamic values unlimited (the 1,000 values per key limit applies only to defined keys), 50 tags attached directly per resource, short names up to 256 characters.
 
 ### 1.9 Control Tower data: config, runtime, jobs
 The Self Service APIs keep three kinds of data in Firestore, split over two databases in the Control Tower project so that the pipeline can never change desired state.

@@ -12,7 +12,7 @@ Every change the platform makes is a **job**: one record, made of ordered **task
 
 | | **JobSync** | **JobAsync** | **JobTerraform** |
 |---|---|---|---|
-| Use when | The caller's own IAM rights must authorize the change: creating Playground Folders and playgrounds, associating groups or users with IAM roles | Platform-identity work, high volume or retry-heavy (for example 1,000 students entering a playground at once) | Infrastructure declared in Terraform state (playground projects, enabling services) |
+| Use when | The caller's own IAM rights must authorize the change: creating Playground Folders and playgrounds (API operations 07 and 08). **Future use:** group management, or associating groups or users with IAM roles, when the caller's own IAM must be leveraged | Platform-identity work, high volume or retry-heavy (for example 1,000 students entering a playground at once) | Infrastructure declared in Terraform state (playground projects, enabling services) |
 | Runs | Inside the API request | A worker, after the response | The Cloud Build pipeline |
 | Identity | **The caller**: their OAuth access token from `X-LSB-Access-Token`, used only during the request, never stored | `sa-lsb-worker` | `sa-control-tower` |
 | Response | `200` / `201` with the finished Job (`SUCCEEDED` or `FAILED`) | `202` with `Accepted` (`job_id`) | `202` with `Accepted` (`job_id`) |
