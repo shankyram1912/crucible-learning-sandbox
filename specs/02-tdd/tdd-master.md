@@ -25,7 +25,7 @@ Specs (one master per folder; longer designs split into `tdd-<folder>-<topic>.md
 2. **Only `MANDATORY` service versions may define user singleton resources.** `DEFAULT_ON` and `OPTIONAL` services define app resources only, so enabling one on a running playground never re-initializes any workspace.
 3. A **playground template** is versioned too; a template version pins service versions (optionally promoting availability mode or narrowing allowance bounds within the service's bounds) and sets `max_students_per_project`.
 4. A playground is created from the template's **`current` version and stays pinned to it for life**. There is no template upgrade. Prerequisites come from the pinned service versions and determine module run order.
-5. Services, templates and their versions are never deleted; they are **retired**, which blocks new selection and leaves existing playgrounds untouched.
+5. Services, templates and their versions are never deleted; every change is **versioned**, and earlier versions remain in version history for the templates and playgrounds pinned to them. Publishing a new version is what takes the previous one out of new selection.
 
 ### 1.3 Playground flows (all tracked jobs)
 - **Create Playground Folder (IT-05):** create the GCP folder under the chosen parent, bind the three IT tags, bind the BU Admin group and `grp-lsb-it-admins@` (section 2.4), grant the runner Project Creator, apply guardrails, create the folder budget.

@@ -22,8 +22,8 @@ As an IT Admin, I want to configure and version single-service templates in the 
   - **Quota per project** (maximum capacity per project shard) and **per-user bounds** (`min` is the minimum and default starting allowance per user, up to a **finite `max`** ceiling — there is no unlimited allowance).
 - Which GCP IAM roles each group gets is defined in the Terraform module, not in the catalog.
 - Elevated privileges are modeled as a separate service definition, not a flag on an existing one.
-- New playground template versions default to each service's `current` version; older non-retired service versions stay selectable when composing a template until retired.
-- **Never deleted:** service templates and service versions are never edited in place and **never hard-deleted** from the platform; obsolete or superseded ones can only be **retired** (blocking new selection while keeping existing uses intact).
+- A new playground template version pins each service's `current` (latest) version; earlier service versions remain in version history for the templates and playgrounds already pinned to them.
+- **Never deleted:** service templates and service versions are never edited in place and **never hard-deleted** from the platform; every change is **versioned**, and superseded versions remain in version history while existing uses keep them.
 
 ---
 
@@ -34,8 +34,8 @@ As an IT Admin, I want to compose versioned playground templates from catalog se
 - A template version composes **pinned service versions** from the service catalog (inheriting each service's mandatory, enabled-by-default-and-optional, or disabled-by-default-and-optional mode, prerequisites, user group slots, and service defaults, with optional template-level tuning within each service's bounds).
 - A template version sets the **maximum number of students per project** (shard capacity ceiling, for example `100` students per project), which together with a playground's expected student count determines how many project shards are created.
 - **Only the `current` version is used for new playgrounds, and never upgraded:** creating a new playground from a template always uses that template's `current` version, and **existing playgrounds stay permanently pinned to the template version they were created with for their entire life** (a playground's template version can never be upgraded).
-- Every active (non-retired) template is available across every Playground Folder.
-- **Never deleted:** playground templates and template versions are never edited in place and **never hard-deleted** from the platform; obsolete or superseded ones can only be **retired** (blocking new selection while keeping existing playgrounds intact).
+- Every template is available across every Playground Folder, always at its `current` (latest) version.
+- **Never deleted:** playground templates and template versions are never edited in place and **never hard-deleted** from the platform; every change is **versioned**, and superseded versions remain in version history while the playgrounds pinned to them keep them.
 
 ---
 
@@ -84,7 +84,7 @@ As an IT Admin, I want to rename a Playground Folder or update its budget, to ac
 ---
 
 ## IT-07 Decommission a Playground Folder
-As an IT Admin, I want to decommission a Playground Folder, to accomplish stopping all billing across its playgrounds and projects when the container is paused or retired.
+As an IT Admin, I want to decommission a Playground Folder, to accomplish stopping all billing across its playgrounds and projects while keeping everything in place for a later recommission.
 
 - Decommissioning a Playground Folder runs as a **tracked job** that disables billing across all underlying playgrounds' associated projects so cloud spend stops immediately, and marks the Playground Folder along with **all underlying playgrounds and projects as decommissioned** in the platform.
 - **Read-only while decommissioned:** the folder and everything inside it stay viewable (configuration and job history) by every persona, but every mutating action on the folder, its playgrounds, and its users' workspaces is blocked until the folder is recommissioned (IT-10).
@@ -122,6 +122,6 @@ As an IT Admin, I want to recommission a decommissioned Playground Folder, to ac
 ## Not in the platform
 - Adding or removing members of Google groups (done in the Admin console).
 - Creating ordinary organizational folders, such as school folders (done in the Cloud console).
-- Hard-deleting service templates, playground templates, catalog versions, or cost tag values from the platform (catalog items are retired or marked disabled, never deleted).
+- Hard-deleting service templates, playground templates, catalog versions, or cost tag values from the platform (catalog items are versioned or marked disabled, never deleted).
 - Deleting decommissioned GCP projects, folders, budgets, or resources (handled as external manual cleanup).
 - Upgrading an existing playground to a newer template version (playgrounds stay permanently pinned to their creation template version), or a simulate / dry-run execution mode.
