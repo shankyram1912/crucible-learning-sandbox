@@ -111,7 +111,7 @@ The Self Service APIs keep three kinds of data in Firestore, split over two data
 
 | | **Config** (desired state) | **Runtime** (observed state) | **Jobs** (operations) |
 |---|---|---|---|
-| Holds | Tag catalog, service catalog and templates (versioned), Playground Folders, playgrounds (BU Admin group, optional Playground Admin group, mapped user groups, pinned template version, budgets, active/decommissioned state), immutable config versions (v1..vN), per-user portal access (active/suspended) | What exists in GCP: folder and project IDs, enabled services, applied config version, shard occupancy, user workspaces, app containers, app resources and allowance counters | Jobs, tasks, step status, log pointers, outputs, one lock per playground / folder |
+| Holds | Tag catalog, service catalog and templates (versioned), Playground Folders, playgrounds (BU Admin group, optional Playground Admin group, mapped user groups, pinned template version, budgets, active/decommissioned state), archived configuration versions | What exists in GCP: folder and project IDs, enabled services, applied config version, shard occupancy; user workspaces with per-user portal access (enabled/suspended), app containers, app resources and allowance counters | Jobs, tasks, step status, log pointers, outputs, one lock per playground / folder |
 | Written by | The API only (on behalf of a user) | Runner (`sa-control-tower`), reconciler | Created by the API, updated by the runner |
 | Rebuildable | No: source of truth | Yes, from GCP | Not needed: history and audit trail |
 | Database | `lsb-control-tower-config-db` (`FIRESTORE_CONFIG_DATABASE`) | `lsb-control-tower-db` (`FIRESTORE_DATABASE`) | `lsb-control-tower-db` (`FIRESTORE_DATABASE`) |

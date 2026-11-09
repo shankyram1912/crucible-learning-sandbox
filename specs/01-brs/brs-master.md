@@ -55,7 +55,7 @@ The same few concepts cover very different situations without new platform featu
 
 | Scenario | How it's handled |
 |---|---|
-| A 20-student seminar and a 1,000-student course | Same template; the seminar gets 1 project, the course 10 (at 100 students per project) |
+| A 20-student seminar and a 1,000-student course | Same template; the seminar gets 1 project, the course 13 (at 80 students per project) |
 | A course that grows mid-term | Increasing expected students adds new shards; existing shards and workspaces are untouched |
 | Courses that need different tools | Different templates, or optional services enabled per playground (optional services add app resources only, so no workspace is ever re-initialized) |
 | A research lab that needs more power | A separate, elevated service definition in its own template, never a hidden switch on the standard one |
@@ -130,7 +130,7 @@ flowchart TD
 
 **Creating a playground.** In one of those Playground Folders, the BU Admin:
 1. **Picks a template.** New playgrounds always start on the chosen template's **`current` version**, and stay **permanently pinned to that template version** for the entire life of the playground (a playground's template version can never be upgraded).
-2. **Enters the expected number of students.** The platform creates expected students ÷ the template's maximum students per project projects, rounded up (for example 350 students at 100 per project gives 4 projects).
+2. **Enters the expected number of students.** The platform creates expected students ÷ the template's maximum students per project projects, rounded up (for example 350 students at 80 per project gives 5 projects).
 3. **Adds the BU tags:** literal `bu-tracking-code` and `bu-subcategory` values (**un-cataloged** — not drawn from a catalog, what you see is what you get), on top of the IT tags inherited from the folder; **cannot be updated once the playground is created**.
 4. **Sets a required playground budget** (in the folder's billing account currency, with the same 50, 75, 90 and 100% alert levels), and **optionally sets a per-project shard budget** less than or equal to the playground budget (as a default across shards or overridden on individual shards). Both budgets and the playground's display name can be updated later.
 5. **Optionally names a Playground Admin group** (at most one), for example the course's TAs, to run this playground alongside the BU Admins; **cannot be changed or swapped after creation**.
@@ -182,7 +182,7 @@ An illustrative example of a first playground template for AI courses. Every ser
 | Cloud Run | **Enabled by default & optional** *(requires Service Account)* | Cloud Run API | none (runs as `sa-<user>`) | Services `run-<user>-<app>-<svc>` | `min` up to `max` (set per playground) |
 | Vertex AI Search | **Enabled by default & optional** *(requires Service Account, Cloud Storage)* | Discovery Engine API | none | Data stores and apps `search-ds-...`, `search-app-...` | `min` up to `max` (set per playground) |
 
-With a ceiling of 100 students per project, a 350-student playground gets 4 project shards. Each user lands in one shard, gets their service account, Gemini access, bucket and logical database on first entry, and then builds app containers such as `app-lab1` with a bucket folder, a schema, a Cloud Run service and a search data store. If a BU Admin unchecked Vertex AI Search at creation and turns it on later, users simply gain a new app resource type — nobody is re-initialized.
+With the default ceiling of 80 students per project, a 350-student playground gets 5 project shards. Each user lands in one shard, gets their service account, Gemini access, bucket and logical database on first entry, and then builds app containers such as `app-lab1` with a bucket folder, a schema, a Cloud Run service and a search data store. If a BU Admin unchecked Vertex AI Search at creation and turns it on later, users simply gain a new app resource type — nobody is re-initialized.
 
 ### 2.7 Terms
 

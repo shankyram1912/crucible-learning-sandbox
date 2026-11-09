@@ -32,7 +32,7 @@ As an IT Admin, I want to compose versioned playground templates from catalog se
 
 - Each playground template has immutable **versions**, with one version marked `current`; every edit creates a new version.
 - A template version composes **pinned service versions** from the service catalog (inheriting each service's mandatory, enabled-by-default-and-optional, or disabled-by-default-and-optional mode, prerequisites, user group slots, and service defaults, with optional template-level tuning within each service's bounds).
-- A template version sets the **maximum number of students per project** (shard capacity ceiling, for example `100` students per project), which together with a playground's expected student count determines how many project shards are created.
+- A template version sets the **maximum number of students per project** (shard capacity ceiling, default `80` students per project), which together with a playground's expected student count determines how many project shards are created.
 - **Only the `current` version is used for new playgrounds, and never upgraded:** creating a new playground from a template always uses that template's `current` version, and **existing playgrounds stay permanently pinned to the template version they were created with for their entire life** (a playground's template version can never be upgraded).
 - Every template is available across every Playground Folder, always at its `current` (latest) version.
 - **Never deleted:** playground templates and template versions are never edited in place and **never hard-deleted** from the platform; every change is **versioned**, and superseded versions remain in version history while the playgrounds pinned to them keep them.

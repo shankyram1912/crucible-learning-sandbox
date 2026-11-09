@@ -1,168 +1,244 @@
-# Crucible (LSB Control Tower) TDD: Firestore Data Architecture (Master)
+# Crucible (Learning Sandbox) Control Tower TDD: Data (Master)
 
 > Parent: [tdd-master.md](../tdd-master.md) · Business requirements: [brs-master.md](../../01-brs/brs-master.md)
 
-Conceptual data domain design, database boundary, lifecycle invariants, and sub-specification index for the Crucible Control Tower.
-
-## Domain specifications
-
-| Spec | Database | Scope | Status |
-|---|---|---|---|
-| [tdd-data-config.md](tdd-data-config.md) | `lsb-control-tower-config-db` (`FIRESTORE_CONFIG_DATABASE`) | Physical Firestore schema, collection hierarchy, JSON document examples, and retrieval/index design for IT Admin and BU Admin configuration entities | In review (2026-11-09) |
-| `tdd-data-runtime-jobs.md` *(to write)* | `lsb-control-tower-db` (`FIRESTORE_DATABASE`) | Observed GCP state (`runtime/*`), student workspaces (including portal access suspension) and app containers, jobs (`jobs/*`), tasks, and target locks (`locks/*`) | Planned |
+The data of the Control Tower is split into two domains, **configuration** and **runtime**. This master defines each domain: its entities, how they relate, how configuration is versioned, and how records change state. Physical schemas, JSON examples, indexes and queries are in the specifications listed in section 8.
 
 ---
 
-## 1. Two-database boundary and trust model
+## 1. Two data domains
 
-Crucible splits Control Tower state across **two Firestore Native databases** in the Control Tower project ([tdd-master.md](../tdd-master.md) section 1.9) so execution engines can read desired configuration without ever having permission to alter it.
-
-```mermaid
-flowchart LR
-  API["Self Service API (sa-lsb-api)"] -->|"read / write"| CFG[("lsb-control-tower-config-db (Desired Config)")]
-  API -->|"create job + lock, read state"| OPS[("lsb-control-tower-db (Runtime, Workspaces & Jobs)")]
-  TF["Terraform Runner (sa-control-tower)"] -->|"read-only"| CFG
-  TF -->|"write runtime + task status"| OPS
-  WK["Async Worker (sa-lsb-worker)"] -->|"read-only"| CFG
-  WK -->|"seat placement, workspaces, tasks"| OPS
-```
-
-| Dimension | Configuration DB (`lsb-control-tower-config-db`) | Runtime, Workspaces & Jobs DB (`lsb-control-tower-db`) |
+| | **Configuration domain** | **Runtime domain** |
 |---|---|---|
-| **Purpose** | Authoritative **desired state** for governance catalogs, templates, Playground Folders, and Playgrounds | **Observed GCP state**, student workspaces (including suspended state) and app containers, asynchronous job/task execution, and target locks |
-| **Entities** | Cost Centers, Cost Center Codes, Cost Categories, Service Templates & Versions, Playground Templates & Versions, Playground Folders, Playgrounds & Config Versions | Folder/Playground/Project Shard runtime state (`applied_config_version`), Student Workspaces & App Containers, Jobs, Tasks, Locks |
-| **Writers** | `sa-lsb-api` only (acting on validated API requests) | `sa-lsb-api` (job + lock creation), `sa-control-tower` (Terraform runner), `sa-lsb-worker` (async worker) |
-| **Readers** | `sa-lsb-api`, `sa-control-tower`, `sa-lsb-worker` (client SDK access denied) | `sa-lsb-api`, `sa-control-tower`, `sa-lsb-worker`, plus future UI read-only listeners under security rules |
-| **Rebuildable from GCP?** | **No** — primary source of truth | Runtime inventory: yes; Jobs: append-only operational audit trail |
-| **Deletion & retention** | **Zero hard deletes.** PITR, delete protection, and 14-week weekly backups | PITR and delete protection; job history kept indefinitely (no TTL) |
+| Holds | Desired state: what IT and BU Admins decided | Observed state: what the platform did and what exists in GCP, plus the jobs that did it |
+| Entities | Cost centers (with their codes), cost categories, services, playground templates, Playground Folders, playgrounds (section 2) | Folder, playground and project-shard runtime records, workspaces, app containers, app resources, jobs, tasks, locks (section 4) |
+| Database | `lsb-control-tower-config-db` | `lsb-control-tower-db` |
+| Written by | The Self Service API only | The Terraform runner, the async worker, and the API (jobs, locks, portal access) |
+| Read by | API, runner, worker | API, runner, worker; a future UI may listen read-only |
+| Rebuildable | No: source of truth | Observed state yes, from GCP; jobs no: audit trail |
+| Protection | PITR, delete protection, weekly backups kept 14 weeks | PITR, delete protection; job history kept indefinitely |
 
-### Desired vs. applied consistency without cross-database transactions
-1. Every playground mutation writes a new immutable `PlaygroundConfigVersion` (`vN`) and advances `latest_config_version` on `playgrounds/{slug}` in `lsb-control-tower-config-db` **first**.
-2. Next, the API creates `jobs/{job_id}` (referencing `config_version = N`) and acquires `locks/PLAYGROUND:{slug}` in **one transaction** inside `lsb-control-tower-db`.
-3. When the Terraform pipeline succeeds, `sa-control-tower` updates `applied_config_version = N` on the playground runtime record, marks the job `SUCCEEDED`, and releases the lock in **one transaction** inside `lsb-control-tower-db`.
-4. Whenever `latest_config_version` (config DB) exceeds `applied_config_version` (runtime DB), the playground has a pending or failed configuration change that can be retried idempotently against `vN`.
-
-### Why Student Workspaces and App Containers live in `lsb-control-tower-db`
-When hundreds of students enter a playground simultaneously (`JobAsync`), `sa-lsb-worker` must atomically check remaining seat capacity on a project shard, assign a shard seat, record singleton/app-resource state (or per-user `SUSPENDED` portal status under `BU-05`), and advance task status in a single Firestore transaction. Rooting runtime shards and workspaces under `playgrounds/{playground_slug}` in `lsb-control-tower-db` keeps those updates in one database while preserving `sa-lsb-worker`'s read-only boundary and the 14-week backup schedule on `lsb-control-tower-config-db`.
+The domains are separate because the engines that act on GCP must be able to read what was decided and never change it. A record in the runtime domain refers to its configuration counterpart by the same slug.
 
 ---
 
-## 2. Conceptual configuration domains
+## 2. Configuration data domain
 
-The configuration model mirrors the layered framework in [brs-master.md](../../01-brs/brs-master.md) section 2 across five conceptual domains.
+### 2.1 Entities
 
-### 2.1 Entity-relationship model (Configuration Domain)
+| Entity | One record is | Key | Versioned | Owner |
+|---|---|---|---|---|
+| **Cost center (with its codes)** | One school's cost center: the allowed `cost-center-bu` value **and**, inside the same record, the list of allowed `cost-center-code` values for that school, each code with its own active/disabled status. There is no separate code entity | the cost center value | No | IT Admin |
+| **Cost category** | One allowed value of the `cost-category` tag, shared by all schools | the value | No | IT Admin |
+| **Service** | One GCP service offered to playgrounds: availability mode, Terraform module, prerequisites, user group slots, fixed sizes, capacity per project shard, finite per-user allowance bounds, singleton and app resources | service slug | Yes | IT Admin |
+| **Playground template** | One composition of pinned service versions (with optional mode promotion or narrower bounds), the user group slots it needs, and the maximum students per project (default 80) | template slug | Yes | IT Admin |
+| **Playground Folder** | One governed folder: parent folder, billing account and currency, the three IT tag values, the BU Admin group, the folder budget, the lifecycle status | folder slug | No | IT Admin |
+| **Playground** | One playground: its folder, pinned template version, two BU tag values, optional Playground Admin group, one mapped group per slot (all fixed), and its current configuration: name, expected students and the resulting number of project shards, budgets, enabled services and per-user allowances; plus lifecycle status | playground slug | Yes | BU Admin (and Playground Admin for configuration) |
+
+### 2.2 How they relate
+
+Three layers: the catalogs IT maintains, the collection of playgrounds IT creates for a BU (the Playground Folder), and the playgrounds the BU creates inside it.
 
 ```mermaid
 erDiagram
-    COST_CENTER ||--o{ COST_CENTER_CODE : "scopes (1 BU to many codes)"
-    COST_CENTER ||--o{ PLAYGROUND_FOLDER : "tags cost-center-bu"
-    COST_CENTER_CODE ||--o{ PLAYGROUND_FOLDER : "tags cost-center-code"
-    COST_CATEGORY ||--o{ PLAYGROUND_FOLDER : "tags cost-category"
-
-    SERVICE_TEMPLATE ||--|{ SERVICE_VERSION : "versions (v1..vN, 1 current)"
-    PLAYGROUND_TEMPLATE ||--|{ PLAYGROUND_TEMPLATE_VERSION : "versions (v1..vN, 1 current)"
-    SERVICE_VERSION }|--o{ PLAYGROUND_TEMPLATE_VERSION : "pinned & tuned in"
-
-    PLAYGROUND_FOLDER ||--o{ PLAYGROUND : "contains (two-level hierarchy)"
-    PLAYGROUND_TEMPLATE_VERSION ||--o{ PLAYGROUND : "permanently pinned at creation"
-    PLAYGROUND ||--|{ PLAYGROUND_CONFIG_VERSION : "evolves via (v1..vN)"
-    SERVICE_VERSION }|--o{ PLAYGROUND_CONFIG_VERSION : "enabled in"
+    SERVICE ||--o{ PLAYGROUND_TEMPLATE : "pinned (service, version) in"
+    COST_CENTER ||--o{ PLAYGROUND_FOLDER : "one value and one of its codes on"
+    COST_CATEGORY ||--o{ PLAYGROUND_FOLDER : "one value on"
+    PLAYGROUND_FOLDER ||--o{ PLAYGROUND : "contains"
+    PLAYGROUND_TEMPLATE ||--o{ PLAYGROUND : "pinned (template, version) by"
 ```
 
-### 2.2 Domain A: Tag Governance Catalog (IT Admin — `IT-03`, `IT-04`)
-Governs the three IT-controlled Resource Manager dynamic tag keys bound on Playground Folders at creation and copied onto playground projects as billing labels ([tdd-tags-labels-master.md](../tdd-tags-labels/tdd-tags-labels-master.md)).
+| Layer | Entities | Relationship rules |
+|---|---|---|
+| Catalogs | Cost center (with its codes), cost category, service, playground template | A code exists only inside its cost center. A template version pins specific service versions; a template never references a service without a version. Services and templates do not reference folders or playgrounds. |
+| Collection of playgrounds for a BU | Playground Folder | References exactly one cost center, one of that cost center's codes, and one cost category, all active at creation. References one BU Admin group by email (groups are not entities). |
+| Playground | Playground | References exactly one Playground Folder and one template version. Copies the folder's billing account, currency and IT tag values onto itself. References each service it enables at the version the template pinned. References its admin and mapped user groups by email only. |
 
-- **`CostCenter` (`cost-center-bu`):** Represents one school or business unit (for example `business`, `computing`).
-- **`CostCenterCode` (`cost-center-code`):** A billing sub-code belonging to **exactly one** `CostCenter` (for example `cs-teaching` under `computing`).
-- **`CostCategory` (`cost-category`):** A single institution-wide list of spend categories shared across all schools (for example `teaching`, `research`).
-- **Domain rules:**
-  1. **What you see is what you get (WYSIWYG):** Each catalog entry is the literal tag/label value itself (matching `^[a-z]([a-z0-9-]{0,61}[a-z0-9])?$`), with no separate display title or description.
-  2. **Add-new or mark-disabled only:** Entries transition strictly from `ACTIVE` to `DISABLED`. Existing values are never edited in place and never deleted. `DISABLED` values cannot be picked for new Playground Folders; existing Playground Folders retain them permanently.
-  3. **Outside the catalog:** Billing accounts are listed live using the calling IT Admin's GCP permissions and stored directly on each `PlaygroundFolder`. BU tags (`bu-tracking-code`, `bu-subcategory`) are un-cataloged WYSIWYG literal values set per `Playground` at creation.
+### 2.3 What changes, and how
 
-### 2.3 Domain B: Service Catalog (IT Admin — `IT-01`)
-Defines the governed single-service building blocks from which playground templates are composed.
+Every configuration entity has fields that are set once at creation and never change. What is left changes in one of two ways: **versioned** entities get a new version (section 3), **in-place** entities are overwritten under a revision counter. Lifecycle status is separate from both and is covered in section 5.
 
-- **`ServiceTemplate`:** Header entity representing **one GCP service capability** (for example `service-account`, `gemini`, `cloud-storage`, `cloud-sql`, `cloud-run`, `vertex-ai-search`). Elevated-privilege or heavy-tier variants are modeled as separate `ServiceTemplate` entities rather than flags on standard services. Points to one `current_version` and carries status `ACTIVE` or `RETIRED`.
-- **`ServiceVersion` (`v1..vN`):** Immutable specification of a service capability containing:
-  1. **Availability mode:** `MANDATORY` (always enabled, cannot be unchecked), `DEFAULT_ON` (enabled by default on new playgrounds, can be unchecked before creation), or `OPTIONAL` (disabled by default, can be enabled at creation or added later). **Only `MANDATORY` services may define a user singleton resource**; optional services (`DEFAULT_ON` / `OPTIONAL`) provide app resources only so enabling one later never requires re-initializing existing workspaces.
-  2. **Provisioning module & dependencies:** Pinned Terraform root module reference (`source_path`, `git_ref`), `required_apis[]`, `prerequisite_services[]` (acyclic dependency list governing auto-enablement and execution order), and expected `group_slots[]` (such as `students`). Concrete GCP IAM role bindings live inside the Terraform module, not in Firestore.
-  3. **Fixed service configuration defaults (`config_defaults`):** Underlying sizes and settings passed to Terraform (such as Cloud SQL `db-perf-optimized-N-8` Enterprise Plus or Cloud Run `2 vCPU / 2 GiB`), fixed for the life of the `ServiceVersion`.
-  4. **Capacity & finite allowance bounds:** `project_quota` (maximum capacity per project shard) and finite `user_allowance_bounds` (`min` starting default and floor, up to a finite `max` integer ceiling for app resources — there is no `unlimited` allowance).
-  5. **Resource descriptors:** Declarations of user `singleton_resources[]` (only when `availability_mode == "MANDATORY"`, 1 per user workspace) and `app_resources[]` (created and deleted by users inside app containers).
-- **Domain rules:**
-  1. Editing a service always creates a new immutable `ServiceVersion` (`v{N+1}`); existing versions are never mutated.
-  2. New playground template versions default to each service's `current_version`, while older `ACTIVE` versions remain selectable to pin known-good modules.
-  3. **Never deleted:** Both `ServiceTemplate` and `ServiceVersion` can only be marked `RETIRED` (blocking new template selection while keeping existing templates and playgrounds intact), never hard-deleted.
+**Fixed at creation**
 
-### 2.4 Domain C: Playground Templates (IT Admin — `IT-02`)
-Composes pinned catalog service versions into ready-to-use course or lab blueprints available across all Playground Folders.
+| Entity | Never changes after creation |
+|---|---|
+| Cost center, cost category | The value itself: it is the tag value bound in GCP, so it can never be edited; it can only be disabled for future use (a code inside a cost center likewise) |
+| Service, playground template | The identifier (slug) that templates, playgrounds, state paths and URLs refer to; the definition behind it changes only by publishing a new version, never in place |
+| Playground Folder | Parent folder, billing account and currency, the three IT tag values, the BU Admin group |
+| Playground | Its Playground Folder, the pinned template version, the maximum students per project, the two BU tag values, the Playground Admin group, the mapped user groups, and the billing and IT tag values copied from the folder |
 
-- **`PlaygroundTemplate`:** Header entity (for example `ai-course-standard`) tracking `current_version` and status `ACTIVE` or `RETIRED`. **Creating a new playground always uses the template's `current_version`, and the playground stays permanently pinned to that template version for life.**
-- **`PlaygroundTemplateVersion` (`v1..vN`):** Immutable blueprint snapshot specifying:
-  1. **Shard capacity ceiling (`max_students_per_project`):** Maximum user workspaces per project shard (capped at **`80`** for AI playgrounds to stay safely inside GCP's 100-Service-Account and 100-Data-Store default project limits).
-  2. **Pinned service composition (`services[]`):** References exact `{service_id, service_version}` pairs (dependency-closed across `prerequisite_services[]`), inheriting `config_defaults` as-is from each `ServiceVersion` while permitting **two bounded template-level tunings**:
-     - **Availability mode promotion:** May promote `OPTIONAL -> DEFAULT_ON | MANDATORY` or `DEFAULT_ON -> MANDATORY`, never weakening a `MANDATORY` service (and every prerequisite must carry an equal-or-stronger effective mode).
-     - **Narrower per-user allowance bounds:** May tighten `[min..max]` within the `ServiceVersion`'s finite bounds (`template.min >= service.min` and `template.max <= service.max`).
-  3. **Required `group_slots[]`:** Derived union of `group_slots` across all included service versions.
-- **Domain rules:**
-  1. Every template change creates a new immutable `PlaygroundTemplateVersion`.
-  2. **Never deleted:** Templates and template versions can only be marked `RETIRED`, never hard-deleted.
+**Everything else**
 
-### 2.5 Domain D: Playground Folders (IT Admin — `IT-05`, `IT-06`, `IT-07`, `IT-10`)
-Represents a governed GCP folder container where one school's BU Admins create and run playgrounds.
-
-- **Immutable after creation (`IT-05`):** `parent_folder_id`, `billing_account_id`, `billing_currency`, IT cost tags (`cost_center_bu`, `cost_center_code`, `cost_category`), and `bu_admin_group` (strictly 1 existing Google group nested in `grp-lsb-bu-admins@`).
-- **Mutable after creation (`IT-06`, `IT-07`, `IT-10` — each as a tracked job):**
-  - `display_name` (synced to the GCP folder display name)
-  - `budget.amount` (whole units `> 0` in `billing_currency`, with platform-wide 50, 75, 90, and 100% alert thresholds)
-  - `status`: `PROVISIONING -> ACTIVE <-> DECOMMISSIONED` (decommissioning disables billing across all child playgrounds/projects without deleting folders, projects, budgets, or resources; `IT-10` recommissioning reverses the cascade).
-- **Single flat document:** Because placement, billing account, IT cost tags, and `bu_admin_group` never mutate after creation, `PlaygroundFolder` needs no `versions/{vN}` subcollection.
-
-### 2.6 Domain E: Playgrounds & Config Versions (BU Admin & Playground Admin — `BU-01`..`BU-09`)
-Represents one course, lab, or hackathon environment inside a `PlaygroundFolder`, backed by $K = \lceil \text{expected\_students} / \text{max\_students\_per\_project} \rceil$ project shards.
-
-- **`Playground` (Header & Immutable Anchors):**
-  - **Immutable after creation:** `playground_folder_id`, pinned `template_id` and `template_version` (never upgraded), `max_students_per_project`, BU cost tags (`bu_tracking_code`, `bu_subcategory`), optional `playground_admin_group` (`0..1` existing Google group, never swapped), `user_group_mappings` (strictly 1 existing Google group per template `group_slot`, never swapped), and inherited parent anchors (`bu_admin_group`, `billing_account_id`, `billing_currency`, IT cost tags).
-  - **Mutable pointers & summary:** `display_name`, `latest_config_version` (`vN`), `expected_students`, `desired_shard_count`, `status` (`PROVISIONING -> ACTIVE <-> DECOMMISSIONED` via `BU-08` / `BU-09`), and `revision`.
-- **`PlaygroundConfigVersion` (`v1..vN`):** Write-once desired-state snapshot created on initial creation (`v1`) and on subsequent playground mutations (`v2..vN`), driving `seeds/vN.tfvars.json`:
-  1. **Rename or budget updates (`BU-02`):** `display_name`, required `playground_budget_amount > 0`, optional `default_shard_budget_amount` ($\le$ `playground_budget_amount`, inherited by newly added shards), and optional `shard_budget_overrides[shard_code]` ($\le$ `playground_budget_amount`).
-  2. **Add-only optional services & finite allowances (`BU-03`):** Enables additional optional services from the playground's permanently pinned `template_version` (auto-including prerequisites) or adjusts per-user `user_allowance` within `[min, max]`. Once enabled in `v{N}`, a service remains enabled for the life of the playground; lowering `user_allowance` only gates new creations.
-  3. **Grow-only capacity (`BU-04`):** `expected_students` ($\ge$ prior version) and `desired_shard_count`.
+| Entity | How it changes | What can change |
+|---|---|---|
+| Service | New version | Any other field |
+| Playground template | New version | Any other field |
+| Playground | New version | Display name; expected students and therefore the number of project shards (grow-only); budgets; enabled services (add-only); per-user allowances |
+| Cost center | In place | Its status; codes added to it; the status of each code |
+| Cost category | In place | Its status |
+| Playground Folder | In place | Display name; budget amount |
 
 ---
 
-## 3. Lifecycle state machines
+## 3. Configuration versioning model
+
+Services, playground templates and playgrounds are versioned. Cost centers, cost categories and Playground Folders are not; they are updated in place under a `revision` counter with the same optimistic-concurrency rule.
+
+Notation used below: **`N`** is the version number of the document as it is when a change starts (the current version); **`N + 1`** is the version number the change produces, which becomes the new current version.
+
+### 3.1 Principles
+1. **Exactly one latest version, on the main document.** A versioned entity is stored as `<collection>/{id}` and that document *is* the current version. There is no separate header document, no `current` pointer, no "make current" step, and no draft.
+2. **One integer `version`** (`1, 2, 3, …`) on the document. It numbers the state and is the optimistic-concurrency token: a change must state the version it read, and is rejected with `409 CONFLICT` if the document has moved on. Rollback is a roll-forward (`N → N + 1` with the earlier content).
+3. **`versions/{version}` holds the archived history `1 .. N-1`.** On create, only the main document (`version: 1`) is written. On every change, the current document is copied unchanged into `versions/{N}` and the main document is replaced by `N + 1`. Archived documents are never modified or deleted.
+4. **Publishing a new version supersedes the previous one.** Nothing pins to a service or template except at a specific version, and new pins always take the latest; so there is no separate retire state and services and templates carry no status.
+
+```text
+<collection>/
+└── {id}                      current ("version": N)
+    └── versions/
+        ├── 1                 archived
+        ├── ...
+        └── N-1               archived
+```
+
+### 3.2 Who archives, and when: one transaction in the API
+Firestore does not version documents, and an asynchronous trigger would leave a window in which `N + 1` exists without `versions/{N}`. The API is the sole writer of the configuration domain, so one shared transactional helper performs every versioned change:
 
 ```mermaid
-stateDiagram-v2
-    direction LR
-    state "Tag Values (IT-03, IT-04)" as TAG {
-        [*] --> TAG_ACTIVE : Create
-        TAG_ACTIVE --> DISABLED : Mark disabled
-    }
-    state "Catalogs & Templates (IT-01, IT-02)" as CAT {
-        [*] --> CAT_ACTIVE : Create (v1..vN)
-        CAT_ACTIVE --> RETIRED : Retire
-    }
-    state "Folders & Playgrounds (IT-05..10, BU-01..09)" as CONT {
-        [*] --> PROVISIONING : Create job started
-        PROVISIONING --> CONT_ACTIVE : Create job SUCCEEDED
-        CONT_ACTIVE --> DECOMMISSIONED : Decommission job SUCCEEDED
-        DECOMMISSIONED --> CONT_ACTIVE : Recommission job SUCCEEDED
-    }
+sequenceDiagram
+    participant C as Caller
+    participant API as Self Service API
+    participant CFG as Configuration database
+
+    C->>API: change <resource>/{id} (expected version N, delta)
+    Note over API,CFG: one Firestore transaction
+    API->>CFG: read <collection>/{id}
+    API->>API: version == N (else 409 CONFLICT); playground and its folder ACTIVE; validate delta; build N+1
+    API->>CFG: create versions/{N} = unchanged copy of N
+    API->>CFG: set <collection>/{id} = N+1 (version, updated_at, updated_by)
+    CFG-->>API: commit
+    API-->>C: updated resource, or the job that applies N+1
 ```
+
+- `create` on `versions/{N}` fails if the document exists, so an archived version can never be overwritten.
+- Both writes commit or neither does: `N + 1` cannot exist without `versions/{N}`.
+- Two concurrent changes against the same version: one commits, the other gets `409 CONFLICT` and must re-read.
+- The `ACTIVE` guard applies to playgrounds (and their folder) only; services and templates have no status.
+
+### 3.3 Resolving the latest and a pinned version
+- **Latest** (lists, pickers, detail reads): read `<collection>/{id}`. Subcollection documents never appear in a collection query, so `versions/` costs nothing here.
+- **Pinned to `K`** (template → service version, playground → template version, job → playground configuration version): read `<collection>/{id}`; if `version == K` use it, otherwise read `versions/{K}`. Because the archive is written in the same transaction as the advance, a pinned read never misses.
+
+### 3.4 Which changes create a version
+
+| Change | What is written |
+|---|---|
+| Any change to a service or a playground template | The current document (version `N`) is archived as `versions/{N}`; the document is rewritten as the new current version `N + 1` |
+| A playground's name, budgets, an enabled service, a per-user allowance, or its expected students | Same copy-on-write on the playground document. In addition a job is created whose purpose is to make GCP match the new current version `N + 1`; the Terraform inputs for that job are built from `N + 1` only |
+| A cost center or cost category created, a code added, a value or code disabled; a Playground Folder renamed or its budget changed | The document is updated in place and `revision` increases by one; nothing is archived |
+| A Playground Folder or playground changes lifecycle status | Only the `status` field is updated, in place, by the job that completed the transition. A status change is not a configuration change, so the playground's `version` and the folder's `revision` stay as they were |
+| Anything in the runtime domain (workspaces, portal access, app containers, app resources) | Written in the runtime domain only; the configuration domain is untouched |
 
 ---
 
-## 4. Cross-cutting invariants
+## 4. Runtime data domain
 
-| Invariant | Rule across `lsb-control-tower-config-db` |
-|---|---|
-| **Zero hard deletes** | No configuration document (and no GCP folder, project, budget, workspace, or resource) is ever deleted by the platform. Tag values become `DISABLED`; services/templates/versions become `RETIRED`; folders and playgrounds toggle `ACTIVE <-> DECOMMISSIONED` via billing disable/enable. |
-| **Singletons only on `MANDATORY` services** | Only `MANDATORY` services may declare `singleton_resources`; optional services declare `app_resources` only, so workspaces are initialized once and never re-initialized. |
-| **Finite `min .. max` allowances** | Every countable app resource specifies finite integer `min` and `max` bounds (`1 <= min <= max`, bounded by shard `project_quota`); there is no `unlimited` allowance. |
-| **Permanently pinned anchors** | IT tags and `bu_admin_group` on a `PlaygroundFolder`, and `template_id` + `template_version`, BU tags, `playground_admin_group`, and `user_group_mappings` on a `Playground`, are fixed at creation and never changed, swapped, or upgraded. Denormalizing `admin_groups[]`, `mapped_user_groups[]`, `billing_*`, and `effective_tags` onto `playgrounds/{slug}` has zero drift risk. |
-| **One group per container / slot** | `1` `bu_admin_group` per Playground Folder; `0..1` `playground_admin_group` per Playground; `1` Google group per template `group_slot`. Group memberships live solely in Google Workspace / Cloud Identity. |
-| **Standard revision & audit block** | Every document carries only `revision` (`integer >= 1`), `created_at` (UTC timestamp), `updated_at` (UTC timestamp), and `updated_by` (lowercase caller email — no `subject` fields). Tracked jobs provide the full operational audit history. |
+### 4.1 Entities
+
+| Entity | One record is | Key | Written by |
+|---|---|---|---|
+| **Folder runtime** | The GCP folder ID of a Playground Folder and its last job | folder slug | Runner |
+| **Playground runtime** | The GCP folder ID of a playground, its **applied configuration version**, and its project shards | playground slug | Runner |
+| **Project shard** | One GCP project of a playground (a playground has one or more, numbered `p01`, `p02`, …): project ID, shard code, seats used against the maximum students per project, budget resource | playground slug + shard code | Runner (create, expand), worker (seat count) |
+| **Workspace** | One user in one playground: the project shard they sit in, their singleton resources, their **portal access** (enabled or suspended), and their used allowance per service | playground slug + user | Worker (initialization, counters), API (portal access) |
+| **App container** | One `app-<name>` inside a workspace | workspace + app name | API (create), worker (delete) |
+| **App resource** | One resource inside an app container: service, kind, name, GCP identifier | app container + resource name | Worker |
+| **Job** | One change: requester, user acted for (if any), target (folder, playground, and where relevant project shard and user), kind, configuration version applied (if any), status, outcome | job ID | API (create), runner and worker (update) |
+| **Task** | One ordered step of a job and its status | job ID + order | Runner, worker |
+| **Lock** | The one active job on a Playground Folder or playground | target | API (take), runner and worker (release) |
+
+### 4.2 How they relate
+
+```mermaid
+erDiagram
+    PLAYGROUND_RUNTIME ||--|{ PROJECT_SHARD : "has"
+    PROJECT_SHARD ||--o{ WORKSPACE : "seats"
+    WORKSPACE ||--o{ APP_CONTAINER : "has"
+    APP_CONTAINER ||--o{ APP_RESOURCE : "holds"
+    JOB ||--|{ TASK : "runs"
+    JOB ||--o| LOCK : "holds while active"
+```
+
+Relationship rules:
+1. A playground runtime record has one project shard per project the playground is sized for (its current number of project shards); shards are only ever added, never removed.
+2. A workspace sits in exactly one project shard of one playground and is created once; a user has at most one workspace per playground.
+3. The counts kept on a workspace (used allowance per service) and on a project shard (seats used) are maintained in the same transaction as the app resource or workspace they count, so allowance and capacity checks need no second read.
+4. A job targets exactly one Playground Folder or playground (plus optional project shard and user); a lock exists for a target only while a job on it is active.
+5. Runtime records never hold configuration: they refer to it by slug and version.
+
+### 4.3 Desired versus applied
+1. The API writes the new configuration version in the configuration domain (section 3.2).
+2. In the runtime domain, in one transaction, it creates the job for that version and takes the target's lock.
+3. When the job succeeds, the runner sets the playground's applied version, marks the job succeeded and releases the lock, in one transaction.
+4. Desired version greater than applied version means the change is pending or failed; re-running the job against the same version is safe.
+
+No transaction spans the two databases.
+
+---
+
+## 5. Lifecycle states
+
+| Entity | States | Transitions | Set by |
+|---|---|---|---|
+| Cost center, each of its codes, cost category | `ACTIVE`, `DISABLED` | `ACTIVE → DISABLED`, one way; disabling a cost center does not change its codes' own status, but none of them can be chosen for a new folder | API, on an IT Admin request |
+| Service, playground template | none | — | — |
+| Playground Folder | `PROVISIONING`, `ACTIVE`, `DECOMMISSIONED` | `PROVISIONING → ACTIVE` when the create job succeeds; `ACTIVE → DECOMMISSIONED` when the decommission job succeeds (cascades to its playgrounds); `DECOMMISSIONED → ACTIVE` when the recommission job succeeds (cascades) | The job finalizer |
+| Playground | `PROVISIONING`, `ACTIVE`, `DECOMMISSIONED` | Same transitions; recommission requires an `ACTIVE` folder | The job finalizer |
+| Workspace portal access | `ENABLED`, `SUSPENDED` | Either direction, any number of times | API, on an admin request |
+| Job | `QUEUED`, `RUNNING`, `SUCCEEDED`, `FAILED` | Forward only; terminal states never change | API (create), runner and worker |
+
+While a folder or playground is `DECOMMISSIONED`, every mutating operation on it and on its workspaces is rejected except recommission; reads and job history remain available.
+
+---
+
+## 6. From business concept to entity
+
+| BRS concept | Entity | Domain |
+|---|---|---|
+| Cost center, cost center code, cost category | Cost center (codes are a property of it), cost category | Configuration |
+| Service template, service version, availability mode, singleton and app resources, per-user bounds | Service | Configuration |
+| Playground template, template version, max students per project, user group slots | Playground template | Configuration |
+| Playground Folder, billing account, folder budget, BU Admin group, IT tags | Playground Folder | Configuration |
+| Playground, BU tags, Playground Admin group, mapped user groups, expected students, playground and shard budgets, enabled services, allowances, configuration version | Playground | Configuration |
+| Project (shard), applied version | Playground runtime, project shard | Runtime |
+| Workspace, workspace initialization, singleton resource, suspended | Workspace | Runtime |
+| App container, app resource, allowance used | App container, app resource | Runtime |
+| Tracked job, decommission / recommission execution | Job, task, lock | Runtime |
+| Tags and labels on GCP resources, guardrails, budgets in Cloud Billing | Not entities: created in GCP by jobs from the folder and playground records | — |
+| Group membership | Not stored: read live from the directory | — |
+
+---
+
+## 7. Invariants
+
+1. Nothing is ever deleted: no record, no archived version, no workspace, no job.
+2. The configuration domain is written only by the API.
+3. A versioned record is its latest version; archived versions are written in the same transaction as the version that replaced them and are never changed.
+4. Services and templates have no status; a new version supersedes the previous one.
+5. Only mandatory services define singleton resources, so a workspace is initialized once.
+6. Every per-user allowance has a finite integer minimum and maximum; there is no unlimited allowance.
+7. Maximum students per project defaults to 80.
+8. Fixed-at-creation fields (section 2.3) are never changed, swapped or upgraded.
+9. One BU Admin group per Playground Folder, at most one Playground Admin group per playground, exactly one group per template slot; membership lives in the directory.
+10. No per-user state in the configuration domain.
+11. Every change is a job; job history is kept indefinitely.
+12. Every record carries its concurrency counter (`version` or `revision`), creation time, last-write time and last writer, and nothing else by way of audit.
+
+---
+
+## 8. Physical specifications
+
+| Spec | Database | Scope | Status |
+|---|---|---|---|
+| [tdd-data-config.md](tdd-data-config.md) | `lsb-control-tower-config-db` (`FIRESTORE_CONFIG_DATABASE`) | Collections, document schemas and JSON examples for the configuration entities; the copy-on-write transaction; retrieval patterns, indexes and security rules | In review (2026-11-09) |
+| `tdd-data-runtime-jobs.md` *(to write)* | `lsb-control-tower-db` (`FIRESTORE_DATABASE`) | Collections and schemas for folder, playground and project-shard runtime records, workspaces, app containers, app resources, jobs, tasks and locks | Planned |
