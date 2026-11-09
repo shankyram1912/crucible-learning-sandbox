@@ -113,11 +113,12 @@ Every error response (`4xx`, `5xx`) uses one shape. The only exception is `healt
 ---
 
 ## 6. Job
-Returned as `Accepted` by every asynchronous operation and in full by the jobs domain.
+Lifecycle, kinds and storage: [tdd-apis-common-jobs.md](tdd-apis-common-jobs.md). Returned in full by JobSync operations and by the jobs domain; asynchronous operations return `Accepted`.
 
 | Field | Type | Required | Description |
 |---|---|---|---|
-| `job_id` | string | yes | For example `job-20261109-0001` |
+| `job_id` | string | yes | `job-<YYYYMMDD>-<8 hex>`, for example `job-20261109-7f3a9c21` |
+| `kind` | enum | yes | `SYNC`, `ASYNC`, `TERRAFORM` |
 | `type` | enum | yes | What the job does; values are defined by the domain specs (for example `CREATE_PLAYGROUND`, `SET_MEMBERS`, `ENABLE_SERVICES`) |
 | `target` | `{kind, id}` | yes | What it acts on; `kind` is `PLAYGROUND_FOLDER`, `PLAYGROUND` or `GROUP` |
 | `config_version` | integer | no | Config version applied, for pipeline jobs ([tdd-master.md](../tdd-master.md) section 1.9) |
@@ -129,6 +130,8 @@ Returned as `Accepted` by every asynchronous operation and in full by the jobs d
 | `client_id` | string | yes | `client.id` of that request |
 | `created_at`, `updated_at` | timestamp | yes | |
 | `finished_at` | timestamp | no | Set when `SUCCEEDED` or `FAILED` |
+| `attempt` | integer | yes | Run attempts so far (`1` for JobSync) |
+| `error` | `{code, message}` | only if `FAILED` | `TASK_FAILED`, `TIMEOUT`, `INTERRUPTED`, `DISPATCH_FAILED`, `ATTEMPTS_EXHAUSTED`, `INTERNAL` |
 | `counts` | `{total, done, running, pending, failed}` | yes | Task counts |
 | `tasks` | list of Task | yes | In execution order |
 

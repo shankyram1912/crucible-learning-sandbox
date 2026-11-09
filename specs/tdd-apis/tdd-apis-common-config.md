@@ -49,6 +49,12 @@ The one place where every setting of the Self Service APIs and the `lsb` CLI is 
 | `LSB_HEALTH_DB_READ_TIMEOUT_SECONDS` | no | `2` | Per-database read timeout in `health db` and `health service` |
 | `LSB_HEALTH_DB_TOTAL_TIMEOUT_SECONDS` | no | `5` | Overall limit for the parallel database reads |
 | `LSB_HEALTH_SERVICE_CACHE_SECONDS` | no | `10` | How long `health service` reuses its last result |
+| `LSB_JOB_DISPATCHER` | no | `inline` | How JobAsync jobs are run: `inline` (in the API process), `http` (local worker), `cloudtasks` ([tdd-apis-common-jobs.md](tdd-apis-common-jobs.md) section 6.3) |
+| `LSB_WORKER_URL` | no | `http://127.0.0.1:8081` | Worker base URL (`http` and `cloudtasks` modes) |
+| `LSB_TASKS_QUEUE` | no | `lsb-jobs` | Cloud Tasks queue (`cloudtasks` mode, in `REGION`) |
+| `LSB_JOB_SYNC_TIMEOUT_SECONDS` | no | `30` | JobSync time budget |
+| `LSB_JOB_LEASE_SECONDS` | no | `120` | JobAsync lease, renewed while running |
+| `LSB_JOB_MAX_ATTEMPTS` | no | `5` | JobAsync attempts before `ATTEMPTS_EXHAUSTED` |
 
 ---
 

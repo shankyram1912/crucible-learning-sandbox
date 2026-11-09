@@ -28,6 +28,7 @@ The **Learning Sandbox Self Service APIs** are the single entry point for every 
 | [tdd-apis-common-auth.md](tdd-apis-common-auth.md) | Authentication, authorization, tokens; read-only Firestore path for a future UI |
 | [tdd-apis-common-models.md](tdd-apis-common-models.md) | Conventions, request headers (including session ID), RequestContext, response headers, Accepted, Page, Error, Job, Task |
 | [tdd-apis-common-cli.md](tdd-apis-common-cli.md) | Terminal output, global options, exit codes |
+| [tdd-apis-common-jobs.md](tdd-apis-common-jobs.md) | **Interim.** Jobs: JobSync, JobAsync, JobTerraform; lifecycle, storage, locks and leases, dispatcher modes, handler contract, testing |
 | [tdd-apis-common-config.md](tdd-apis-common-config.md) | Every API and CLI setting in one place (platform keys from `initialize.env`, `LSB_` API keys, CLI keys) |
 
 Naming: `tdd-apis-common-<topic>.md` for cross-cutting specs, `tdd-apis-<domain>.md` for domain specs. This master stays an index (principles, common specs, domain table).
