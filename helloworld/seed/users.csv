@@ -1,10 +1,10 @@
-email,given_name,family_name,persona,service_group
-lsb-it-admin1@shankyram.altostrat.com,LSB,IT Admin 1,IT Admin,grp-lsb-it-admins@shankyram.altostrat.com
-lsb-bu-biz1@shankyram.altostrat.com,LSB,Business Admin 1,BU Admin (Business),grp-lsb-bu-admins@shankyram.altostrat.com
-lsb-bu-cs1@shankyram.altostrat.com,LSB,Computing Admin 1,BU Admin (Computing),grp-lsb-bu-admins@shankyram.altostrat.com
-lsb-owner-ba101@shankyram.altostrat.com,LSB,BA 101 Owner,Playground owner (BA 101),
-lsb-owner-cs100@shankyram.altostrat.com,LSB,CS 100 Owner,Playground owner (CS 100),
-lsb-student1@shankyram.altostrat.com,LSB,Student 1,Student (BA 101),
-lsb-student2@shankyram.altostrat.com,LSB,Student 2,Student (BA 101),
-lsb-student3@shankyram.altostrat.com,LSB,Student 3,Student (CS 100),
-lsb-student4@shankyram.altostrat.com,LSB,Student 4,Student (CS 100),
+First Name [Required],Last Name [Required],Email Address [Required],Password [Required],Org Unit Path [Required],Employee Title,Change Password at Next Sign-In
+LSB,IT Admin 1,lsb-it-admin1@shankyram.altostrat.com,,/,IT Admin,False
+LSB,Business Admin 1,lsb-bu-biz1@shankyram.altostrat.com,,/,BU Admin (Business),False
+LSB,Computing Admin 1,lsb-bu-cs1@shankyram.altostrat.com,,/,BU Admin (Computing),False
+LSB,BA 101 Owner,lsb-owner-ba101@shankyram.altostrat.com,,/,Playground owner (BA 101),False
+LSB,CS 100 Owner,lsb-owner-cs100@shankyram.altostrat.com,,/,Playground owner (CS 100),False
+LSB,Student 1,lsb-student1@shankyram.altostrat.com,,/,Student (BA 101),False
+LSB,Student 2,lsb-student2@shankyram.altostrat.com,,/,Student (BA 101),False
+LSB,Student 3,lsb-student3@shankyram.altostrat.com,,/,Student (CS 100),False
+LSB,Student 4,lsb-student4@shankyram.altostrat.com,,/,Student (CS 100),False

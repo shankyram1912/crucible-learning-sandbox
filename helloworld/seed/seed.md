@@ -1,15 +1,15 @@
 # Hello World Seed Data (proposal)
 
-Status: proposed 2026-11-08. Users defined in `users.csv`, created by `create-users.sh` (not run yet). Replaces the defunct seed in `seed/backup/` (old cohort model).
+Status: proposed 2026-11-08. Users in [users.csv](users.csv) (Admin console bulk upload format). Not created yet. Replaces the defunct seed in `seed/backup/` (old cohort model).
 
 ## Principle
 Seed only what the platform cannot create: **people** and the **tag value catalog**. Schools, Playground Folders and playgrounds are created through the Self Service API operations as test scenarios, so the seed exercises the real flows instead of bypassing them.
 
 Domain: `shankyram.altostrat.com`. All users are Cloud Identity Free users with **no GCP roles of their own**.
 
-## 1. Users ([users.csv](users.csv), created by [create-users.sh](create-users.sh))
+## 1. Users ([users.csv](users.csv))
 
-| Email | Persona | Service group (seeded) | Used for |
+| Email | Persona | Service group (added through the platform) | Used for |
 |---|---|---|---|
 | `lsb-it-admin1@` | IT Admin | `grp-lsb-it-admins@` | Tag binding test now; creates Playground Folders (API op 04) |
 | `lsb-bu-biz1@` | BU Admin, Business | `grp-lsb-bu-admins@` | BU tag test now; controller of the Business Playground Folder |
@@ -18,7 +18,7 @@ Domain: `shankyram.altostrat.com`. All users are Cloud Identity Free users with 
 | `lsb-owner-cs100@` | Playground owner | none | Owner of the CS 100 playground's projects |
 | `lsb-student1@` to `lsb-student4@` | Student | none | Students 1 and 2 in BA 101, 3 and 4 in CS 100 (API op 06) |
 
-Only the first three are seeded into groups. All other access comes from the platform.
+**The seed creates users only; it never adds group memberships.** Membership of the locked service groups is changed only by IT Admins through the platform (API op 06, `group members`); the only bootstrapped member is `IT_ADMINS_INITIAL_MEMBERS` (Day-0 step 4). All other access also comes from the platform.
 
 ## 2. Tag value catalog (`seed/catalog.csv`, loaded into Firestore)
 
@@ -46,7 +46,7 @@ School folders are created once by IT as setup. Negative checks:
 
 ## 4. Tag binding test (needs only the first three users; can run before step 6)
 
-Setup as admin@: scratch folder `lsb-tag-test` under University Sandbox, Tag User on it for `lsb-it-admin1@` and `lsb-bu-biz1@` (stands in for the folder-level grants from step 6 and Playground Folder creation). Users added to their groups (allow a few minutes).
+Prerequisite: `lsb-it-admin1@` and `lsb-bu-biz1@` are in their service groups, added **through the platform** (API op 06, `group members`), so the test runs after that operation exists. Setup as admin@: scratch folder `lsb-tag-test` under University Sandbox, Tag User on it for both users (stands in for the folder-level grants from step 6 and Playground Folder creation).
 
 | User | Bind `cost-center-bu` | Bind `bu-subcategory` | Remove IT's `cost-center-bu` binding |
 |---|---|---|---|
@@ -62,31 +62,28 @@ Teardown: remove the bindings, the test memberships and the folder.
 
 ## Creating the users
 
-`gcloud` has no command to create Cloud Identity or Workspace users, so [create-users.sh](create-users.sh) creates them with the **Admin SDK Directory API** (curl, token from gcloud), then adds the first three to their service group with `gcloud identity groups memberships add`. It is idempotent (existing users and memberships are skipped) and never deletes anything.
+`gcloud` cannot create Cloud Identity or Workspace users, and Google blocks gcloud's own sign-in from requesting the Admin Directory scope ("This app is blocked", verified 2026-11-09). So users are created with the **Admin console bulk upload**, and only the group memberships are scripted.
 
-Run in Cloud Shell as a Super Admin (`admin@`):
+[users.csv](users.csv) keeps only the Admin console template columns we need (Directory > Users > Bulk update users): the five required ones (first name, last name, email, password, org unit `/`), Employee Title (persona) and Change Password at Next Sign-In (`False`). Header names must match the template exactly; optional columns can be left out. If an upload is ever rejected for missing columns, use the full template header instead. **The Password column is empty in the repo**; fill it in a copy outside the repo just before uploading:
+
 ```bash
-cd ~/learning-sandbox/helloworld/src/terraform/control-tower && source ./initialize.sh   # sets QUOTA_PROJECT
-cd ../../../seed
-
-# one time: Directory API on the quota project, and an ADC token with the Directory scope
-gcloud services enable admin.googleapis.com --project="$QUOTA_PROJECT"
-gcloud auth application-default login --no-launch-browser \
-  --scopes=https://www.googleapis.com/auth/admin.directory.user,https://www.googleapis.com/auth/cloud-platform
-
-./create-users.sh --dry-run    # shows what it would do
-./create-users.sh              # prompts once for the seed password (or set LSB_SEED_PASSWORD)
+cd ~/learning-sandbox/helloworld/seed
+read -r -s -p "Seed password (min 8 chars): " PW; echo
+awk -F, -v OFS=, -v pw="$PW" 'NR>1{$4=pw}1' users.csv > ~/lsb-users-upload.csv; unset PW
+# Admin console > Directory > Users > Bulk update users > upload ~/lsb-users-upload.csv
+# after the upload completes:
+rm ~/lsb-users-upload.csv
 ```
 
+Group memberships are **not** part of the seed: IT Admins add them through the platform (API op 06).
+
 Notes:
-- **Password:** one shared seed password, prompted (not echoed) or from `LSB_SEED_PASSWORD`; never written to disk or the repo. `changePasswordAtNextLogin` is off so test sign-ins are smooth.
-- **Licences:** users go into the root org unit. If the domain auto-assigns Google Workspace licences, each user takes one; otherwise they are Cloud Identity Free users. Move them to an org unit without auto-licensing if that matters.
-- **Memberships:** a just-created user can take a minute to be visible to Cloud Identity. If a membership step fails, re-run the script.
-- **Re-running ADC login** replaces the ADC token used by Terraform; that is fine, as it keeps the `cloud-platform` scope.
-- **Fallback:** Admin console > Directory > Users > Bulk update users, with a CSV in the Admin console format generated from `users.csv`.
+- **Licences:** users go into the root org unit. If the domain auto-assigns Google Workspace licences, each user takes one; otherwise they are Cloud Identity Free users.
+- **Repeatable alternative:** an own OAuth desktop client (consent screen Internal) with `gcloud auth application-default login --client-id-file=...` would allow the Directory API from a script. Not needed for a one-off seed.
 - **Signing in as a test user:** incognito Cloud Shell, or `gcloud auth login <user> --no-launch-browser`.
 
 ## Open decisions (continue here)
 1. Trim the set or keep all 9 users (the tag test needs only the first three).
 2. Delete or keep `seed/backup/`.
-3. Generate `catalog.csv` and `scenarios.md` (`users.csv` and `create-users.sh` are done).
+3. Generate `catalog.csv` and `scenarios.md` (`users.csv` is done).
+4. Tag binding test timing: it now needs API op 06 for the memberships; move it before API op 04 in the to-do list.
