@@ -1,0 +1,10 @@
+email,given_name,family_name,persona,service_group
+lsb-it-admin1@shankyram.altostrat.com,LSB,IT Admin 1,IT Admin,grp-lsb-it-admins@shankyram.altostrat.com
+lsb-bu-biz1@shankyram.altostrat.com,LSB,Business Admin 1,BU Admin (Business),grp-lsb-bu-admins@shankyram.altostrat.com
+lsb-bu-cs1@shankyram.altostrat.com,LSB,Computing Admin 1,BU Admin (Computing),grp-lsb-bu-admins@shankyram.altostrat.com
+lsb-owner-ba101@shankyram.altostrat.com,LSB,BA 101 Owner,Playground owner (BA 101),
+lsb-owner-cs100@shankyram.altostrat.com,LSB,CS 100 Owner,Playground owner (CS 100),
+lsb-student1@shankyram.altostrat.com,LSB,Student 1,Student (BA 101),
+lsb-student2@shankyram.altostrat.com,LSB,Student 2,Student (BA 101),
+lsb-student3@shankyram.altostrat.com,LSB,Student 3,Student (CS 100),
+lsb-student4@shankyram.altostrat.com,LSB,Student 4,Student (CS 100),

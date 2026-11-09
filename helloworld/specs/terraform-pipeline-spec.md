@@ -15,12 +15,12 @@ How playground Terraform runs: when it is triggered, which identities it uses, h
 3. **Tasks:** each Terraform module of the playground (project creation, then each enabled service in dependency order) is one task in the job, with its own state and readiness check.
 
 ```
-API (job created, config vN in Firestore)
+API (config vN in the config database, job + lock in the runtime and jobs database)
   └─ start predefined Cloud Build trigger (playground ID, config version)
-       ├─ prepare: fetch tfvars vN, validate schema, pre-checks
+       ├─ prepare: read config vN (read-only), generate tfvars, validate schema, pre-checks
        ├─ for each module in order:
        │    init → plan → policy gate → apply (retry transient) → readiness → task status
-       └─ finalize: job status, logs, outputs to Firestore
+       └─ finalize: job status, logs, outputs and runtime state to the runtime and jobs database
 ```
 
 ---
@@ -38,7 +38,7 @@ The internet-facing service never holds provisioning rights.
 
 ## 3. Secured source (no injected code)
 
-1. **Variables only:** the API passes the playground ID and config version; tfvars are generated from Firestore and schema-validated. User input never becomes HCL, shell commands or build steps.
+1. **Variables only:** the API passes the playground ID and config version; tfvars are generated from the config database (which the runner can read but not write) and schema-validated. User input never becomes HCL, shell commands or build steps.
 2. **Predefined trigger:** the build config (`cloudbuild.yaml`) lives in the repo; only allow-listed substitutions can be passed.
 3. **Pinned source:** the trigger is bound to one repo and one protected branch (required reviews, no force-push); modules referenced by tag or commit SHA; providers pinned and the lock file committed.
 4. **Pinned builder image:** the Terraform image is referenced by digest (`@sha256:...`), never `:latest`.
@@ -73,7 +73,7 @@ The internet-facing service never holds provisioning rights.
 - **Never auto-destroy on failure.** A failed job stays `FAILED` with details; the remedy is a re-run.
 
 ### 4.5 Make every run visible
-- **Each module is a task** with status in Firestore (`PENDING → APPLYING → READY / FAILED`); CLI and UI show where a run stopped and why.
+- **Each module is a task** with status in the runtime and jobs database (`PENDING → APPLYING → READY / FAILED`); CLI and UI show where a run stopped and why.
 - **Build logs** stored in the state bucket and linked from the job.
 - **Lost-status reconciliation:** if a build dies before writing its final status, the API reads the build state (`builds.get`) and corrects the job.
 - **Nightly read-only `terraform plan`** per playground reports drift.

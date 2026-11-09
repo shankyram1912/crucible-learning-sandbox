@@ -11,11 +11,26 @@ variable "region" {
 }
 
 variable "firestore_database" {
-  description = "Firestore database ID (FIRESTORE_DATABASE)."
+  description = "Firestore database ID for runtime state and jobs (FIRESTORE_DATABASE)."
   type        = string
 
   validation {
     condition     = can(regex("^[a-z][a-z0-9-]{2,61}[a-z0-9]$", var.firestore_database))
     error_message = "FIRESTORE_DATABASE must be 4-63 characters: lowercase letters, digits, hyphens; start with a letter; not end with a hyphen."
+  }
+}
+
+variable "firestore_config_database" {
+  description = "Firestore database ID for config, the desired state (FIRESTORE_CONFIG_DATABASE)."
+  type        = string
+
+  validation {
+    condition     = can(regex("^[a-z][a-z0-9-]{2,61}[a-z0-9]$", var.firestore_config_database))
+    error_message = "FIRESTORE_CONFIG_DATABASE must be 4-63 characters: lowercase letters, digits, hyphens; start with a letter; not end with a hyphen."
+  }
+
+  validation {
+    condition     = var.firestore_config_database != var.firestore_database
+    error_message = "FIRESTORE_CONFIG_DATABASE and FIRESTORE_DATABASE must be different databases."
   }
 }

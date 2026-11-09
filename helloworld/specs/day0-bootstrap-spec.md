@@ -112,7 +112,8 @@ Every key is also exported to Terraform as a lowercase `TF_VAR_` copy (for examp
 | Key | What it is | Example | Notes |
 |---|---|---|---|
 | `TF_STATE_BUCKET` | Bucket for all Terraform state and runner backups | `${CT_PROJECT_ID}-bucket` (e.g. `lsb-control-tower-e26-bucket`) | Created by `ControlTowerProjectCreate`. Bucket names are global, so it is derived from the project ID. Also holds the `initialize.env`, status and log backups used by `Restore`. |
-| `FIRESTORE_DATABASE` | ID of the Firestore database used by the Self Service APIs | `lsb-control-tower-db` | Created by a later operation. 4 to 63 characters: lowercase letters, digits, hyphens. |
+| `FIRESTORE_CONFIG_DATABASE` | Firestore database for config, the desired state (helloworld-spec 1.9) | `lsb-control-tower-config-db` | Created by `ControlTowerFirestoreCreate`. 4 to 63 characters: lowercase letters, digits, hyphens. Must differ from `FIRESTORE_DATABASE`. |
+| `FIRESTORE_DATABASE` | Firestore database for runtime state and jobs (helloworld-spec 1.9) | `lsb-control-tower-db` | Created by `ControlTowerFirestoreCreate`. 4 to 63 characters: lowercase letters, digits, hyphens. |
 
 **Billing labels** ([helloworld-spec.md](helloworld-spec.md) section 1.7)
 | Key | Label | Control Tower value | Notes |
@@ -182,7 +183,7 @@ Usage: `./run.sh --operation=<OperationName> [--validate-only] [--describe] [--y
 | `Restore` | utility | In a fresh Cloud Shell, pulls `initialize.env`, `controltower.status` and logs back from the state bucket |
 | `ControlTowerProjectCreate` | bootstrap (order 1) | Control Tower folder (or existing), project, billing link, state bucket |
 | `ControlTowerApisEnable` | bootstrap (order 2) | Enables the baseline APIs on the Control Tower project, creates the Cloud Run, Cloud Build and Artifact Registry service agents |
-| `ControlTowerFirestoreCreate` | bootstrap (order 3) | Creates the Firestore database for the Self Service APIs |
+| `ControlTowerFirestoreCreate` | bootstrap (order 3) | Creates the two Firestore databases for the Self Service APIs: config, and runtime + jobs |
 | `PlaygroundGroupsCreate` | bootstrap (order 4) | Creates the two locked playground service groups (IT Admins nested in BU Admins) and adds the initial IT Admins |
 | `PlaygroundTagsCreate` | bootstrap (order 5) | Creates the five dynamic playground tag keys at org level and grants Tag User on them to the two groups |
 
@@ -375,12 +376,17 @@ Long description printed before the run: [operation.md](../src/terraform/control
 Long description printed before the run: [operation.md](../src/terraform/control-tower/03-control-tower-firestore-create/operation.md)
 
 1. Own root and state (`control-tower/03-control-tower-firestore-create`).
-2. **Database:** Firestore `FIRESTORE_DATABASE` (`lsb-control-tower-db`) on `CT_PROJECT_ID`, type `FIRESTORE_NATIVE`, location `REGION` (`asia-southeast1`).
-3. **Protection:** delete protection enabled, `prevent_destroy`, point-in-time recovery enabled (7-day window, to recover from bad writes).
-4. **Access:** server-side only for the CLI-first MVP. Only the Self Service APIs' service account reads and writes, through IAM (granted in the identity operation). Firebase enablement, Firebase Auth and security rules for a future UI's read-only listeners belong to a later UI operation ([apiservices-spec.md](apiservices-spec.md) section 3.5); the database does not change for that.
-5. **Readiness:** the database is reported by `gcloud firestore databases describe --database=<FIRESTORE_DATABASE> --project=<CT_PROJECT_ID>`.
-6. **Written back to `initialize.env`:** nothing (`FIRESTORE_DATABASE` is already set).
-7. **Cannot be undone:** the location cannot change after creation, and a deleted database ID cannot be reused for a period.
+2. **Databases** on `CT_PROJECT_ID`, both `FIRESTORE_NATIVE` in `REGION` (`asia-southeast1`), see [helloworld-spec.md](helloworld-spec.md) section 1.9:
+   - `FIRESTORE_CONFIG_DATABASE` (`lsb-control-tower-config-db`): config, the desired state.
+   - `FIRESTORE_DATABASE` (`lsb-control-tower-db`): runtime state and jobs. Created by the first run of this operation (2026-11-08); the config database was added later.
+3. **Protection:** both have delete protection, `prevent_destroy` and point-in-time recovery (7-day window). Config also has a **weekly backup** (Sunday, kept 14 weeks, the maximum).
+4. **Job history expiry:** TTL policies on `FIRESTORE_DATABASE` for the `jobs` and `tasks` collection groups, field `expireAt`. The API sets `expireAt` when it creates a job or task, so the retention period is an API setting, not Terraform.
+5. **Access:** server-side only for the CLI-first MVP. Per-database IAM (API read/write on both, runner read-only on config) is granted in step 6. Firebase enablement, Firebase Auth and security rules for a future UI's read-only listeners belong to a later UI operation ([apiservices-spec.md](apiservices-spec.md) section 3.5); the databases do not change for that.
+6. **Validation:** Firestore API enabled; the two database IDs differ; warns if a database exists before this operation is `DONE`.
+7. **Readiness:** both databases are reported by `gcloud firestore databases describe`.
+8. **Written back to `initialize.env`:** nothing (both IDs are already set).
+9. **Re-run after adding the config database:** plan shows 4 to add (config database, its backup schedule, two TTL policies) and no change to `FIRESTORE_DATABASE`.
+10. **Cannot be undone:** the location cannot change after creation, and a deleted database ID cannot be reused for a period.
 
 ### 4. `PlaygroundGroupsCreate` (`04-playground-groups-create`)
 Long description printed before the run: [operation.md](../src/terraform/control-tower/04-playground-groups-create/operation.md)

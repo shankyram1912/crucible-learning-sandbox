@@ -10,7 +10,7 @@
 #   Restore                     pull initialize.env, controltower.status and logs back from the state bucket
 #   ControlTowerProjectCreate   (order 1) Control Tower folder, project, billing link, state bucket
 #   ControlTowerApisEnable      (order 2) baseline APIs + service agents on the Control Tower project
-#   ControlTowerFirestoreCreate (order 3) Firestore database for the Self Service APIs
+#   ControlTowerFirestoreCreate (order 3) Firestore databases for the Self Service APIs (config; runtime + jobs)
 #   PlaygroundGroupsCreate      (order 4) locked playground service groups (IT Admins nested in BU Admins)
 #   PlaygroundTagsCreate        (order 5) five dynamic playground tag keys + Tag User grants
 #
@@ -47,14 +47,14 @@ declare -A OP_DIR=(
 declare -A OP_TITLE=(
   [ControlTowerProjectCreate]="Control Tower folder + project + state bucket"
   [ControlTowerApisEnable]="Baseline APIs + service agents on the Control Tower project"
-  [ControlTowerFirestoreCreate]="Firestore database for the Self Service APIs"
+  [ControlTowerFirestoreCreate]="Firestore databases: config, and runtime + jobs"
   [PlaygroundGroupsCreate]="Locked playground service groups (IT Admins nested in BU Admins)"
   [PlaygroundTagsCreate]="Dynamic playground tag keys + Tag User grants"
 )
 declare -A OP_KEYS=(
   [ControlTowerProjectCreate]="QUOTA_PROJECT ORG_ID BILLING_ACCOUNT_ID CT_FOLDER_NAME CT_FOLDER_PARENT CT_PROJECT_ID REGION TF_STATE_BUCKET"
   [ControlTowerApisEnable]="QUOTA_PROJECT CT_PROJECT_ID CT_PROJECT_NUMBER REGION TF_STATE_BUCKET"
-  [ControlTowerFirestoreCreate]="QUOTA_PROJECT CT_PROJECT_ID REGION TF_STATE_BUCKET FIRESTORE_DATABASE"
+  [ControlTowerFirestoreCreate]="QUOTA_PROJECT CT_PROJECT_ID REGION TF_STATE_BUCKET FIRESTORE_DATABASE FIRESTORE_CONFIG_DATABASE"
   [PlaygroundGroupsCreate]="QUOTA_PROJECT REGION TF_STATE_BUCKET DIRECTORY_CUSTOMER_ID DOMAIN IT_ADMINS_GROUP BU_ADMINS_GROUP IT_ADMINS_INITIAL_MEMBERS"
   [PlaygroundTagsCreate]="QUOTA_PROJECT ORG_ID REGION TF_STATE_BUCKET IT_ADMINS_GROUP BU_ADMINS_GROUP"
 )
@@ -499,24 +499,39 @@ post_apply_ControlTowerApisEnable() { # dir prefix
   terraform -chdir="$dir" output -json service_agents | jq -r 'to_entries[] | "  \(.key): \(.value)"' | while IFS= read -r l; do ok "service agent ${l#  }"; done
 }
 
-# ControlTowerFirestoreCreate: Firestore API on the CT project; warn if the database already exists.
+# ControlTowerFirestoreCreate: Firestore API on the CT project; the two database IDs differ;
+# warn if a database exists that Terraform does not manage yet.
 validate_ControlTowerFirestoreCreate() {
+  local db
   [[ -z "${CT_PROJECT_ID-}" ]] && return 0
   if ! gcloud services list --enabled --project="$CT_PROJECT_ID" --format="value(config.name)" 2>/dev/null | grep -qx firestore.googleapis.com; then
     problems+=("firestore.googleapis.com is not enabled on $CT_PROJECT_ID (run ControlTowerApisEnable first)")
     return 0
   fi
-  if [[ -n "${FIRESTORE_DATABASE-}" && "$(status_get ControlTowerFirestoreCreate STATUS)" != "DONE" ]] \
-     && gcloud firestore databases describe --database="$FIRESTORE_DATABASE" --project="$CT_PROJECT_ID" --format="value(name)" >/dev/null 2>&1; then
-    warnings+=("Firestore database $FIRESTORE_DATABASE already exists on $CT_PROJECT_ID: apply will fail unless it came from an interrupted earlier run of this operation")
+  if [[ -n "${FIRESTORE_DATABASE-}" && "${FIRESTORE_DATABASE-}" == "${FIRESTORE_CONFIG_DATABASE-}" ]]; then
+    problems+=("FIRESTORE_CONFIG_DATABASE and FIRESTORE_DATABASE must be different databases")
   fi
+  # FIRESTORE_DATABASE is managed since the first run; FIRESTORE_CONFIG_DATABASE was added later.
+  if [[ "$(status_get ControlTowerFirestoreCreate STATUS)" != "DONE" ]]; then
+    for db in "${FIRESTORE_DATABASE-}" "${FIRESTORE_CONFIG_DATABASE-}"; do
+      [[ -z "$db" ]] && continue
+      if gcloud firestore databases describe --database="$db" --project="$CT_PROJECT_ID" --format="value(name)" >/dev/null 2>&1; then
+        warnings+=("Firestore database $db already exists on $CT_PROJECT_ID: apply will fail unless it came from an interrupted earlier run of this operation")
+      fi
+    done
+  fi
+  return 0
 }
 
 post_apply_ControlTowerFirestoreCreate() { # dir prefix
+  local db
   CURRENT_STEP="readiness check"
-  wait_for "Firestore database ${FIRESTORE_DATABASE} on ${CT_PROJECT_ID}" 180 \
-    gcloud firestore databases describe --database="$FIRESTORE_DATABASE" --project="$CT_PROJECT_ID" --format="value(name)"
-  ok "location $(terraform -chdir="$1" output -raw location), point-in-time recovery and delete protection enabled"
+  for db in "$FIRESTORE_CONFIG_DATABASE" "$FIRESTORE_DATABASE"; do
+    wait_for "Firestore database ${db} on ${CT_PROJECT_ID}" 180 \
+      gcloud firestore databases describe --database="$db" --project="$CT_PROJECT_ID" --format="value(name)"
+  done
+  ok "location $(terraform -chdir="$1" output -raw location), point-in-time recovery and delete protection enabled on both"
+  ok "config: weekly backup (Sunday, kept 14 weeks); runtime + jobs: TTL on jobs.expireAt and tasks.expireAt"
 }
 
 # PlaygroundGroupsCreate: group emails and initial members in DOMAIN; warn if groups already exist.
