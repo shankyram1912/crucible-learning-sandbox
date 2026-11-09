@@ -61,9 +61,12 @@ Crucible is a self-service Google Cloud learning sandbox platform orchestrated f
         'Governed, multi-tenant Google Cloud & AI learning sandboxes orchestrated from a central Control Tower.',
       template: 'splash' as const,
       hero: {
-        title: 'Governed cloud sandboxes. Built for scale.',
+        title: 'Governed cloud learning sandboxes. Built for scale.',
         tagline:
-          'Crucible separates Central IT financial & guardrail governance from self-service course playgrounds and isolated student app workspaces on Google Cloud.',
+          'Crucible separates Central IT financial & guardrail governance from self-service shared playgrounds and isolated student app workspaces on Google Cloud.',
+        image: {
+          html: `<img src="${BASE}/favicon.svg" alt="Red smelting crucible" width="220" height="220" class="crucible-hero-mark" />`,
+        },
         actions: [
           {
             text: 'Conceptual Framework',

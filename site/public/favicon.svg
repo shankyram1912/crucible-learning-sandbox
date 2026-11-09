@@ -1,6 +1,48 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
-  <rect width="32" height="32" rx="7" fill="#151a22"/>
-  <path d="M8 10h16l-2.4 13a3 3 0 0 1-2.95 2.45h-5.3A3 3 0 0 1 10.4 23L8 10Z" stroke="#9fb7e9" stroke-width="2.2" stroke-linejoin="round"/>
-  <path d="M6 10h20" stroke="#dce6fa" stroke-width="2.2" stroke-linecap="round"/>
-  <path d="M13 16c0 1.8 1.3 3.2 3 3.2s3-1.4 3-3.2c0-1.5-1.5-2.6-3-4.2-1.5 1.6-3 2.7-3 4.2Z" fill="#9fb7e9"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="vessel" x1="12" y1="22" x2="52" y2="58" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#dc2626"/>
+      <stop offset="55%" stop-color="#b91c1c"/>
+      <stop offset="100%" stop-color="#7f1d1d"/>
+    </linearGradient>
+    <linearGradient id="molten" x1="16" y1="18" x2="48" y2="28" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#fef08a"/>
+      <stop offset="50%" stop-color="#fb923c"/>
+      <stop offset="100%" stop-color="#ef4444"/>
+    </linearGradient>
+    <linearGradient id="flame" x1="32" y1="3" x2="32" y2="24" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#fef08a"/>
+      <stop offset="55%" stop-color="#f97316"/>
+      <stop offset="100%" stop-color="#dc2626"/>
+    </linearGradient>
+    <linearGradient id="rim" x1="8" y1="20" x2="56" y2="26" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#f87171"/>
+      <stop offset="50%" stop-color="#ef4444"/>
+      <stop offset="100%" stop-color="#991b1b"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Rising smelting sparks -->
+  <circle cx="22" cy="8" r="2" fill="#fde047"/>
+  <circle cx="43" cy="10" r="1.8" fill="#fb923c"/>
+  <circle cx="33" cy="5" r="1.6" fill="#fef08a"/>
+
+  <!-- Smelting flame rising from molten bath -->
+  <path d="M32 7C28 12.5 23 15.5 24 21.5C24.8 25 28.2 26.5 32 26.5C35.8 26.5 39.2 25 40 21.5C41 15.5 36 12.5 32 7Z" fill="url(#flame)"/>
+  <path d="M32 13C30 16 28 18 28.5 21.2C29 23.4 30.4 24.4 32 24.4C33.6 24.4 35 23.4 35.5 21.2C36 18 34 16 32 13Z" fill="#fef9c3"/>
+
+  <!-- Red-hot tapered foundry crucible body -->
+  <path d="M12 23H52L46.2 51.5C45.3 55.8 41.5 59 37.1 59H26.9C22.5 59 18.7 55.8 17.8 51.5L12 23Z" fill="url(#vessel)" stroke="#450a0a" stroke-width="2" stroke-linejoin="round"/>
+
+  <!-- Glowing heat band & specular highlight on vessel -->
+  <path d="M17.5 31L21.5 50.5C22 53 24.2 54.8 26.8 54.8H30" stroke="#fca5a5" stroke-width="2.2" stroke-linecap="round" opacity="0.55"/>
+
+  <!-- Crucible pouring lip & rim -->
+  <ellipse cx="32" cy="23" rx="21" ry="5.2" fill="url(#rim)" stroke="#450a0a" stroke-width="2"/>
+
+  <!-- Glowing molten metal surface inside rim -->
+  <ellipse cx="32" cy="23" rx="16.5" ry="3.3" fill="url(#molten)"/>
+
+  <!-- Molten drip over pouring spout -->
+  <path d="M44 25.5C44 25.5 46.5 29.5 45.2 33.5C44.4 35.8 42.2 35.6 41.8 33.2C41.4 30.8 44 25.5 44 25.5Z" fill="url(#molten)"/>
 </svg>

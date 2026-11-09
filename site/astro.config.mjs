@@ -14,6 +14,10 @@ export default defineConfig({
   integrations: [
     starlight({
       title: 'crucible',
+      logo: {
+        src: './src/assets/crucible-logo.svg',
+        alt: 'Crucible smelting icon',
+      },
       description:
         'Governed, multi-tenant Google Cloud & AI learning sandboxes orchestrated from a central Control Tower.',
       favicon: '/favicon.svg',
@@ -26,6 +30,8 @@ export default defineConfig({
       ],
       components: {
         PageFrame: './src/components/PageFrame.astro',
+        ThemeProvider: './src/components/ThemeProvider.astro',
+        ThemeSelect: './src/components/ThemeSelect.astro',
       },
       sidebar: [
         {
