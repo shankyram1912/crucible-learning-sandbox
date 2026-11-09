@@ -138,5 +138,5 @@ Every call carries a **session ID** (one per terminal session, reused for 8 hour
 | `No usable Google login (...)` or `ADC did not return an ID token` | Not signed in: `gcloud auth application-default login` |
 | `API unreachable at ...` | Wrong or missing `LSB_API_URL`, or no network path to the API |
 | `UNAUTHENTICATED: Caller is not in <domain>` | Signed in with a personal or other account: sign in again with your organization account |
-| `UNAUTHENTICATED: Invalid ID token: ...` | Sign-in expired or not accepted: sign in again; if it persists, contact the platform team with the request ID |
+| `UNAUTHENTICATED: Invalid ID token: ...` | Sign-in expired or not accepted (`audience not accepted` means the API does not trust the app you signed in with): sign in again with `gcloud auth application-default login`; if it persists, contact the platform team with the request ID |
 | `PERMISSION_DENIED: This operation needs the PLATFORM_ADMIN persona` | `lsb health db` is for Platform Admins; use `lsb health service` |

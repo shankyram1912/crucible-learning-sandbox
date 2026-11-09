@@ -71,7 +71,9 @@ class TokenVerifier:
             claims = jwt.decode(token, certs=self._get_certs(), audience=self._settings.allowed_audiences,
                                 clock_skew_in_seconds=10)
         except Exception as exc:  # signature, expiry, audience, malformed
-            raise ApiError(ErrorCode.UNAUTHENTICATED, f"Invalid ID token: {type(exc).__name__}") from exc
+            reason = "audience not accepted" if "audience" in str(exc).lower() else type(exc).__name__
+            log.info("token rejected: %s", exc)
+            raise ApiError(ErrorCode.UNAUTHENTICATED, f"Invalid ID token: {reason}") from exc
         if claims.get("iss") not in GOOGLE_ISSUERS:
             raise ApiError(ErrorCode.UNAUTHENTICATED, "Token issuer is not Google")
         email = str(claims.get("email", "")).lower()

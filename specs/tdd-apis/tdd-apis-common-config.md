@@ -42,7 +42,7 @@ The one place where every setting of the Self Service APIs and the `lsb` CLI is 
 | Key | Required | Default | Meaning |
 |---|---|---|---|
 | `LSB_PLATFORM_ADMIN_GROUPS` | no | value of `BU_ADMINS_GROUP` | Groups whose members (transitively) are `PLATFORM_ADMIN` ([tdd-apis-common-models.md](tdd-apis-common-models.md) section 3). Today only `grp-lsb-bu-admins@` |
-| `LSB_ALLOWED_AUDIENCES` | no | `32555940559.apps.googleusercontent.com` | OAuth client IDs (or Firebase project IDs) accepted as the `aud` of ID tokens ([tdd-apis-common-auth.md](tdd-apis-common-auth.md) section 1). The default is the public client ID that gcloud and ADC sign in with; **this is the decided setup for the CLI** (no separate `lsb` OAuth client). The UI step adds the Firebase project ID. Not a secret; a setting rather than a code constant because it belongs to Google |
+| `LSB_ALLOWED_AUDIENCES` | no | `764086051850-6qr4p6gpi6hn506pt8ejuq83di341hur.apps.googleusercontent.com,32555940559.apps.googleusercontent.com` | OAuth client IDs (or Firebase project IDs) accepted as the `aud` of ID tokens ([tdd-apis-common-auth.md](tdd-apis-common-auth.md) section 1). The defaults are the two public clients `gcloud` signs in with: the ADC client used by current `gcloud auth application-default login`, and the gcloud CLI client used by older ADC logins. **This is the decided setup for the CLI** (no separate `lsb` OAuth client). The UI step adds the Firebase project ID. Not a secret; a setting rather than a code constant because it belongs to Google |
 | `LSB_API_VERSION` | no | `unknown` | Git commit the API was built from; returned by `health api` |
 | `LSB_API_PORT` | no | `8080` | Port the API listens on |
 | `LSB_LOG_LEVEL` | no | `INFO` | `DEBUG`, `INFO`, `WARNING`, `ERROR` |

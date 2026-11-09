@@ -9,7 +9,12 @@ from functools import lru_cache
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-ADC_GCLOUD_CLIENT_ID = "32555940559.apps.googleusercontent.com"
+# Public OAuth client IDs that `gcloud` uses to sign in. The `aud` of an ADC ID token is one of them:
+# older ADC logins used the gcloud CLI client, current `gcloud auth application-default login` uses
+# the dedicated ADC client.
+GCLOUD_CLI_CLIENT_ID = "32555940559.apps.googleusercontent.com"
+GCLOUD_ADC_CLIENT_ID = "764086051850-6qr4p6gpi6hn506pt8ejuq83di341hur.apps.googleusercontent.com"
+DEFAULT_ALLOWED_AUDIENCES = f"{GCLOUD_ADC_CLIENT_ID},{GCLOUD_CLI_CLIENT_ID}"
 
 
 def _split(value: str | list[str]) -> list[str]:
@@ -33,7 +38,7 @@ class Settings(BaseSettings):
 
     # API keys
     LSB_PLATFORM_ADMIN_GROUPS: str = ""  # empty means BU_ADMINS_GROUP
-    LSB_ALLOWED_AUDIENCES: str = ADC_GCLOUD_CLIENT_ID
+    LSB_ALLOWED_AUDIENCES: str = DEFAULT_ALLOWED_AUDIENCES
     LSB_API_VERSION: str = "unknown"
     LSB_API_PORT: int = 8080
     LSB_LOG_LEVEL: str = "INFO"
