@@ -436,7 +436,7 @@ const { title = data.title, tagline } = data.hero || {};
     ];
 
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const STAGE_MS = 6400;
+    const STAGE_MS = 3500;
 
     let activeStage = 0;
     let stageStart = performance.now();
@@ -447,7 +447,7 @@ const { title = data.title, tagline } = data.hero || {};
       const next = ((idx % 4) + 4) % 4;
       activeStage = next;
       stageStart = performance.now();
-      if (userTriggered) pausedUntil = stageStart + 14000;
+      if (userTriggered) pausedUntil = stageStart + 7000;
 
       section!.dataset.activeStage = String(next);
 

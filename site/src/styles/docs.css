@@ -444,8 +444,8 @@ h4 {
   transform: translateY(6px);
   pointer-events: none;
   transition:
-    opacity 360ms var(--c-ease),
-    transform 360ms var(--c-ease);
+    opacity 220ms var(--c-ease),
+    transform 220ms var(--c-ease);
 }
 
 .c-stage-pane.is-active {
@@ -586,8 +586,8 @@ h4 {
   cursor: pointer;
   transform-origin: 280px 280px;
   transition:
-    opacity 480ms var(--c-ease),
-    transform 520ms var(--c-ease);
+    opacity 280ms var(--c-ease),
+    transform 320ms var(--c-ease);
 }
 
 .c-ring-hit {
@@ -602,8 +602,8 @@ h4 {
   stroke-width: 2;
   opacity: 0.35;
   transition:
-    stroke-width 400ms var(--c-ease),
-    opacity 400ms var(--c-ease);
+    stroke-width 240ms var(--c-ease),
+    opacity 240ms var(--c-ease);
 }
 
 .c-track-amber {
@@ -617,8 +617,8 @@ h4 {
   stroke-linecap: round;
   opacity: 0.45;
   transition:
-    stroke-width 400ms var(--c-ease),
-    opacity 400ms var(--c-ease);
+    stroke-width 240ms var(--c-ease),
+    opacity 240ms var(--c-ease);
 }
 
 .c-ring-orbit {
@@ -627,30 +627,31 @@ h4 {
   stroke-linecap: round;
   transform-origin: 280px 280px;
   opacity: 0;
-  transition: opacity 400ms var(--c-ease);
+  transition: opacity 240ms var(--c-ease);
 }
 
 .c-orbit-blue {
   stroke: var(--g-blue);
-  animation: orbitRotateCw 14s linear infinite;
+  animation: orbitRotateCw 4.8s linear infinite;
 }
 
 .c-orbit-green {
   stroke: var(--g-green);
-  animation: orbitRotateCcw 12s linear infinite;
+  animation: orbitRotateCcw 3.8s linear infinite;
 }
 
 .c-orbit-amber {
   stroke: var(--g-amber);
-  animation: orbitRotateCw 10s linear infinite;
+  animation: orbitRotateCw 3s linear infinite;
 }
 
 .c-inherit-spokes line {
   stroke: var(--g-green);
-  stroke-width: 1.5;
-  stroke-dasharray: 4 4;
+  stroke-width: 1.8;
+  stroke-dasharray: 4 5;
   opacity: 0;
-  transition: opacity 400ms var(--c-ease);
+  animation: linkFlow 0.75s linear infinite;
+  transition: opacity 240ms var(--c-ease);
 }
 
 /* Node pills on rings */
@@ -816,8 +817,8 @@ h4 {
   transform-origin: 280px 280px;
   pointer-events: none;
   transition:
-    opacity 480ms var(--c-ease),
-    transform 520ms var(--c-ease);
+    opacity 280ms var(--c-ease),
+    transform 320ms var(--c-ease);
 }
 
 .crucible-launch[data-active-stage='3'] .c-ai-app-scene {
@@ -860,7 +861,7 @@ h4 {
   stroke-width: 3;
   stroke-dasharray: 8 10;
   stroke-linecap: round;
-  animation: linkFlow 1.4s linear infinite;
+  animation: linkFlow 0.75s linear infinite;
 }
 
 .c-pulse-1 {
@@ -868,15 +869,15 @@ h4 {
 }
 .c-pulse-2 {
   stroke: var(--g-red);
-  animation-delay: -0.35s;
+  animation-delay: -0.18s;
 }
 .c-pulse-3 {
   stroke: var(--g-green);
-  animation-delay: -0.7s;
+  animation-delay: -0.36s;
 }
 .c-pulse-4 {
   stroke: var(--g-amber);
-  animation-delay: -1.05s;
+  animation-delay: -0.54s;
 }
 
 .c-ai-sat rect {
@@ -902,7 +903,7 @@ h4 {
   fill: rgba(66, 133, 244, 0.18);
   transform-box: fill-box;
   transform-origin: center;
-  animation: hubBreath 2.6s ease-in-out infinite;
+  animation: hubBreath 1.5s ease-in-out infinite;
 }
 
 .c-ai-hub-core {
@@ -1046,7 +1047,7 @@ h4 {
 
 .c-card-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 22px;
 }
 

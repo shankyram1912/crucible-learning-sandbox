@@ -41,67 +41,61 @@ function rewriteLinks(body: string, sourceRelPath: string): string {
 }
 
 function buildLandingPage() {
-  const md = `
-<div class="c-pillars not-content">
-  <div class="c-pillars-head">
-    <div class="c-pillars-flow" aria-label="Documentation Reading Order">
-      <span>01 Conceptual Architecture</span>
-      <i aria-hidden="true">&rarr;</i>
-      <span>02 Specifications</span>
-      <i aria-hidden="true">&rarr;</i>
-      <span>03 Deployment &amp; User Guides</span>
-    </div>
-    <h2>Documentation</h2>
-    <p>Follow the platform from the conceptual framework and persona journeys, to technical specifications, to Day-0 bootstrap and CLI guides.</p>
-  </div>
-
-  <div class="c-card-grid">
-    <div class="c-pillar-card">
-      <div class="c-pillar-top">
-        <div class="c-card-eyebrow">01 &middot; Conceptual Architecture</div>
-        <h3><a href="${BASE}/brs/master/">Conceptual Framework &amp; Journeys</a></h3>
-        <p>The business problem, layered conceptual model, personas, playground organization, core business rules, and persona journeys.</p>
-      </div>
-      <ul class="c-pillar-links">
-        <li><a href="${BASE}/brs/master/"><span>Business Requirements &amp; Conceptual Framework</span><i>&rarr;</i></a></li>
-        <li><a href="${BASE}/brs/it-admin-cuj/"><span>IT Admin Journeys</span><i>&rarr;</i></a></li>
-        <li><a href="${BASE}/brs/bu-admin-cuj/"><span>BU Admin &amp; Playground Admin Journeys</span><i>&rarr;</i></a></li>
-        <li><a href="${BASE}/brs/student-cuj/"><span>Student &amp; Designated User Journeys</span><i>&rarr;</i></a></li>
-      </ul>
-    </div>
-
-    <div class="c-pillar-card">
-      <div class="c-pillar-top">
-        <div class="c-card-eyebrow">02 &middot; Specifications</div>
-        <h3><a href="${BASE}/tdd/master/">Technical Design (TDD)</a></h3>
-        <p>Control Tower Terraform and IAM principles, tag and label binding, playground pipeline and GCP services, Firestore data design, and Self Service APIs.</p>
-      </div>
-      <ul class="c-pillar-links">
-        <li><a href="${BASE}/tdd/master/"><span>Control Tower TDD: Terraform &amp; IAM Principles</span><i>&rarr;</i></a></li>
-        <li><a href="${BASE}/tdd/tags-labels/"><span>Tag and Label Binding</span><i>&rarr;</i></a></li>
-        <li><a href="${BASE}/tdd/playground-pipeline/"><span>Playground Pipeline &amp; GCP Services</span><i>&rarr;</i></a></li>
-        <li><a href="${BASE}/tdd/data/"><span>Firestore Data Design &amp; Config DB</span><i>&rarr;</i></a></li>
-        <li><a href="${BASE}/tdd/apis/master/"><span>Self Service APIs &amp; CUJ Operation Map</span><i>&rarr;</i></a></li>
-      </ul>
-    </div>
-
-    <div class="c-pillar-card">
-      <div class="c-pillar-top">
-        <div class="c-card-eyebrow">03 &middot; Deployment &amp; User Guides</div>
-        <h3><a href="${BASE}/deploy/control-tower/">Deploy &amp; Operate</a></h3>
-        <p>Bootstrap the Control Tower in Google Cloud Shell, run the local API server, and use the <code>lsb</code> command-line interface.</p>
-      </div>
-      <ul class="c-pillar-links">
-        <li><a href="${BASE}/deploy/control-tower/"><span>Control Tower Day-0 Bootstrap Runbook</span><i>&rarr;</i></a></li>
-        <li><a href="${BASE}/deploy/api/"><span>lsb-api Local Server &amp; Developer Guide</span><i>&rarr;</i></a></li>
-        <li><a href="${BASE}/deploy/cli/"><span>lsb-cli Developer Guide</span><i>&rarr;</i></a></li>
-        <li><a href="${BASE}/guides/cli/"><span>lsb CLI User Guide</span><i>&rarr;</i></a></li>
-        <li><a href="${BASE}/roadmap/todolist/"><span>Build Sequence &amp; Status</span><i>&rarr;</i></a></li>
-      </ul>
-    </div>
-  </div>
-</div>
-`;
+  // Single contiguous CommonMark HTML block (no blank lines or 4-space indents, which CommonMark treats as <pre><code>)
+  const md = [
+    `<div class="c-pillars not-content">`,
+    `<div class="c-pillars-head">`,
+    `<div class="c-pillars-flow" aria-label="Documentation Reading Order">`,
+    `<span>01 Conceptual Architecture</span><i aria-hidden="true">&rarr;</i><span>02 Specifications</span><i aria-hidden="true">&rarr;</i><span>03 Deployment &amp; User Guides</span>`,
+    `</div>`,
+    `<h2>Documentation</h2>`,
+    `<p>Follow the platform from the conceptual framework and persona journeys, to technical specifications, to Day-0 bootstrap and CLI guides.</p>`,
+    `</div>`,
+    `<div class="c-card-grid">`,
+    `<div class="c-pillar-card">`,
+    `<div class="c-pillar-top">`,
+    `<div class="c-card-eyebrow">01 &middot; Conceptual Architecture</div>`,
+    `<h3><a href="${BASE}/brs/master/">Conceptual Framework &amp; Journeys</a></h3>`,
+    `<p>The business problem, layered conceptual model, personas, playground organization, core business rules, and persona journeys.</p>`,
+    `</div>`,
+    `<ul class="c-pillar-links">`,
+    `<li><a href="${BASE}/brs/master/"><span>Business Requirements &amp; Conceptual Framework</span><i>&rarr;</i></a></li>`,
+    `<li><a href="${BASE}/brs/it-admin-cuj/"><span>IT Admin Journeys</span><i>&rarr;</i></a></li>`,
+    `<li><a href="${BASE}/brs/bu-admin-cuj/"><span>BU Admin &amp; Playground Admin Journeys</span><i>&rarr;</i></a></li>`,
+    `<li><a href="${BASE}/brs/student-cuj/"><span>Student &amp; Designated User Journeys</span><i>&rarr;</i></a></li>`,
+    `</ul>`,
+    `</div>`,
+    `<div class="c-pillar-card">`,
+    `<div class="c-pillar-top">`,
+    `<div class="c-card-eyebrow">02 &middot; Specifications</div>`,
+    `<h3><a href="${BASE}/tdd/master/">Technical Design (TDD)</a></h3>`,
+    `<p>Control Tower Terraform and IAM principles, tag and label binding, playground pipeline and GCP services, Firestore data design, and Self Service APIs.</p>`,
+    `</div>`,
+    `<ul class="c-pillar-links">`,
+    `<li><a href="${BASE}/tdd/master/"><span>Control Tower TDD: Terraform &amp; IAM Principles</span><i>&rarr;</i></a></li>`,
+    `<li><a href="${BASE}/tdd/tags-labels/"><span>Tag and Label Binding</span><i>&rarr;</i></a></li>`,
+    `<li><a href="${BASE}/tdd/playground-pipeline/"><span>Playground Pipeline &amp; GCP Services</span><i>&rarr;</i></a></li>`,
+    `<li><a href="${BASE}/tdd/data/"><span>Firestore Data Design &amp; Config DB</span><i>&rarr;</i></a></li>`,
+    `<li><a href="${BASE}/tdd/apis/master/"><span>Self Service APIs &amp; CUJ Operation Map</span><i>&rarr;</i></a></li>`,
+    `</ul>`,
+    `</div>`,
+    `<div class="c-pillar-card">`,
+    `<div class="c-pillar-top">`,
+    `<div class="c-card-eyebrow">03 &middot; Deployment &amp; User Guides</div>`,
+    `<h3><a href="${BASE}/deploy/control-tower/">Deploy &amp; Operate</a></h3>`,
+    `<p>Bootstrap the Control Tower in Google Cloud Shell, run the local API server, and use the <code>lsb</code> command-line interface.</p>`,
+    `</div>`,
+    `<ul class="c-pillar-links">`,
+    `<li><a href="${BASE}/deploy/control-tower/"><span>Control Tower Day-0 Bootstrap Runbook</span><i>&rarr;</i></a></li>`,
+    `<li><a href="${BASE}/deploy/api/"><span>lsb-api Local Server &amp; Developer Guide</span><i>&rarr;</i></a></li>`,
+    `<li><a href="${BASE}/deploy/cli/"><span>lsb-cli Developer Guide</span><i>&rarr;</i></a></li>`,
+    `<li><a href="${BASE}/guides/cli/"><span>lsb CLI User Guide</span><i>&rarr;</i></a></li>`,
+    `<li><a href="${BASE}/roadmap/todolist/"><span>Build Sequence &amp; Status</span><i>&rarr;</i></a></li>`,
+    `</ul>`,
+    `</div>`,
+    `</div>`,
+    `</div>`,
+  ].join('\n');
 
   return {
     raw: md.trim(),
