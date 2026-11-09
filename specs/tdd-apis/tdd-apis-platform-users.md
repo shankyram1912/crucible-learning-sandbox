@@ -6,7 +6,7 @@ Platform users are the people with a **platform role**: IT Admins and BU Admins.
 
 | # (build order) | Operation | REST | CLI | Status |
 |---|---|---|---|---|
-| 04 | Platform roles | `GET /v1/platform-users/me/roles`, `GET /v1/platform-users/{email}/roles` | `lsb platform-users roles [EMAIL]` | Built, to test live |
+| 04 | Platform roles | `GET /v1/platform-users/me/roles`, `GET /v1/platform-users/{email}/roles` | `lsb platform-users roles [EMAIL]` | Done |
 
 Replaces the `group members` rows (10 to 12) of [apis-v0-interface.md](../../specs-reference/apis-v0-interface.md) A.2 and B for the service groups; the platform no longer changes membership.
 
