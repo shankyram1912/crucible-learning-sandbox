@@ -1,0 +1,621 @@
+---
+import { BASE, OWNER_REPO } from '../pages-map';
+
+const { data } = Astro.locals.starlightRoute.entry;
+const isSplash = data.template === 'splash';
+const { title = data.title, tagline, actions = [] } = data.hero || {};
+---
+
+{
+  isSplash ? (
+    <section class="crucible-launch not-content" id="crucible-launch" aria-label="Crucible Platform Overview">
+      <div class="crucible-aurora" aria-hidden="true">
+        <i></i>
+        <i></i>
+        <i></i>
+      </div>
+      <canvas id="crucible-canvas" aria-hidden="true"></canvas>
+
+      <div class="crucible-launch-grid">
+        <div class="crucible-launch-copy">
+          <a class="crucible-badge" href={`${BASE}/brs/master/`}>
+            <span class="crucible-badge-dot" aria-hidden="true">&#10022;</span>
+            <span>Start Here &middot; Crucible Conceptual Framework</span>
+            <span class="crucible-badge-arrow" aria-hidden="true">&rarr;</span>
+          </a>
+
+          <h1 id="_top" data-page-title class="crucible-title">
+            Governed cloud learning sandboxes. <span class="crucible-grad-text">Built for scale.</span>
+          </h1>
+
+          {tagline && <p class="crucible-sub">{tagline}</p>}
+
+          <div class="crucible-cta">
+            <a class="c-btn c-btn-primary" href={`${BASE}/brs/master/`}>
+              Conceptual Framework &rarr;
+            </a>
+            <a class="c-btn c-btn-secondary" href={`${BASE}/tdd/master/`}>
+              Technical Design (TDD)
+            </a>
+            <a class="c-btn c-btn-minimal" href={`https://github.com/${OWNER_REPO}`} target="_blank" rel="noopener">
+              GitHub &#8599;
+            </a>
+          </div>
+
+          <div class="crucible-stages" role="region" aria-label="How Crucible works across 4 layers">
+            <div class="c-stage-tabs" role="tablist">
+              <button type="button" class="c-stage-tab is-active" role="tab" aria-selected="true" data-cstage="0">
+                <span class="c-stage-bar"><i></i></span>
+                <span class="c-stage-idx">01</span><span class="c-stage-name">Crucible</span>
+              </button>
+              <button type="button" class="c-stage-tab" role="tab" aria-selected="false" data-cstage="1">
+                <span class="c-stage-bar"><i></i></span>
+                <span class="c-stage-idx">02</span><span class="c-stage-name">Catalog</span>
+              </button>
+              <button type="button" class="c-stage-tab" role="tab" aria-selected="false" data-cstage="2">
+                <span class="c-stage-bar"><i></i></span>
+                <span class="c-stage-idx">03</span><span class="c-stage-name">Shards</span>
+              </button>
+              <button type="button" class="c-stage-tab" role="tab" aria-selected="false" data-cstage="3">
+                <span class="c-stage-bar"><i></i></span>
+                <span class="c-stage-idx">04</span><span class="c-stage-name">Workspaces</span>
+              </button>
+            </div>
+
+            <div class="c-stage-panes">
+              <div class="c-stage-pane is-active" data-cstage-pane="0">
+                <h3>1. Central IT sets Playground Folders, tags &amp; budgets</h3>
+                <p>IT Admins place Playground Folders under existing org folders with immutable billing accounts, required budgets, dynamic cost tags, and guardrails.</p>
+                <span class="c-stage-code">cost-center-bu &middot; cost-center-code &middot; cost-category</span>
+              </div>
+              <div class="c-stage-pane" data-cstage-pane="1">
+                <h3>2. Versioned Service Catalog &amp; Playground Templates</h3>
+                <p>Services pin Terraform modules with mandatory, default-on, or optional modes and per-student allowances; templates compose ready-made playground shapes.</p>
+                <span class="c-stage-code">Service vN &rarr; Template vN &rarr; Pinned Playground</span>
+              </div>
+              <div class="c-stage-pane" data-cstage-pane="2">
+                <h3>3. BU Admins launch sharded Playgrounds for courses</h3>
+                <p>Expected students divided by template students-per-project creates isolated GCP project shards linked to billing, with optional Playground Admin groups.</p>
+                <span class="c-stage-code">&lceil;expected_students / students_per_project&rceil; shards</span>
+              </div>
+              <div class="c-stage-pane" data-cstage-pane="3">
+                <h3>4. Students initialize singletons &amp; build App Containers</h3>
+                <p>First entry provisions each student's singleton SA, bucket, and logical DB in one shard, unlocking self-service app containers within pooled allowances.</p>
+                <span class="c-stage-code">sa-&lt;student&gt; &middot; app-&lt;name&gt;</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="crucible-launch-viz" aria-hidden="true">
+          <div class="crucible-chips is-on" id="c-chips-0">
+            <div class="crucible-chip" style="--x:24%;--y:15%">
+              <span class="c-chip-ok">&#10003;</span><span>Playground Folder</span><b>governed</b>
+            </div>
+            <div class="crucible-chip" style="--x:78%;--y:22%">
+              <span class="c-chip-spin"></span><span>Dynamic cost tags</span><em>synced</em>
+            </div>
+            <div class="crucible-chip" style="--x:52%;--y:85%">
+              <span class="c-chip-ok">&#10003;</span><span>50 / 75 / 90 / 100%</span><b>budget</b>
+            </div>
+          </div>
+
+          <div class="crucible-chips" id="c-chips-1">
+            <div class="crucible-chip" style="--x:24%;--y:16%">
+              <span class="c-chip-ok">&#10003;</span><span>Service Catalog</span><b>versioned</b>
+            </div>
+            <div class="crucible-chip" style="--x:78%;--y:24%">
+              <span class="c-chip-ok">&#10003;</span><span>Mandatory SA + Gemini</span><b>pinned</b>
+            </div>
+            <div class="crucible-chip" style="--x:52%;--y:85%">
+              <span class="c-chip-spin"></span><span>Terraform root modules</span><em>additive</em>
+            </div>
+          </div>
+
+          <div class="crucible-chips" id="c-chips-2">
+            <div class="crucible-chip" style="--x:22%;--y:15%">
+              <span class="c-chip-ok">&#10003;</span><span>Shard p01..pNN</span><b>100 / project</b>
+            </div>
+            <div class="crucible-chip" style="--x:78%;--y:23%">
+              <span class="c-chip-ok">&#10003;</span><span>BU + Playground Admins</span><b>owners</b>
+            </div>
+            <div class="crucible-chip" style="--x:52%;--y:85%">
+              <span class="c-chip-spin"></span><span>Grow-only capacity</span><em>non-disruptive</em>
+            </div>
+          </div>
+
+          <div class="crucible-chips" id="c-chips-3">
+            <div class="crucible-chip" style="--x:24%;--y:16%">
+              <span class="c-chip-ok">&#10003;</span><span>Singleton SA, Bucket, DB</span><b>initialized</b>
+            </div>
+            <div class="crucible-chip" style="--x:78%;--y:24%">
+              <span class="c-chip-spin"></span><span>App container app-lab1</span><em>isolated</em>
+            </div>
+            <div class="crucible-chip" style="--x:52%;--y:85%">
+              <span class="c-chip-ok">&#10003;</span><span>Pooled student allowance</span><b>capped</b>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  ) : (
+    <div class="hero">
+      <div class="sl-flex stack">
+        <div class="sl-flex copy">
+          <h1 id="_top" data-page-title set:html={title} />
+          {tagline && <div class="tagline" set:html={tagline} />}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+<script>
+  function initCrucibleMetamorphosis() {
+    const section = document.getElementById('crucible-launch');
+    const canvas = document.getElementById('crucible-canvas') as HTMLCanvasElement | null;
+    if (!section || !canvas) return;
+    if (canvas.dataset.bound === '1') return;
+    canvas.dataset.bound = '1';
+
+    const tabs = Array.from(section.querySelectorAll<HTMLButtonElement>('.c-stage-tab'));
+    const panes = Array.from(section.querySelectorAll<HTMLElement>('[data-cstage-pane]'));
+    const chipGroups = [0, 1, 2, 3].map((i) => document.getElementById(`c-chips-${i}`));
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const STAGE_MS = 5800;
+    const MORPH_MS = 1350;
+
+    let activeStage = 0;
+    let stageStart = performance.now();
+    let userPausedUntil = 0;
+    let morphStart = performance.now();
+
+    const gl = canvas.getContext('webgl', { alpha: true, antialias: true, premultipliedAlpha: false });
+    if (!gl) return;
+
+    const isMobile = window.matchMedia('(max-width: 960px)').matches;
+    const N = isMobile ? 9000 : 18000;
+
+    function h(i: number, salt: number) {
+      const x = Math.sin(i * 12.9898 + salt * 78.233) * 43758.5453;
+      return x - Math.floor(x);
+    }
+
+    // 4 3D Particle Formations:
+    // 0: Red-hot Smelting Crucible vessel + molten rim + rising flame & sparks
+    // 1: Service Catalog & Template DAG (versioned service nodes & edges)
+    // 2: Sharded Playground Projects (6 bounded 3D shard cubes under folder bar)
+    // 3: Student Singleton Core + Orbiting App Containers
+    const fCrucible = new Float32Array(N * 3);
+    const fCatalog = new Float32Array(N * 3);
+    const fShards = new Float32Array(N * 3);
+    const fWorkspaces = new Float32Array(N * 3);
+
+    const aSeed = new Float32Array(N * 3);
+    const aColor = new Float32Array(N * 3);
+    const aFireColor = new Float32Array(N * 3);
+
+    // CodeMod Google Aurora palette for Catalog / Shards / Workspaces
+    const googlePalette = [
+      [0.259, 0.522, 0.957], // Google Blue #4285F4
+      [0.608, 0.447, 0.796], // Iris #9B72CB
+      [0.918, 0.263, 0.208], // Google Red #EA4335
+      [0.984, 0.737, 0.016], // Google Yellow #FBBC04
+      [0.204, 0.659, 0.325], // Google Green #34A853
+    ];
+
+    // Smelting Crucible palette (deep crimson vessel -> molten orange -> white-gold flame)
+    const firePalette = [
+      [0.58, 0.09, 0.08], // Deep foundry red
+      [0.86, 0.16, 0.15], // Smelting crimson #DC2626
+      [0.96, 0.38, 0.12], // Molten orange
+      [0.99, 0.74, 0.08], // Molten gold
+      [1.0, 0.95, 0.68],  // White-hot spark
+    ];
+
+    function samplePalette(pal: number[][], t: number) {
+      const u = Math.max(0, Math.min(0.9999, t)) * (pal.length - 1);
+      const idx = Math.floor(u);
+      const f = u - idx;
+      const a = pal[idx], b = pal[idx + 1];
+      return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f];
+    }
+
+    const dagNodes = [
+      [-0.88, -0.72, 0.08], [-0.28, -0.76, -0.08], [0.28, -0.76, 0.08], [0.88, -0.72, -0.08],
+      [-0.56, 0.04, 0.12], [0.0, 0.08, -0.1], [0.56, 0.04, 0.12],
+      [-0.3, 0.76, -0.05], [0.3, 0.76, 0.05],
+    ];
+    const dagEdges = [
+      [0, 4], [1, 4], [1, 5], [2, 5], [2, 6], [3, 6],
+      [4, 7], [5, 7], [5, 8], [6, 8], [4, 5], [5, 6],
+    ];
+    const shardCenters = [
+      [-0.72, 0.24, 0.06], [0.0, 0.24, -0.04], [0.72, 0.24, 0.06],
+      [-0.72, -0.48, -0.04], [0.0, -0.48, 0.06], [0.72, -0.48, -0.04],
+    ];
+    const appOrbits = [
+      [-0.82, 0.68, 0.12], [0.84, 0.58, -0.08], [0.72, -0.66, 0.1], [-0.74, -0.62, -0.1],
+    ];
+
+    const ga = Math.PI * (3 - Math.sqrt(5));
+
+    for (let i = 0; i < N; i++) {
+      const i3 = i * 3;
+      const u = (i + 0.5) / N;
+      const r1 = h(i, 1), r2 = h(i, 2), r3 = h(i, 3), r4 = h(i, 4);
+
+      const phi = Math.acos(1 - 2 * u);
+      const th = ga * i;
+      const sx = Math.sin(phi) * Math.cos(th);
+      const sy = Math.cos(phi);
+      const sz = Math.sin(phi) * Math.sin(th);
+
+      // --- Form 0: 3D Smelting Crucible ---
+      let fireHeat = 0.25;
+      if (u < 0.54) {
+        // Tapered foundry crucible body (frustum from y=-0.82 bottom to y=0.22 rim)
+        const v = u / 0.54;
+        const y = -0.82 + v * 1.04;
+        const radius = 0.36 + 0.34 * Math.pow(v, 0.82);
+        const angle = th;
+        const wall = 0.94 + 0.06 * r1;
+        fCrucible[i3] = Math.cos(angle) * radius * wall;
+        fCrucible[i3 + 1] = y;
+        fCrucible[i3 + 2] = Math.sin(angle) * radius * wall;
+        fireHeat = 0.12 + 0.38 * v;
+      } else if (u < 0.66) {
+        // Thick glowing pouring lip / rim torus at y=0.23
+        const angle = r1 * Math.PI * 2;
+        const tube = r2 * Math.PI * 2;
+        const R = 0.72, tr = 0.055;
+        // Slight pouring spout elongation on +X
+        const spout = Math.max(0, Math.cos(angle)) ** 3 * 0.1;
+        fCrucible[i3] = (R + spout + tr * Math.cos(tube)) * Math.cos(angle);
+        fCrucible[i3 + 1] = 0.23 + tr * Math.sin(tube) * 0.8;
+        fCrucible[i3 + 2] = (R + tr * Math.cos(tube)) * Math.sin(angle);
+        fireHeat = 0.45 + 0.25 * r3;
+      } else if (u < 0.80) {
+        // Glowing molten bath surface disc + pouring molten stream on +X
+        const sub = (u - 0.66) / 0.14;
+        if (sub < 0.78) {
+          const rad = 0.66 * Math.sqrt(r1);
+          const ang = r2 * Math.PI * 2;
+          fCrucible[i3] = Math.cos(ang) * rad;
+          fCrucible[i3 + 1] = 0.21 + (r3 - 0.5) * 0.03;
+          fCrucible[i3 + 2] = Math.sin(ang) * rad;
+          fireHeat = 0.72 + 0.25 * (1 - rad / 0.66);
+        } else {
+          // Molten drip arc over pouring spout
+          const d = (sub - 0.78) / 0.22;
+          fCrucible[i3] = 0.78 + d * 0.12 + (r1 - 0.5) * 0.04;
+          fCrucible[i3 + 1] = 0.22 - d * d * 0.58;
+          fCrucible[i3 + 2] = (r2 - 0.5) * 0.06;
+          fireHeat = 0.78 + 0.2 * (1 - d);
+        }
+      } else {
+        // Rising smelting flame & embers above molten bath (y = 0.24 .. 1.02)
+        const f = (u - 0.80) / 0.20;
+        const y = 0.24 + f * 0.78;
+        const cone = (1 - f) * 0.36 + 0.03;
+        const ang = r1 * Math.PI * 2 + f * 3.5;
+        const rad = cone * Math.sqrt(r2);
+        fCrucible[i3] = Math.cos(ang) * rad + Math.sin(f * 5.0) * 0.04;
+        fCrucible[i3 + 1] = y;
+        fCrucible[i3 + 2] = Math.sin(ang) * rad;
+        fireHeat = 0.62 + 0.38 * (1 - rad / (cone + 0.01));
+      }
+
+      // --- Form 1: Service Catalog & Template DAG ---
+      if (u < 0.56) {
+        const nIdx = i % dagNodes.length;
+        const nd = dagNodes[nIdx];
+        const nodeR = (nIdx < 4 ? 0.17 : nIdx < 7 ? 0.2 : 0.22) * Math.cbrt(r1);
+        fCatalog[i3] = nd[0] + sx * nodeR;
+        fCatalog[i3 + 1] = nd[1] + sy * nodeR;
+        fCatalog[i3 + 2] = nd[2] + sz * nodeR;
+      } else {
+        const eIdx = i % dagEdges.length;
+        const edge = dagEdges[eIdx];
+        const p0 = dagNodes[edge[0]], p1 = dagNodes[edge[1]];
+        const t = r2;
+        fCatalog[i3] = p0[0] + (p1[0] - p0[0]) * t + (r1 - 0.5) * 0.03;
+        fCatalog[i3 + 1] = p0[1] + (p1[1] - p0[1]) * t + (r3 - 0.5) * 0.03;
+        fCatalog[i3 + 2] = p0[2] + (p1[2] - p0[2]) * t + Math.sin(t * Math.PI) * 0.11;
+      }
+
+      // --- Form 2: Sharded Playground Projects ---
+      if (u < 0.84) {
+        const cIdx = i % 6;
+        const sc = shardCenters[cIdx];
+        fShards[i3] = sc[0] + (r1 - 0.5) * 0.44;
+        fShards[i3 + 1] = sc[1] + (r2 - 0.5) * 0.34;
+        fShards[i3 + 2] = sc[2] + (r3 - 0.5) * 0.3;
+      } else {
+        // Playground Folder governance bar above shards
+        fShards[i3] = (r2 - 0.5) * 1.95;
+        fShards[i3 + 1] = 0.74 + (r1 - 0.5) * 0.06;
+        fShards[i3 + 2] = (r3 - 0.5) * 0.12;
+      }
+
+      // --- Form 3: Student Singleton Core + App Containers ---
+      if (u < 0.46) {
+        const cr = 0.48 * (0.9 + 0.1 * r1);
+        fWorkspaces[i3] = sx * cr;
+        fWorkspaces[i3 + 1] = sy * cr;
+        fWorkspaces[i3 + 2] = sz * cr;
+      } else {
+        const b = i % 4;
+        const tgt = appOrbits[b];
+        const v = (u - 0.46) / 0.54;
+        if (v < 0.42) {
+          const t = v / 0.42;
+          fWorkspaces[i3] = sx * 0.42 * (1 - t) + tgt[0] * t + (r1 - 0.5) * 0.04;
+          fWorkspaces[i3 + 1] = sy * 0.42 * (1 - t) + tgt[1] * t + (r2 - 0.5) * 0.04;
+          fWorkspaces[i3 + 2] = sz * 0.42 * (1 - t) + tgt[2] * t + Math.sin(t * Math.PI) * 0.15;
+        } else {
+          // App container cube
+          fWorkspaces[i3] = tgt[0] + (r1 - 0.5) * 0.34;
+          fWorkspaces[i3 + 1] = tgt[1] + (r2 - 0.5) * 0.34;
+          fWorkspaces[i3 + 2] = tgt[2] + (r3 - 0.5) * 0.34;
+        }
+      }
+
+      aSeed[i3] = r1 * 6.2831853;
+      aSeed[i3 + 1] = 0.4 + r2 * 0.9;
+      aSeed[i3 + 2] = r4;
+
+      const ct = Math.max(0, Math.min(1, (sx * 0.55 + sy * 0.45 + 1) * 0.5 + (r1 - 0.5) * 0.12));
+      const gRgb = samplePalette(googlePalette, ct);
+      aColor[i3] = gRgb[0];
+      aColor[i3 + 1] = gRgb[1];
+      aColor[i3 + 2] = gRgb[2];
+
+      const fRgb = samplePalette(firePalette, fireHeat);
+      aFireColor[i3] = fRgb[0];
+      aFireColor[i3 + 1] = fRgb[1];
+      aFireColor[i3 + 2] = fRgb[2];
+    }
+
+    const forms = [fCrucible, fCatalog, fShards, fWorkspaces];
+    const aFrom = new Float32Array(fCrucible);
+    const aTo = new Float32Array(fCrucible);
+
+    // Compile pure WebGL shaders (zero external CDN dependency)
+    const vsSource = `
+      attribute vec3 aFrom;
+      attribute vec3 aTo;
+      attribute vec3 aSeed;
+      attribute vec3 aColor;
+      attribute vec3 aFireColor;
+      uniform float uTime;
+      uniform float uMorph;
+      uniform float uStage;
+      uniform float uFromFire;
+      uniform float uToFire;
+      uniform float uDpr;
+      uniform float uAspect;
+      uniform vec2 uOffset;
+      uniform float uScale;
+      uniform vec2 uMouse;
+      varying vec3 vColor;
+      varying float vAlpha;
+
+      mat2 rot(float a) { float s = sin(a), c = cos(a); return mat2(c, -s, s, c); }
+
+      void main() {
+        float delay = aSeed.z * 0.28;
+        float t = clamp((uMorph - delay) / (1.0 - 0.28), 0.0, 1.0);
+        t = t * t * (3.0 - 2.0 * t);
+        vec3 p = mix(aFrom, aTo, t);
+
+        float swirl = sin(t * 3.14159265) * 0.24;
+        p.xz = rot(swirl * (aSeed.y - 0.5)) * p.xz;
+
+        float fireMix = mix(uFromFire, uToFire, t);
+
+        // Smelting flame rise when in Crucible stage (stage 0)
+        if (fireMix > 0.01 && p.y > 0.22) {
+          p.y += mod(uTime * 0.28 + aSeed.x, 0.55) * 0.22 * fireMix;
+          p.x += sin(uTime * 2.4 + aSeed.x * 3.0) * 0.025 * fireMix;
+        }
+
+        float n = sin(uTime * aSeed.y + aSeed.x) * 0.014 + cos(uTime * 0.7 * aSeed.y + aSeed.x * 1.7) * 0.01;
+        p += normalize(p + vec3(0.0001)) * n;
+
+        float ry = uTime * 0.14 + uMouse.x * 0.3;
+        float rx = 0.14 + uMouse.y * 0.18;
+        p.xz = rot(ry) * p.xz;
+        p.yz = rot(rx) * p.yz;
+
+        p = p * uScale;
+        p.xy += uOffset;
+        float camZ = 4.15;
+        float mvZ = p.z - camZ;
+        float fov = 1.0 / tan(0.33);
+
+        gl_Position = vec4((p.x * fov) / uAspect, p.y * fov, (-mvZ - 0.2) / 10.0 * mvZ, -mvZ);
+
+        float sz = (2.3 + aSeed.z * 1.65) * uDpr * (3.2 / -mvZ);
+        gl_PointSize = clamp(sz, 1.0, 9.5);
+
+        float depthFade = smoothstep(-5.8, -2.5, mvZ);
+        vColor = mix(aColor, aFireColor, fireMix);
+        vAlpha = (0.56 + 0.34 * aSeed.z) * depthFade;
+      }
+    `;
+
+    const fsSource = `
+      precision mediump float;
+      varying vec3 vColor;
+      varying float vAlpha;
+      void main() {
+        vec2 c = gl_PointCoord - 0.5;
+        float d2 = dot(c, c);
+        if (d2 > 0.25) discard;
+        float a = smoothstep(0.25, 0.02, d2) * vAlpha;
+        gl_FragColor = vec4(vColor, a);
+      }
+    `;
+
+    function compile(type: number, src: string) {
+      const sh = gl!.createShader(type)!;
+      gl!.shaderSource(sh, src);
+      gl!.compileShader(sh);
+      return sh;
+    }
+
+    const prog = gl.createProgram()!;
+    gl.attachShader(prog, compile(gl.VERTEX_SHADER, vsSource));
+    gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, fsSource));
+    gl.linkProgram(prog);
+    gl.useProgram(prog);
+
+    function makeBuf(data: Float32Array, name: string, usage = gl!.STATIC_DRAW) {
+      const buf = gl!.createBuffer()!;
+      gl!.bindBuffer(gl!.ARRAY_BUFFER, buf);
+      gl!.bufferData(gl!.ARRAY_BUFFER, data, usage);
+      const loc = gl!.getAttribLocation(prog, name);
+      if (loc >= 0) {
+        gl!.enableVertexAttribArray(loc);
+        gl!.vertexAttribPointer(loc, 3, gl!.FLOAT, false, 0, 0);
+      }
+      return { buf, loc };
+    }
+
+    const bufFrom = makeBuf(aFrom, 'aFrom', gl.DYNAMIC_DRAW);
+    const bufTo = makeBuf(aTo, 'aTo', gl.DYNAMIC_DRAW);
+    makeBuf(aSeed, 'aSeed');
+    makeBuf(aColor, 'aColor');
+    makeBuf(aFireColor, 'aFireColor');
+
+    const uTime = gl.getUniformLocation(prog, 'uTime');
+    const uMorph = gl.getUniformLocation(prog, 'uMorph');
+    const uStage = gl.getUniformLocation(prog, 'uStage');
+    const uFromFire = gl.getUniformLocation(prog, 'uFromFire');
+    const uToFire = gl.getUniformLocation(prog, 'uToFire');
+    const uDpr = gl.getUniformLocation(prog, 'uDpr');
+    const uAspect = gl.getUniformLocation(prog, 'uAspect');
+    const uOffset = gl.getUniformLocation(prog, 'uOffset');
+    const uScale = gl.getUniformLocation(prog, 'uScale');
+    const uMouse = gl.getUniformLocation(prog, 'uMouse');
+
+    let fromFireVal = 1.0;
+    let toFireVal = 1.0;
+
+    function triggerMorph(nextIdx: number) {
+      const now = performance.now();
+      const u = Math.min(1, (now - morphStart) / MORPH_MS);
+      const e = u * u * (3 - 2 * u);
+      for (let i = 0; i < aFrom.length; i++) {
+        aFrom[i] = aFrom[i] + (aTo[i] - aFrom[i]) * e;
+      }
+      fromFireVal = fromFireVal + (toFireVal - fromFireVal) * e;
+      toFireVal = nextIdx === 0 ? 1.0 : 0.0;
+
+      aTo.set(forms[nextIdx] || forms[0]);
+      gl!.bindBuffer(gl!.ARRAY_BUFFER, bufFrom.buf);
+      gl!.bufferSubData(gl!.ARRAY_BUFFER, 0, aFrom);
+      gl!.bindBuffer(gl!.ARRAY_BUFFER, bufTo.buf);
+      gl!.bufferSubData(gl!.ARRAY_BUFFER, 0, aTo);
+      morphStart = now;
+    }
+
+    function selectStage(idx: number, fromUser: boolean) {
+      const next = ((idx % 4) + 4) % 4;
+      activeStage = next;
+      stageStart = performance.now();
+      if (fromUser) userPausedUntil = stageStart + 14000;
+      tabs.forEach((t, i) => {
+        const on = i === next;
+        t.classList.toggle('is-active', on);
+        t.classList.toggle('is-done', i < next);
+        t.setAttribute('aria-selected', on ? 'true' : 'false');
+      });
+      panes.forEach((p, i) => p.classList.toggle('is-active', i === next));
+      chipGroups.forEach((c, i) => {
+        if (c) c.classList.toggle('is-on', i === next);
+      });
+      triggerMorph(next);
+    }
+
+    tabs.forEach((tab, i) => tab.addEventListener('click', () => selectStage(i, true)));
+
+    let aspect = 1, offX = 0.55, offY = 0.0, scale = 0.95, dpr = 1;
+    function layout() {
+      const rect = section!.getBoundingClientRect();
+      const w = Math.max(1, rect.width);
+      const hRect = Math.max(1, rect.height);
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas!.width = Math.round(w * dpr);
+      canvas!.height = Math.round(hRect * dpr);
+      gl!.viewport(0, 0, canvas!.width, canvas!.height);
+      aspect = w / hRect;
+      const narrow = w <= 960;
+      const visH = 2 * Math.tan(0.33) * 4.15;
+      const visW = visH * aspect;
+      offX = narrow ? 0 : visW * 0.23;
+      offY = narrow ? -visH * 0.22 : 0.02;
+      scale = narrow ? 0.68 : Math.min(1.05, Math.max(0.84, visW / 5.2));
+    }
+    layout();
+    window.addEventListener('resize', layout, { passive: true });
+
+    let mx = 0, my = 0, tmx = 0, tmy = 0;
+    section.addEventListener(
+      'pointermove',
+      (e) => {
+        const r = section.getBoundingClientRect();
+        tmx = ((e.clientX - r.left) / r.width - 0.5) * 2;
+        tmy = -((e.clientY - r.top) / r.height - 0.5) * 2;
+      },
+      { passive: true },
+    );
+
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+    let rafId = 0;
+    const t0 = performance.now();
+    function frame(now: number) {
+      if (!document.body.contains(canvas)) {
+        cancelAnimationFrame(rafId);
+        return;
+      }
+      if (!reduceMotion && now > userPausedUntil && now - stageStart > STAGE_MS) {
+        selectStage(activeStage + 1, false);
+      }
+      mx += (tmx - mx) * 0.06;
+      my += (tmy - my) * 0.06;
+
+      gl!.clearColor(0, 0, 0, 0);
+      gl!.clear(gl!.COLOR_BUFFER_BIT);
+      gl!.useProgram(prog);
+
+      // Re-bind attributes cleanly every frame
+      gl!.bindBuffer(gl!.ARRAY_BUFFER, bufFrom.buf);
+      gl!.vertexAttribPointer(bufFrom.loc, 3, gl!.FLOAT, false, 0, 0);
+      gl!.bindBuffer(gl!.ARRAY_BUFFER, bufTo.buf);
+      gl!.vertexAttribPointer(bufTo.loc, 3, gl!.FLOAT, false, 0, 0);
+
+      const morph = reduceMotion ? 1 : Math.min(1, (now - morphStart) / MORPH_MS);
+      gl!.uniform1f(uTime, reduceMotion ? 0 : (now - t0) * 0.001);
+      gl!.uniform1f(uMorph, morph);
+      gl!.uniform1f(uStage, activeStage);
+      gl!.uniform1f(uFromFire, fromFireVal);
+      gl!.uniform1f(uToFire, toFireVal);
+      gl!.uniform1f(uDpr, dpr);
+      gl!.uniform1f(uAspect, aspect);
+      gl!.uniform2f(uOffset, offX, offY);
+      gl!.uniform1f(uScale, scale);
+      gl!.uniform2f(uMouse, mx, my);
+
+      gl!.drawArrays(gl!.POINTS, 0, N);
+      rafId = requestAnimationFrame(frame);
+    }
+    rafId = requestAnimationFrame(frame);
+  }
+
+  initCrucibleMetamorphosis();
+  document.addEventListener('astro:page-load', initCrucibleMetamorphosis);
+</script>

@@ -20,7 +20,7 @@ export default defineConfig({
       },
       description:
         'Governed, multi-tenant Google Cloud & AI learning sandboxes orchestrated from a central Control Tower.',
-      favicon: '/favicon.svg',
+      favicon: '/crucible-favicon.svg',
       social: [
         {
           icon: 'github',
@@ -29,6 +29,7 @@ export default defineConfig({
         },
       ],
       components: {
+        Hero: './src/components/Hero.astro',
         PageFrame: './src/components/PageFrame.astro',
         ThemeProvider: './src/components/ThemeProvider.astro',
         ThemeSelect: './src/components/ThemeSelect.astro',

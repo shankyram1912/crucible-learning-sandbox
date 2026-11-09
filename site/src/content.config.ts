@@ -42,15 +42,31 @@ function rewriteLinks(body: string, sourceRelPath: string): string {
 
 function buildLandingPage() {
   const md = `
-Crucible is a self-service Google Cloud learning sandbox platform orchestrated from a central **Control Tower**. Central IT defines governed **Playground Folders**, version-tracked **Service Catalogs**, and **Playground Templates** once — empowering Schools (**BU Admins**), Teaching Assistants (**Playground Admins**), and **Students** to spin up shared-project cloud & AI labs safely inside pooled budgets.
+## Architecture & Specification Suite
 
-## Read the Specifications
-
-- **[Business Requirements & Conceptual Framework (01-BRS)](${BASE}/brs/master/)** — Layered conceptual model from big-picture governance down to Playground Folders, Playgrounds, project shards, student singleton resources, and app containers.
-  - [IT Admin Journeys (CUJ)](${BASE}/brs/it-admin-cuj/) · [BU Admin Journeys (CUJ)](${BASE}/brs/bu-admin-cuj/)
-- **[Technical Design Principles (02-TDD)](${BASE}/tdd/master/)** — Terraform execution model, dynamic Resource Manager tags & billing label sync, dual-Firestore split, and least-privilege IAM.
-  - [Control Tower Day-0 Bootstrap](${BASE}/tdd/control-tower/) · [Tag & Label Binding Deep Dive](${BASE}/tdd/tags-labels/) · [Self Service APIs](${BASE}/tdd/apis/master/)
-- **[lsb CLI User Guide](${BASE}/guides/cli/)** — Install \`lsb\` via \`uv tool install\`, sign in with Google Cloud ADC, and inspect platform health and roles.
+<div class="c-card-grid not-content">
+  <a class="c-card" href="${BASE}/brs/master/">
+    <div>
+      <div class="c-card-eyebrow">01 &middot; Business Requirements</div>
+      <h3>Conceptual Framework</h3>
+    </div>
+    <p>Layered conceptual model from Central IT governance down to Playground Folders, sharded Playgrounds, student singletons, and app containers.</p>
+  </a>
+  <a class="c-card" href="${BASE}/tdd/master/">
+    <div>
+      <div class="c-card-eyebrow">02 &middot; Technical Design</div>
+      <h3>Terraform &amp; IAM Principles</h3>
+    </div>
+    <p>Dynamic Resource Manager tags &amp; label sync, dual-Firestore split, Cloud Build pipeline identities, and least-privilege access gates.</p>
+  </a>
+  <a class="c-card" href="${BASE}/guides/cli/">
+    <div>
+      <div class="c-card-eyebrow">03 &middot; Self Service CLI</div>
+      <h3>lsb User Guide &amp; APIs</h3>
+    </div>
+    <p>Install <code>lsb</code> via <code>uv tool install</code>, authenticate with Google Cloud ADC, and inspect platform health and roles.</p>
+  </a>
+</div>
 `;
 
   return {
@@ -64,9 +80,6 @@ Crucible is a self-service Google Cloud learning sandbox platform orchestrated f
         title: 'Governed cloud learning sandboxes. Built for scale.',
         tagline:
           'Crucible separates Central IT financial & guardrail governance from self-service shared playgrounds and isolated student app workspaces on Google Cloud.',
-        image: {
-          html: `<img src="${BASE}/favicon.svg" alt="Red smelting crucible" width="220" height="220" class="crucible-hero-mark" />`,
-        },
         actions: [
           {
             text: 'Conceptual Framework',

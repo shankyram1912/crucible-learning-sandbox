@@ -58,12 +58,12 @@ import Default from '@astrojs/starlight/components/PageFrame.astro';
   renderMermaidBlocks();
   document.addEventListener('astro:page-load', renderMermaidBlocks);
 
-  // Re-render when the user toggles dark/light/color mode
+  // Re-render when the user toggles dark/light mode
   new MutationObserver(() => {
     const rendered = document.querySelectorAll<HTMLElement>('.crucible-mermaid[data-mermaid-source]');
     if (rendered.length) renderMermaidBlocks();
   }).observe(document.documentElement, {
     attributes: true,
-    attributeFilter: ['data-theme', 'data-palette'],
+    attributeFilter: ['data-theme'],
   });
 </script>

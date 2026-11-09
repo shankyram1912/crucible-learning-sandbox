@@ -10,10 +10,9 @@ import Select from '@astrojs/starlight/components/Select.astro';
     options={[
       { label: Astro.locals.t('themeSelect.dark'), selected: false, value: 'dark' },
       { label: Astro.locals.t('themeSelect.light'), selected: false, value: 'light' },
-      { label: 'Color', selected: false, value: 'color' },
       { label: Astro.locals.t('themeSelect.auto'), selected: true, value: 'auto' },
     ]}
-    width="6.75em"
+    width="6.25em"
   />
 </starlight-theme-select>
 
@@ -22,43 +21,28 @@ import Select from '@astrojs/starlight/components/Select.astro';
 </script>
 
 <script>
-  type Theme = 'auto' | 'dark' | 'light' | 'color';
+  type Theme = 'auto' | 'dark' | 'light';
 
   const storageKey = 'starlight-theme';
 
   const parseTheme = (theme: unknown): Theme =>
-    theme === 'auto' || theme === 'dark' || theme === 'light' || theme === 'color' ? theme : 'auto';
+    theme === 'dark' || theme === 'light' ? theme : 'auto';
 
   const loadTheme = (): Theme =>
     parseTheme(typeof localStorage !== 'undefined' && localStorage.getItem(storageKey));
 
   function storeTheme(theme: Theme): void {
     if (typeof localStorage !== 'undefined') {
-      localStorage.setItem(
-        storageKey,
-        theme === 'light' || theme === 'dark' || theme === 'color' ? theme : '',
-      );
+      localStorage.setItem(storageKey, theme === 'light' || theme === 'dark' ? theme : '');
     }
   }
-
-  const getPreferredColorScheme = (): 'light' | 'dark' =>
-    matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
 
   function onThemeChange(theme: Theme): void {
     StarlightThemeProvider.updatePickers(theme);
-    if (theme === 'color') {
-      document.documentElement.dataset.theme = 'light';
-      document.documentElement.dataset.palette = 'color';
-    } else {
-      document.documentElement.dataset.theme = theme === 'auto' ? getPreferredColorScheme() : theme;
-      delete document.documentElement.dataset.palette;
-    }
+    // Auto points directly to Light (Google 4-color theme)
+    document.documentElement.dataset.theme = theme === 'dark' ? 'dark' : 'light';
     storeTheme(theme);
   }
-
-  matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => {
-    if (loadTheme() === 'auto') onThemeChange('auto');
-  });
 
   class StarlightThemeSelect extends HTMLElement {
     constructor() {

@@ -2,26 +2,16 @@
 import { Icon } from '@astrojs/starlight/components';
 ---
 
-{/* Inlined to avoid FOUC across Dark, Light, Color (Google), and Auto modes. */}
+{/* Inlined to avoid FOUC: Light uses the Google 4-color palette, Dark uses slate, and Auto defaults to Light. */}
 <script is:inline>
   window.StarlightThemeProvider = (() => {
-    const storedTheme =
+    const stored =
       typeof localStorage !== 'undefined' && localStorage.getItem('starlight-theme');
-    const sysTheme =
-      window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
-    const apply = (pref) => {
-      if (pref === 'color') {
-        document.documentElement.dataset.theme = 'light';
-        document.documentElement.dataset.palette = 'color';
-      } else {
-        const resolved = pref === 'light' || pref === 'dark' ? pref : sysTheme;
-        document.documentElement.dataset.theme = resolved;
-        delete document.documentElement.dataset.palette;
-      }
-    };
-    apply(storedTheme || 'auto');
+    const pref = stored === 'dark' || stored === 'light' ? stored : 'auto';
+    // Auto points to Light (Google 4-color theme)
+    document.documentElement.dataset.theme = pref === 'dark' ? 'dark' : 'light';
     return {
-      updatePickers(theme = storedTheme || 'auto') {
+      updatePickers(theme = pref) {
         document.querySelectorAll('starlight-theme-select').forEach((picker) => {
           const select = picker.querySelector('select');
           if (select) select.value = theme;
@@ -43,11 +33,4 @@ import { Icon } from '@astrojs/starlight/components';
   <Icon name="sun" class="light" />
   <Icon name="moon" class="dark" />
   <Icon name="laptop" class="auto" />
-  <svg aria-hidden="true" class="color" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;">
-    <circle cx="7.5" cy="9.5" r="2.2" fill="#4285f4" />
-    <circle cx="12" cy="6.8" r="2.2" fill="#ea4335" />
-    <circle cx="16.5" cy="9.5" r="2.2" fill="#fbbc04" />
-    <circle cx="15" cy="14.8" r="2.2" fill="#34a853" />
-    <path d="M12 2a10 10 0 1 0 0 20 2.5 2.5 0 0 0 2.1-3.85c-.4-.62-.1-1.45.64-1.45H16a6 6 0 0 0 6-6c0-4.96-4.48-8.7-10-8.7Zm0 18a8 8 0 1 1 0-16c4.41 0 8 2.94 8 6.7a4 4 0 0 1-4 4h-1.26a3.46 3.46 0 0 0-2.9 5.3Z" opacity="0.55" />
-  </svg>
 </template>
