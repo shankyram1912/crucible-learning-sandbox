@@ -3,7 +3,8 @@
 Scope: guiding principles for the LSB Control Tower. These specs supersede the earlier BRS and TDD, which are kept for reference in `specs-reference/`.
 
 Specs (one master per folder; longer designs split into `tdd-<folder>-<topic>.md` sub-files under it):
-- [../todolist.md](../todolist.md): build sequence and status (Day-0 steps, Self Service API operations)
+- [brs/brs-master.md](../01-brs/brs-master.md): business requirements: personas, configuration model, organization, rules, and the IT Admin and BU Admin journeys with their design decisions
+- [../todolist.md](../../todolist.md): build sequence and status (Day-0 steps, Self Service API operations)
 - [tdd-control-tower/tdd-control-tower-master.md](tdd-control-tower/tdd-control-tower-master.md): builds the Control Tower: Day-0 bootstrap (Cloud Shell, `initialize.env`, `run.sh`, steps)
 - [tdd-playground/tdd-playground-master.md](tdd-playground/tdd-playground-master.md): builds playgrounds: Terraform pipeline (identities, secured source, reliability), with [tdd-playground-services.md](tdd-playground/tdd-playground-services.md) for the GCP service modules
 - [tdd-apis/tdd-apis-master.md](tdd-apis/tdd-apis-master.md): Learning Sandbox Self Service APIs (REST interface and `lsb` CLI mapping)
@@ -84,7 +85,7 @@ Folders cannot carry labels, and labels are never inherited. To cover every proj
 | `bu-subcategory` | Dynamic | Pattern only, free value set per playground | BU Admins (and IT Admins, nested) |
 
 1. **All five keys are dynamic tags, created once at org level** by one Day-0 operation (`PlaygroundTagsCreate`). Each key has the allowed-values pattern `^[a-z]([a-z0-9-]{0,61}[a-z0-9])?$`, so any matching value can be bound without creating it first. No tag values are created in GCP, there is no per-key value cap, and GCP tag state needs no maintenance when schools or categories are onboarded.
-2. **Where they are bound:** the **Playground Folder** carries `cost-center-bu`, `cost-center-code`, `cost-category` and defaults for `bu-tracking-code` and `bu-subcategory`; a **playground** may override `bu-tracking-code` and `bu-subcategory` with its own values (a direct binding overrides the inherited value). The three IT-governed keys are never overridden at playground level. Every project and resource below inherits the effective values.
+2. **Where they are bound:** the **Playground Folder** carries only the three IT-governed keys, `cost-center-bu`, `cost-center-code` and `cost-category`, set by IT Admins. The **playground** carries `bu-tracking-code` and `bu-subcategory`, set by BU Admins. The IT-governed keys are never bound at playground level. Every project and resource below inherits the effective values.
 3. **The Firestore catalog is the only list of allowed values** for `cost-center-bu`, `cost-center-code` and `cost-category`. IT Admins maintain it through the platform, and the API checks a value against it before binding. GCP itself only checks the pattern, so a binding made outside the platform (Console, gcloud) is limited to people with Tag User on the key: IT Admins for the three governed keys. `bu-tracking-code` and `bu-subcategory` have no catalog list: BU Admins choose them freely within the pattern, so a BU can split its costs under the IT-assigned cost center without changing who pays.
 4. **Why tags at all, when labels are copied:** tags on the folder are inherited by every project and resource below, including Console-created projects, and project owners cannot remove or override them. Labels are per project and editable by project owners. Tags are the source of truth; labels are a copy for label-based billing views.
 5. **Not used in IAM conditions or org policies:** dynamic tag values cannot be used there. Policy switches that need tags (for example enabling GPUs per playground) get their own small **defined** key with fixed values, designed with the guardrails operation (`PlaygroundGuardrailsCreate`), separate from these billing keys.
@@ -119,8 +120,8 @@ The Self Service APIs keep three kinds of data in Firestore, split over two data
 ```
 lsb-control-tower-config-db
   catalog/{key}/values/{value}           IT-governed tag values, scoped by cost-center-bu
-  playgroundFolders/{id}                 school folder, controllers, IT tag values, default bu-* tags
-  playgrounds/{id}                       Playground Folder, owners, template, bu-* overrides
+  playgroundFolders/{id}                 parent folder, BU Admin group, IT tag values, billing account, budget
+  playgrounds/{id}                       Playground Folder, owners, template, bu-tracking-code, bu-subcategory
   playgrounds/{id}/versions/{vN}         immutable config versions (tfvars source)
 
 lsb-control-tower-db
@@ -151,7 +152,7 @@ lsb-control-tower-db
 | Group | Members | Configures | Also |
 |---|---|---|---|
 | `grp-lsb-it-admins@<domain>` | IT Admins | **Playground Folders** (create, set the IT-governed tags, name the BU Admin controllers) | Only IT Admins add or remove members of both groups; control of every Playground Folder and playground by default |
-| `grp-lsb-bu-admins@<domain>` | BU Admins, plus `grp-lsb-it-admins@` nested | **Playgrounds** inside the Playground Folders they control (owners, `bu-tracking-code` and `bu-subcategory` overrides, template, services) | |
+| `grp-lsb-bu-admins@<domain>` | BU Admins, plus `grp-lsb-it-admins@` nested | **Playgrounds** inside the Playground Folders they control (owners, `bu-tracking-code` and `bu-subcategory`, template, services) | |
 
 - Both are created in Day-0 step 4 (`PlaygroundGroupsCreate`) as security groups with no owners or managers, **not locked**. **The platform never changes group membership** (decided 2026-11-09): people with directory rights (Super Admins, Groups Admins) manage these groups in the Admin console, as for student and TA groups. The platform only reads them.
 - Membership changes go through the platform, which enforces "IT Admins only". No human owners or managers on these groups.
@@ -172,23 +173,23 @@ lsb-control-tower-db
 |---|---|---|---|
 | `grp-lsb-it-admins@` | Common ancestor of the school folders (for example University Sandbox) | Folder Admin, Tag User, Project Creator | IT Admins create and configure Playground Folders in any school |
 | `grp-lsb-it-admins@` | Tag keys `cost-center-bu`, `cost-center-code`, `cost-category` | Tag User | Only IT Admins set the governed cost codes |
-| `grp-lsb-bu-admins@` | Tag keys `bu-tracking-code`, `bu-subcategory` | Tag User | BU Admins set their tracking code and subcategory on their Playground Folders and playgrounds; the cost center itself stays with IT |
+| `grp-lsb-bu-admins@` | Tag keys `bu-tracking-code`, `bu-subcategory` | Tag User | BU Admins set their tracking code and subcategory on their playgrounds; the cost center itself stays with IT |
 
 **Per Playground Folder and playground (bound by the platform at creation):**
 | Principal | Playground Folder | Playground folder | Projects in the playground |
 |---|---|---|---|
-| **Playground Folder controllers**: BU Admin users or groups (1..N) named by the IT Admin at creation | **Folder Admin + Tag User + Project Creator** (create and configure playgrounds, create projects) | Inherited | Owner (inherited) |
-| `grp-lsb-it-admins@` | Inherited from the standing grant | Inherited | Inherited |
+| **Playground Folder BU Admin group**: exactly one group, already a member of `grp-lsb-bu-admins@`, named by the IT Admin at creation | **Folder Admin + Tag User + Project Creator** (create and configure playgrounds) | Inherited | **`roles/owner`**, bound **per project** |
+| `grp-lsb-it-admins@` | Inherited from the standing grant | Inherited | **`roles/owner`**, bound **per project** |
 | **Playground owners**: 1..N users or groups named at playground creation (editable later) | Nothing | **Browser** only; **no Project Creator** | **`roles/owner`**, bound **per project** |
 | Students and Student Admins (preset groups) | Nothing | Nothing | Per project (baseline usage roles) and per own resource only |
-| Terraform runner service account (pipeline stage, section 2.10) | Project Creator via the common ancestor | Inherited | Owner (creator of pipeline-made projects) |
+| Terraform runner service account (pipeline stage, section 2.10) | **Project Creator**, bound on each Playground Folder at its creation | Inherited | Owner (creator of every playground project; as owner it also links the project to billing) |
 
-1. **BU Admins need no grants on school folders.** All their GCP rights come from the Playground Folders where an IT Admin named them as controllers.
-2. **Admin rights are inherited; student rights are not.** Controllers' rights are bound on the Playground Folder and flow to everything below. Playground owners are bound on each project. Students are never bound on a folder.
-3. **Project creation** inside a playground is done only by Playground Folder controllers, IT Admins, or the Terraform pipeline. Playground owners work inside the projects they are given.
-4. **Isolation between schools:** BU Admins control only the Playground Folders they were named on.
+1. **BU Admins need no grants on school folders.** All their GCP rights come from the Playground Folders whose BU Admin group they're in.
+2. **Admin rights on folders are inherited; on projects they're bound explicitly.** The BU Admin group's folder rights flow to everything below. On every playground project, the BU Admin group, `grp-lsb-it-admins@` and the playground owners are each bound `roles/owner`. Students are never bound on a folder.
+3. **Project creation** inside a playground is done only by the Terraform pipeline, which also links each project to the Playground Folder's billing account. Admins and playground owners work inside the projects it creates.
+4. **Isolation between schools:** BU Admins control only the Playground Folders whose BU Admin group they're in.
 5. **Folder Admin also includes `folders.delete` and `folders.move`**, so controllers could delete (empty) or move folders in the Console. Optional later hardening: an IAM deny on move/delete for non-IT principals, or a custom role without them.
-6. **Billing:** linking a new project to billing additionally requires Billing Account User on the billing account (account-wide; scoped per school only by using separate billing accounts).
+6. **Billing:** only the Terraform runner links projects to billing: as each project's creator it is owner, and it holds Billing Account User on every billing account used for playgrounds. The platform creates Playground Folder budgets with Billing Account Costs Manager. Both are prerequisites granted by the platform setup IaC. Admins and playground owners hold no billing rights.
 
 ### 2.5 Playground project hook
 An event-driven hook in the Control Tower (project-creation audit log event to a small function) runs for every project created in a playground, including projects created in the Console:
@@ -239,3 +240,38 @@ User ── ID token + access token ──▶ Self Service APIs (Cloud Run)
 1. **Config stage uses the user's token, no service account.** The user's own permissions (section 2.3) are what make the change; nothing is created that the user could not create themselves.
 2. **Pipeline stage:** identities, secured source (variables only, predefined trigger, protected branch, pinned versions and image) and reliability are specified in [tdd-playground-master.md](tdd-playground/tdd-playground-master.md).
 3. **Decided (2026-11-09):** no platform identity has directory write rights. Group creation and membership (service groups, student and TA groups) are done by people with directory rights; playground admins map existing groups to playground slots as a JobSync IAM association.
+
+---
+
+## 3. Open items (to come back to)
+
+Tracked here until each is decided or applied. Decisions they depend on are in [brs/brs-master.md](../01-brs/brs-master.md) and the persona journey docs.
+
+### 3.1 Sections to align with the business requirements
+1. **1.2 rule 1:** "a folder is designated as a playground"; playgrounds are always created by the platform (2.1 rule 3).
+2. **1.2 rule 4:** prerequisites are declared on the service version, not the template.
+3. **1.3:** create playground no longer creates preset groups (BU Admins map existing groups); the pipeline creates projects and links billing.
+4. **1.1 rule 3 and 2.6 rule 3:** group membership is managed in the Admin console, not by a platform bulk operation.
+5. **1.8 rules 4 and 7, and 2.5:** the auto-labeler and project hook for Console-created projects; Console-created projects in playgrounds aren't supported.
+6. **2.1 and 2.3:** the parent of a Playground Folder is any folder the IT Admin can see, not only a school folder.
+7. **2.2:** one BU Admin group per Playground Folder; the platform never changes membership (drop the "membership changes go through the platform" and platform-recorded drift bullets).
+8. **2.6 rule 1:** a Playground Folder takes one group; named users only as playground owners.
+9. **2.6 rule 5 and 2.8:** roles map to groups inside each service's Terraform module; elevated privileges are a separate service.
+10. **2.7 rule 4:** BU Admins map existing groups to the template's group slots; the platform doesn't name groups.
+11. **2.9 rule 1:** guardrails are applied on each Playground Folder.
+
+### 3.2 Open design items
+1. **2.8:** roles for Cloud SQL, Cloud Run and Vertex AI Search, decided as each service module is designed.
+2. **2.4 rule 5:** optional hardening so BU Admins can't delete or move folders.
+3. **1.8 rule 11:** tag limits to verify against the official quotas.
+4. **2.4:** the common ancestor for IT Admins' standing grant (Day-0 step 6 decision).
+
+### 3.3 Open questions from the admin journeys
+1. **IT-01:** can a service be mandatory (always on)?
+2. **BU-01:** does the BU Admin enter the expected number of students, so the platform works out how many projects to create?
+3. **BU-01:** playground budget: none, optional or required?
+4. **BU-03:** can BU Admins adjust quotas per playground within the template's limits?
+5. **BU-03:** turning a service off; 1.6 rule 4 already says services are add-only and can never be turned off.
+6. **BU-03:** who can upgrade a playground to a newer template version?
+7. **BU-04:** adding projects to a playground (not designed).
+8. **BU-05:** decommissioning a playground (not designed).

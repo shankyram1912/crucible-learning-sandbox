@@ -1,4 +1,4 @@
-"""Access control (specs/tdd-apis/tdd-apis-common-acl.md).
+"""Access control (specs/02-tdd/tdd-apis/tdd-apis-common-acl.md).
 
 The ACL itself is configuration: settings `LSB_ACL` maps every operation to 1..N roles (default in
 settings.DEFAULT_ACL). The same rules apply to every client (lsb CLI, REST, scripts, future UI).

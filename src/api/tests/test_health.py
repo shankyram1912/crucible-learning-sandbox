@@ -1,4 +1,4 @@
-"""Health domain tests (specs/tdd-apis/tdd-apis-health.md section 6), with fakes for token,
+"""Health domain tests (specs/02-tdd/tdd-apis/tdd-apis-health.md section 6), with fakes for token,
 group membership and Firestore so they run without GCP."""
 
 import pytest

@@ -5,7 +5,7 @@
 #
 # Run by an IT Admin who has directory rights (Super Admin or Groups Admin), signed in to gcloud
 # as themselves. This is a person acting in the directory, never the platform: the platform only
-# reads groups (specs/tdd-master.md section 2.2).
+# reads groups (specs/02-tdd/tdd-master.md section 2.2).
 #
 # Uses DIRECTORY_CUSTOMER_ID and QUOTA_PROJECT from src/terraform/control-tower/initialize.env.
 # Idempotent: existing groups and memberships are skipped. Never deletes anything.

@@ -1,4 +1,4 @@
-"""Platform users domain (specs/tdd-apis/tdd-apis-platform-users.md): platform roles."""
+"""Platform users domain (specs/02-tdd/tdd-apis/tdd-apis-platform-users.md): platform roles."""
 
 import re
 

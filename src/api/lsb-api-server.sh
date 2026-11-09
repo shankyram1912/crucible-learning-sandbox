@@ -11,7 +11,7 @@
 # Loads the platform settings from src/terraform/control-tower/initialize.env (via initialize.sh),
 # sets LSB_API_VERSION to the current git commit, and runs uvicorn from the project's .venv.
 # The API uses your ADC as its own identity (Firestore reads, group membership checks).
-# Settings: specs/tdd-apis/tdd-apis-common-config.md
+# Settings: specs/02-tdd/tdd-apis/tdd-apis-common-config.md
 
 set -Eeuo pipefail
 

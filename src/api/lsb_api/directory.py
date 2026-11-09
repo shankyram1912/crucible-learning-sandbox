@@ -1,6 +1,6 @@
 """Directory reads: which Google Groups a user belongs to.
 
-The platform only reads the directory (specs/tdd-master.md section 2.2). One call to the Cloud Identity
+The platform only reads the directory (specs/02-tdd/tdd-master.md section 2.2). One call to the Cloud Identity
 API (`groups.memberships.searchTransitiveGroups`) returns every group a user is in, directly or through
 nested groups. Results are cached per user for a short time.
 

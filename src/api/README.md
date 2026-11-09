@@ -1,6 +1,6 @@
 # lsb-api: Learning Sandbox Self Service APIs
 
-FastAPI service. Specs: [specs/tdd-apis/](../../specs/tdd-apis/tdd-apis-master.md). Settings: [tdd-apis-common-config.md](../../specs/tdd-apis/tdd-apis-common-config.md).
+FastAPI service. Specs: [specs/02-tdd/tdd-apis/](../../specs/02-tdd/tdd-apis/tdd-apis-master.md). Settings: [tdd-apis-common-config.md](../../specs/02-tdd/tdd-apis/tdd-apis-common-config.md).
 
 ## Layout
 | Path | What |

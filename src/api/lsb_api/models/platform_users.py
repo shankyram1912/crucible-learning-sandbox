@@ -1,4 +1,4 @@
-"""Platform users domain models (specs/tdd-apis/tdd-apis-platform-users.md)."""
+"""Platform users domain models (specs/02-tdd/tdd-apis/tdd-apis-platform-users.md)."""
 
 from enum import StrEnum
 

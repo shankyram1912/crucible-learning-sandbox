@@ -1,4 +1,4 @@
-"""Common models (specs/tdd-apis/tdd-apis-common-models.md)."""
+"""Common models (specs/02-tdd/tdd-apis/tdd-apis-common-models.md)."""
 
 from enum import StrEnum
 

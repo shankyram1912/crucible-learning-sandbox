@@ -1,4 +1,4 @@
-"""Settings for the Self Service APIs (specs/tdd-apis/tdd-apis-common-config.md).
+"""Settings for the Self Service APIs (specs/02-tdd/tdd-apis/tdd-apis-common-config.md).
 
 The only place that reads environment variables. Loaded once at startup and validated;
 the API refuses to start if a required setting is missing or invalid.
@@ -19,7 +19,7 @@ GCLOUD_ADC_CLIENT_ID = "764086051850-6qr4p6gpi6hn506pt8ejuq83di341hur.apps.googl
 DEFAULT_ALLOWED_AUDIENCES = f"{GCLOUD_ADC_CLIENT_ID},{GCLOUD_CLI_CLIENT_ID}"
 
 
-# Access control list (specs/tdd-apis/tdd-apis-common-acl.md): every operation mapped to 1..N roles.
+# Access control list (specs/02-tdd/tdd-apis/tdd-apis-common-acl.md): every operation mapped to 1..N roles.
 # Override with LSB_ACL as JSON, for example LSB_ACL='{"health.api": ["IT_ADMIN"], ...}' (the whole map).
 DEFAULT_ACL: dict[str, list[str]] = {
     "health.api": ["USER"],

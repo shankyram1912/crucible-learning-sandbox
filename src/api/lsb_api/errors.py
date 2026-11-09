@@ -1,4 +1,4 @@
-"""Errors: one shape for every 4xx/5xx (specs/tdd-apis/tdd-apis-common-models.md section 5)."""
+"""Errors: one shape for every 4xx/5xx (specs/02-tdd/tdd-apis/tdd-apis-common-models.md section 5)."""
 
 import logging
 

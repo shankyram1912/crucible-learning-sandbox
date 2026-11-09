@@ -1,4 +1,4 @@
-"""In-memory roster of platform admins (specs/tdd-apis/tdd-apis-platform-users.md section 1).
+"""In-memory roster of platform admins (specs/02-tdd/tdd-apis/tdd-apis-platform-users.md section 1).
 
 Loaded at API startup as the final step before serving, then refreshed in the background every
 LSB_ADMIN_ROSTER_REFRESH_SECONDS (default 300). Holds the transitive user members of the admin groups from

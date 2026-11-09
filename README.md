@@ -22,7 +22,7 @@ learning-sandbox/
 
 ## Getting started
 
-Day-0 bootstrap runs in Cloud Shell as an org admin. See [src/terraform/control-tower/README.md](src/terraform/control-tower/README.md) and [specs/tdd-control-tower/tdd-control-tower-master.md](specs/tdd-control-tower/tdd-control-tower-master.md).
+Day-0 bootstrap runs in Cloud Shell as an org admin. See [src/terraform/control-tower/README.md](src/terraform/control-tower/README.md) and [specs/02-tdd/tdd-control-tower/tdd-control-tower-master.md](specs/02-tdd/tdd-control-tower/tdd-control-tower-master.md).
 
 The `lsb` command line: [guides/lsb-cli-user-guide.md](guides/lsb-cli-user-guide.md). Running the API locally: [src/api/README.md](src/api/README.md).
 

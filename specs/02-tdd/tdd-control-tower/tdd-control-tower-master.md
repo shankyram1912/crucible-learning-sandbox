@@ -351,7 +351,7 @@ Colors follow [tdd-apis-common-cli.md](../tdd-apis/tdd-apis-common-cli.md) secti
 ## 7. Baseline operations
 
 ### 1. `ControlTowerProjectCreate` (`01-control-tower-project-create`)
-Long description printed before the run: [operation.md](../../src/terraform/control-tower/01-control-tower-project-create/operation.md)
+Long description printed before the run: [operation.md](../../../src/terraform/control-tower/01-control-tower-project-create/operation.md)
 
 1. **Folder:** if `CT_FOLDER_ID` is set, use that existing folder and skip creation; if empty, create `CT_FOLDER_NAME` under `CT_FOLDER_PARENT`.
 2. **Project:** create `CT_PROJECT_ID` in the folder and link `BILLING_ACCOUNT_ID`.
@@ -363,7 +363,7 @@ Long description printed before the run: [operation.md](../../src/terraform/cont
 7. **Readiness:** project `ACTIVE` and billing enabled before `ControlTowerApisEnable` can run.
 
 ### 2. `ControlTowerApisEnable` (`02-control-tower-apis-enable`)
-Long description printed before the run: [operation.md](../../src/terraform/control-tower/02-control-tower-apis-enable/operation.md)
+Long description printed before the run: [operation.md](../../../src/terraform/control-tower/02-control-tower-apis-enable/operation.md)
 
 1. Own root and state (`control-tower/02-control-tower-apis-enable`), project ID from `initialize.env`.
 2. API list is a variable. Baseline (Control Tower's own services):
@@ -381,7 +381,7 @@ Long description printed before the run: [operation.md](../../src/terraform/cont
 6. **Readiness:** every listed API `ENABLED`, and service agents exist for Cloud Run, Cloud Build and Artifact Registry.
 
 ### 3. `ControlTowerFirestoreCreate` (`03-control-tower-firestore-create`)
-Long description printed before the run: [operation.md](../../src/terraform/control-tower/03-control-tower-firestore-create/operation.md)
+Long description printed before the run: [operation.md](../../../src/terraform/control-tower/03-control-tower-firestore-create/operation.md)
 
 1. Own root and state (`control-tower/03-control-tower-firestore-create`).
 2. **Databases** on `CT_PROJECT_ID`, both `FIRESTORE_NATIVE` in `REGION` (`asia-southeast1`), see [tdd-master.md](../tdd-master.md) section 1.9:
@@ -397,7 +397,7 @@ Long description printed before the run: [operation.md](../../src/terraform/cont
 10. **Cannot be undone:** the location cannot change after creation, and a deleted database ID cannot be reused for a period.
 
 ### 4. `PlaygroundGroupsCreate` (`04-playground-groups-create`)
-Long description printed before the run: [operation.md](../../src/terraform/control-tower/04-playground-groups-create/operation.md)
+Long description printed before the run: [operation.md](../../../src/terraform/control-tower/04-playground-groups-create/operation.md)
 
 1. Own root and state (`control-tower/04-playground-groups-create`).
 2. **Groups (Terraform, `google_cloud_identity_group`):** `IT_ADMINS_GROUP` and `BU_ADMINS_GROUP` under `customers/<DIRECTORY_CUSTOMER_ID>`, with labels `cloudidentity.googleapis.com/groups.discussion_forum` and `cloudidentity.googleapis.com/groups.security` (**not locked**, decided 2026-11-09: membership is managed outside the platform, and with no owners or managers only Super Admins and Groups Admins can change it); `initial_group_config = "EMPTY"` so no human becomes owner; `prevent_destroy`.
@@ -410,10 +410,10 @@ Long description printed before the run: [operation.md](../../src/terraform/cont
 9. **History:** first created locked (2026-11-08, the locked label is accepted by Terraform); unlocked on 2026-11-09 by removing the label (re-run of this operation).
 
 ### 5. `PlaygroundTagsCreate` (`05-playground-tags-create`)
-Long description printed before the run: [operation.md](../../src/terraform/control-tower/05-playground-tags-create/operation.md)
+Long description printed before the run: [operation.md](../../../src/terraform/control-tower/05-playground-tags-create/operation.md)
 
 1. Own root and state (`control-tower/05-playground-tags-create`). **Provider pinned to `hashicorp/google ~> 8.0`** in its own `versions.tf`, because `allowed_values_regex` on `google_tags_tag_key` needs 7.20 or later (verified 2026-11-08: absent in 7.10, present in 7.20, 8.0, 8.10). Operations 1 to 4 stay on `~> 6.0`.
-2. **Tag keys (Terraform, `google_tags_tag_key`):** `cost-center-bu`, `cost-center-code`, `cost-category`, `bu-tracking-code`, `bu-subcategory` under `organizations/<ORG_ID>`, each with `allowed_values_regex = ^[a-z](../[a-z0-9-]{0,61}[a-z0-9])?$` (dynamic values, see [tdd-master.md](../tdd-master.md) section 1.8); descriptions say they are managed by the platform; `prevent_destroy`. **No tag values are created**; the key names and the pattern are fixed in the module, not in `initialize.env`.
+2. **Tag keys (Terraform, `google_tags_tag_key`):** `cost-center-bu`, `cost-center-code`, `cost-category`, `bu-tracking-code`, `bu-subcategory` under `organizations/<ORG_ID>`, each with `allowed_values_regex = ^[a-z]([a-z0-9-]{0,61}[a-z0-9])?$` (dynamic values, see [tdd-master.md](../tdd-master.md) section 1.8); descriptions say they are managed by the platform; `prevent_destroy`. **No tag values are created**; the key names and the pattern are fixed in the module, not in `initialize.env`.
 3. **Tag User (Terraform, `google_tags_tag_key_iam_member`, additive):** `roles/resourcemanager.tagUser` on `cost-center-bu`, `cost-center-code` and `cost-category` for `IT_ADMINS_GROUP`; on `bu-tracking-code` and `bu-subcategory` for `BU_ADMINS_GROUP`.
 4. **Not bound anywhere:** nothing is attached to the Control Tower or any folder. Bindings happen later, on Playground Folders and playgrounds, through the Self Service APIs.
 5. **Runs as the admin** in Cloud Shell with their own credentials; needs `resourcemanager.tagKeys.create` and `resourcemanager.tagKeys.setIamPolicy` on the org (Tag Administrator or Organization Administrator). Calls are billed to `QUOTA_PROJECT`.

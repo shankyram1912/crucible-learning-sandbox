@@ -2,7 +2,7 @@
 
 > Parent: [tdd-apis-master.md](tdd-apis-master.md)
 
-Health tells an operator whether the Self Service APIs are up and whether they can reach their data. It has three operations: **`health api`** (the API process itself, no dependencies), **`health db`** (one small read on each Firestore database, with database names, latency and error codes for operators) and **`health service`** (the same data check, answered only as OK or NOT_OK per data area, so it reveals nothing about the databases). They replace the single `GET /v1/health` / `lsb health` row (1) in [apis-v0-interface.md](../../specs-reference/apis-v0-interface.md) A.2 and B.
+Health tells an operator whether the Self Service APIs are up and whether they can reach their data. It has three operations: **`health api`** (the API process itself, no dependencies), **`health db`** (one small read on each Firestore database, with database names, latency and error codes for operators) and **`health service`** (the same data check, answered only as OK or NOT_OK per data area, so it reveals nothing about the databases). They replace the single `GET /v1/health` / `lsb health` row (1) in [apis-v0-interface.md](../../../specs-reference/apis-v0-interface.md) A.2 and B.
 
 | # (build order) | Operation | REST | CLI | Status |
 |---|---|---|---|---|

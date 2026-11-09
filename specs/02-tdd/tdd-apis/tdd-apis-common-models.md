@@ -2,7 +2,7 @@
 
 > Parent: [tdd-apis-master.md](tdd-apis-master.md)
 
-Models shared by every API domain, independent of any single operation. Domain specs define their own request and response bodies and reference this file for everything common. In code these are the Pydantic models in `src/api/lsb_api/models/common.py` (one `src/api/lsb_api/models/<domain>.py` per domain spec) and the request context dependency in `src/api/lsb_api/context.py`. The OpenAPI document (`/openapi.json`, `/docs`) is generated from the models, never hand-written. When an operation is built, its Pydantic models must match the field tables in its spec. Frozen originals: [apis-v0-interface.md](../../specs-reference/apis-v0-interface.md) A.4 and A.5.
+Models shared by every API domain, independent of any single operation. Domain specs define their own request and response bodies and reference this file for everything common. In code these are the Pydantic models in `src/api/lsb_api/models/common.py` (one `src/api/lsb_api/models/<domain>.py` per domain spec) and the request context dependency in `src/api/lsb_api/context.py`. The OpenAPI document (`/openapi.json`, `/docs`) is generated from the models, never hand-written. When an operation is built, its Pydantic models must match the field tables in its spec. Frozen originals: [apis-v0-interface.md](../../../specs-reference/apis-v0-interface.md) A.4 and A.5.
 
 ---
 

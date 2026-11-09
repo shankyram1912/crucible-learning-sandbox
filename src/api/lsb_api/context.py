@@ -1,6 +1,6 @@
 """Authentication and the server-built RequestContext.
 
-specs/tdd-apis/tdd-apis-common-auth.md section 1, tdd-apis-common-models.md sections 2-3.
+specs/02-tdd/tdd-apis/tdd-apis-common-auth.md section 1, tdd-apis-common-models.md sections 2-3.
 """
 
 import logging

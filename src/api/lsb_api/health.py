@@ -1,4 +1,4 @@
-"""Health domain (specs/tdd-apis/tdd-apis-health.md): health api, health db, health service."""
+"""Health domain (specs/02-tdd/tdd-apis/tdd-apis-health.md): health api, health db, health service."""
 
 import asyncio
 import time

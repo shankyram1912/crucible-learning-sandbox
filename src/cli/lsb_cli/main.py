@@ -1,6 +1,6 @@
 """lsb: command line for the Learning Sandbox Self Service APIs.
 
-Conventions: specs/tdd-apis/tdd-apis-common-cli.md; settings: tdd-apis-common-config.md section 4;
+Conventions: specs/02-tdd/tdd-apis/tdd-apis-common-cli.md; settings: tdd-apis-common-config.md section 4;
 health commands: tdd-apis-health.md.
 """
 

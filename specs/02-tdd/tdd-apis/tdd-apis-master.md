@@ -38,7 +38,7 @@ Naming: `tdd-apis-common-<topic>.md` for cross-cutting specs, `tdd-apis-<domain>
 
 ## 3. Domain specs
 
-Operations are grouped into **domains**. Each domain has its own spec in this folder (`tdd-apis-<domain>.md`, with `Parent:` this file), which holds the domain's operations and CLI commands. This master keeps only the principles and this index; everything common to all domains is in the common specs (section 2). Build order across domains is global and tracked in [todolist.md](../../todolist.md) section 2.
+Operations are grouped into **domains**. Each domain has its own spec in this folder (`tdd-apis-<domain>.md`, with `Parent:` this file), which holds the domain's operations and CLI commands. This master keeps only the principles and this index; everything common to all domains is in the common specs (section 2). Build order across domains is global and tracked in [todolist.md](../../../todolist.md) section 2.
 
 | Domain | Operations (build #) | CLI group | Spec | Status |
 |---|---|---|---|---|
@@ -50,7 +50,7 @@ Operations are grouped into **domains**. Each domain has its own spec in this fo
 | Platform users | roles (04); listing with filters later; read-only | `lsb platform-users` | [tdd-apis-platform-users.md](tdd-apis-platform-users.md) | Roles done |
 | Services | enable, GCS first (09) | `lsb service` | `tdd-apis-services.md` (to write) | To do |
 
-> The first API draft (REST and CLI reference, cohort model) is frozen in [apis-v0-interface.md](../../specs-reference/apis-v0-interface.md); each domain spec states which of its rows it replaces. Each domain spec follows [tdd-master.md](../tdd-master.md) section 2.
+> The first API draft (REST and CLI reference, cohort model) is frozen in [apis-v0-interface.md](../../../specs-reference/apis-v0-interface.md); each domain spec states which of its rows it replaces. Each domain spec follows [tdd-master.md](../tdd-master.md) section 2.
 
 **A domain spec is created when its first operation is designed.** Every operation in it uses the same headings: REST method and path, CLI command, request and response (field tables plus a JSON example, per [tdd-apis-common-models.md](tdd-apis-common-models.md)), validation and pre-checks, auth rule, job and tasks (if async), terminal output, test, status. Workflow per operation:
 

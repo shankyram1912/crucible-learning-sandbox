@@ -12,7 +12,7 @@ How playground tags and project labels are bound: which permissions GCP checks, 
 |---|---|---|
 | What | Resource Manager tags, five **dynamic** keys at org level | Key-value pairs on a project |
 | Keys | `cost-center-bu`, `cost-center-code`, `cost-category`, `bu-tracking-code`, `bu-subcategory` | The same five names |
-| Bound on | Playground Folders (all five) and playgrounds (override `bu-tracking-code`, `bu-subcategory`) | Every project: Control Tower from `LABEL_*` configuration, playground projects copied from their effective tags |
+| Bound on | Playground Folders (the three IT keys) and playgrounds (`bu-tracking-code`, `bu-subcategory`) | Every project: Control Tower from `LABEL_*` configuration, playground projects copied from their effective tags |
 | Inherited | Yes, by every folder, project and resource below | No |
 | Who can change | Only holders of Tag User on the key (and on the resource) | Anyone who can edit the project, including project owners |
 | Role | **Source of truth** | Copy, for label-based billing views |
@@ -37,7 +37,7 @@ How playground tags and project labels are bound: which permissions GCP checks, 
 5. **Two layers of value validation:**
    - **GCP checks the pattern** `^[a-z]([a-z0-9-]{0,61}[a-z0-9])?$` on every binding, from any client. A value that doesn't match is rejected with `INVALID_ARGUMENT` (section 5).
    - **The API checks the catalog** for the three IT-governed keys: the value must be in the Firestore catalog list. GCP cannot check this, so a Console binding is limited only by the pattern and by who holds Tag User on the key (IT Admins).
-6. **IAM protects the override rules.** A playground's direct binding overrides the inherited value for that key. The IT-governed keys are never overridden at playground level: BU Admins hold no Tag User on them, so GCP refuses the override even in the Console (section 5).
+6. **IAM protects where each key is bound.** The IT-governed keys are bound only on Playground Folders. BU Admins hold no Tag User on them, so GCP refuses a playground-level binding of those keys even in the Console (section 5).
 7. **One value per key per resource.** Changing a value is a re-tag: the job deletes the resource's binding for that key, then binds the new value, and updates the labels of the affected projects in the same job (section 3).
 8. **Location and project:** tag bindings on folders are global (no `--location`) and don't need a project. A client that sends a quota project the caller can't use fails before the tag check is reached.
 9. **Not used in IAM conditions or org policies:** dynamic values can't be used there (tdd-master 1.8 rule 5).

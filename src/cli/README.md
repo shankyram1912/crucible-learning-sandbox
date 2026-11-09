@@ -1,6 +1,6 @@
 # lsb-cli: `lsb` command line (developers)
 
-Typer + Rich client for the Self Service APIs. **Users: see the [lsb CLI user guide](../../guides/lsb-cli-user-guide.md)** (install from the git URL, sign in, commands). Conventions: [tdd-apis-common-cli.md](../../specs/tdd-apis/tdd-apis-common-cli.md).
+Typer + Rich client for the Self Service APIs. **Users: see the [lsb CLI user guide](../../guides/lsb-cli-user-guide.md)** (install from the git URL, sign in, commands). Conventions: [tdd-apis-common-cli.md](../../specs/02-tdd/tdd-apis/tdd-apis-common-cli.md).
 
 ## Work on the CLI
 ```bash

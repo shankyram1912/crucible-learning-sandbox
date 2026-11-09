@@ -1,4 +1,4 @@
-"""Health domain models (specs/tdd-apis/tdd-apis-health.md)."""
+"""Health domain models (specs/02-tdd/tdd-apis/tdd-apis-health.md)."""
 
 from datetime import datetime
 from enum import StrEnum
