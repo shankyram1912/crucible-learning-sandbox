@@ -37,7 +37,7 @@ As a BU Admin, I want to enable additional optional services, adjust per-student
 - Services are **add-only**: once enabled on a playground, a service stays enabled for the life of the playground. Required prerequisite services are added automatically.
 - Each change is saved as a new version of the playground's configuration and applied across every project in the playground.
 - I set each service's per-student allowance for my playground, within the limits the template and service allow. Lowering an allowance is non-destructive: it only gates new creations and leaves existing student resources untouched.
-- **Template upgrades** are explicit and additive/non-destructive: BU Admins, Playground Admins (for their playground), and IT Admins (single or bulk across playgrounds) can upgrade a playground to a newer template version. New mandatory or default services are added, already-enabled services stay enabled even if removed from the template, and updated service module versions are applied.
+- **Template upgrades** are explicit and additive/non-destructive: BU Admins, Playground Admins (for their playground), and IT Admins can upgrade a playground to a newer template version (per playground; no bulk upgrade). New mandatory or default services are added, already-enabled services stay enabled even if removed from the template, and updated service module versions are applied.
 
 ---
 

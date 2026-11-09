@@ -261,9 +261,9 @@ Tracked here until each is decided or applied. Decisions they depend on are in [
 11. **2.9 rule 1:** guardrails are applied on each Playground Folder.
 12. **2.4 and 2.6 rule 1:** playground owners become the playground's optional **Playground Admin group** (at most one existing group per playground), bound `roles/owner` on every project, with the same platform rights as BU Admins for that playground except decommissioning (needs a playground-scoped check in the ACL).
 13. **1.3 and the template model:** a playground's project count is expected students (entered by the BU Admin, grow-only) ÷ the template version's students per project, rounded up.
-14. **Service requirement modes:** add `MANDATORY` alongside `DEFAULT_ON` and `OPTIONAL` in the service catalog and template versions.
+14. **Service catalog availability modes & bounds:** each single-GCP-service template version sets `MANDATORY`, `DEFAULT_ON` (enabled by default and optional), or `OPTIONAL` (disabled by default and ready to enable), plus service config defaults, quota per project, and per-user `min` and `max` bounds.
 15. **Playground and shard budgets:** a **required** `google_billing_budget` per playground (`resource_ancestors` = playground folder ID) and an **optional** per-project shard `google_billing_budget` (`projects` = shard project, amount $\le$ playground budget), both in the Playground Folder's billing account currency with 50/75/90/100% thresholds, created by the platform.
-16. **Template version upgrades:** additive/non-destructive execution (`vN+1` playground config version) for BU Admins, Playground Admins (own playground), and IT Admins (single or bulk).
+16. **Template version upgrades:** per-playground additive/non-destructive execution (`vN+1` playground config version; no bulk upgrade) for BU Admins, Playground Admins (own playground), and IT Admins.
 17. **Capacity expansion:** increasing `expected_students` adds new shards `p(K+1)..pM` with all currently enabled playground services, leaving `p01..pK` untouched.
 
 ### 3.2 Open design items
@@ -271,4 +271,4 @@ Tracked here until each is decided or applied. Decisions they depend on are in [
 2. **2.4 rule 5:** optional hardening so BU Admins can't delete or move folders.
 3. **1.8 rule 11:** tag limits to verify against the official quotas.
 4. **2.4:** the common ancestor for IT Admins' standing grant (Day-0 step 6 decision).
-5. **Playground decommission mechanics (BU-05):** how decommissioning disables billing across the playground's shard projects (for example unlinking `billingAccountName` via Cloud Billing API as the runner/platform identity and removing any optional playground budget) while keeping projects, folders, and resources intact for external cleanup.
+5. **Decommission billing-disable mechanics (IT-07 & BU-05):** how decommissioning a Playground Folder or playground disables billing across all underlying playgrounds and associated shard projects (removing budgets and marking records `DECOMMISSIONED`) while never deleting records, folders, projects, or resources (manual external cleanup).

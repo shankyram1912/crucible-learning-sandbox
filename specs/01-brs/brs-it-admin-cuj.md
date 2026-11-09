@@ -8,89 +8,97 @@ Each journey is one sentence, followed by the design decisions behind it.
 ---
 
 ## IT-01 Manage the service catalog
-As an IT Admin, I want to add, version, update and retire GCP service definitions, to accomplish one controlled list of services that templates are built from.
+As an IT Admin, I want to configure and version single-service templates in the service catalog, to accomplish one governed, flexible set of GCP building blocks that playground templates are composed from.
 
-- Each service has versions, and one version is marked current.
-- A version holds: name and description, the Terraform module and its pinned ref, the APIs it enables, the services it requires, its requirement mode (**mandatory**, **on by default**, or **optional**), max per project, min per student, sizes and settings, and the groups it expects (for example students).
-- Mandatory services (for example Service Account) are always enabled in every template and playground that includes them and cannot be unchecked.
-- Which roles each group gets is defined in the Terraform module, not in the catalog.
-- Elevated privileges are a separate service, not an option on an existing one.
-- New templates default to the current version; older versions stay selectable until retired.
-- A service or version that's in use can only be retired, never deleted. Deleting is allowed only if it was never used.
+- Every **service template** in the catalog maps to a **single GCP service** and is **versioned**, with one version marked current.
+- Each service version sets its **playground availability mode**, giving flexibility when rolling out services into playground templates:
+  1. **Mandatory:** always enabled in every playground that uses it; cannot be unchecked (for example Service Account).
+  2. **Enabled by default and optional:** starts enabled on new playgrounds, and can be unchecked before creation.
+  3. **Disabled by default and optional:** starts disabled on new playgrounds, ready to be enabled at creation or added later.
+- Each service version also sets:
+  - Name, description, the **Terraform module** and its pinned ref, the GCP APIs it enables, the prerequisite services it requires, the user group slots it expects, and the **student singleton resources** and **app resources** it provides.
+  - **Service configuration defaults** (sizes and underlying settings passed to Terraform, such as shared Cloud SQL tier or Cloud Run CPU/memory).
+  - **Quota per project** (maximum capacity per project shard) and **per-user defaults and bounds** (default `min` and `max` allowance per student).
+- Which GCP IAM roles each group gets is defined in the Terraform module, not in the catalog.
+- Elevated privileges are modeled as a separate service definition, not a flag on an existing one.
+- New playground template versions default to each service's current version; older versions stay selectable until retired/disabled.
+- Services and versions already in use can only be retired/disabled (blocking new selection while keeping existing uses intact), never deleted; hard deletion is allowed only if never used.
 
 ---
 
 ## IT-02 Manage playground templates
-As an IT Admin, I want to build playground templates from service versions, to accomplish ready-made playground shapes that BU Admins choose from.
+As an IT Admin, I want to compose versioned playground templates from catalog service versions and set the per-project student ceiling, to accomplish ready-made playground shapes that BU Admins choose from.
 
-- Each template has versions, and one version is marked current. Every edit creates a new version.
-- A version holds: name and description, the service versions it includes (each mandatory, on by default, or optional), students per project (which, with the playground's expected students, decides how many projects a playground gets), the groups it expects, and quota and size settings within each service's limits.
-- A playground keeps the template version it was created with, until it's explicitly upgraded.
-- Every template is available in every Playground Folder.
-- Retire, don't delete, once in use.
+- Each playground template has immutable **versions**, with one version marked current; every edit creates a new version.
+- A template version composes **pinned service versions** from the service catalog (inheriting each service's mandatory, enabled-by-default-and-optional, or disabled-by-default-and-optional mode, Prerequisites, user group slots, and service defaults, with optional template-level tuning within each service's bounds).
+- A template version sets the **maximum number of students per project** (shard capacity ceiling, for example `100` students per project), which together with a playground's expected student count determines how many project shards are created.
+- A playground stays pinned to the template version it was created with until a single-playground upgrade is explicitly triggered.
+- Every active template is available across every Playground Folder.
+- Templates and versions already in use can only be retired/disabled, never deleted.
 
 ---
 
 ## IT-03 Manage cost centers and their codes
-As an IT Admin, I want to keep the list of cost centers (one per school) and each one's codes, to accomplish billing tags that only IT can assign.
+As an IT Admin, I want to add new cost centers (one per school) and their cost center codes and mark obsolete ones disabled, to accomplish governed billing tags that only IT can assign.
 
-- Each code belongs to one cost center.
-- Values can't be changed. A different value is a new entry, and the old one is retired.
-- Retire, don't delete, once in use.
+- Each cost center code belongs to one cost center (`cost-center-bu`).
+- Lifecycle is strictly **add new or mark disabled**: existing values are never edited in place or deleted from the platform. Disabled values cannot be chosen for new Playground Folders, while existing folders keep them.
 
 ---
 
 ## IT-04 Manage cost categories
-As an IT Admin, I want to keep one shared list of cost categories, to accomplish the same categories across all schools.
+As an IT Admin, I want to add new cost categories to one shared list and mark obsolete ones disabled, to accomplish consistent category tagging across all schools.
 
-- One list for all schools.
-- Values can't be changed; retire, don't delete, once in use.
+- One shared list of cost categories (`cost-category`) across all schools.
+- Lifecycle is strictly **add new or mark disabled**: existing values are never edited in place or deleted from the platform. Disabled values cannot be chosen for new Playground Folders, while existing folders keep them.
 
 ---
 
 ## IT-05 Create a Playground Folder
-As an IT Admin, I want to create a Playground Folder with a billing account, budget, cost tags and a BU Admin group, to accomplish a governed, budgeted space where a BU builds its playgrounds.
+As an IT Admin, I want to create a Playground Folder with a billing account, budget, IT cost tags and a BU Admin group, to accomplish a governed, budgeted space where a BU builds its playgrounds.
 
-- **Where:** I browse from the top of the organization and pick any folder I can see. GCP checks that I have the rights to create there. The folder can't be moved later.
+- **Where:** I browse from the top of the organization and pick any existing folder I can see. GCP checks that I have the rights to create there. The folder can't be moved later.
 - **Inherited access:** anyone with access on the parent folder also has it inside. Picking the parent is my responsibility.
-- **Guardrails:** applied on the Playground Folder. They add to whatever the org and parent folders already apply.
-- **Billing account:** I pick from the accounts I can see. It can't be changed later. Every project under the folder is linked to it by the platform.
-- **Budget:** required, in the billing account's currency. Alert levels 50, 75, 90 and 100% are platform-wide. No email notifications for now. The platform creates the budget.
-- **Cost tags:** cost center, cost center code and category, chosen from the lists in IT-03 and IT-04. Nothing else is tagged on the folder.
-- **BU Admin group:** exactly one group, which must already be inside the BU Admins group. People are added to it in the Admin console. It manages the playgrounds and their tags in the folder.
-- **Project owners:** on every playground project, the BU Admin group, the IT Admins group and the playground's Playground Admin group each get full owner access.
+- **Guardrails:** applied on the Playground Folder, adding to whatever the organization and parent folders already enforce.
+- **Billing account:** I pick from the billing accounts I can see. It can't be changed later, and every project created under the folder is linked to it by the pipeline.
+- **Budget:** required, in the billing account's currency, with platform-wide alert levels at 50, 75, 90 and 100% (email notifications are out of scope for now). Created by the platform.
+- **IT Admin cost tags (set at Playground Folder level):** `cost-center-bu`, `cost-center-code`, and `cost-category`, chosen from the active values in IT-03 and IT-04. Only these three IT tags are set on the Playground Folder (BU tags are set on playgrounds). Folder tags are **inherited** by every playground, project, and resource below and are **copied onto every project below as billing labels**.
+- **BU Admin group:** exactly one existing group, which must already be inside `grp-lsb-bu-admins@`. Members are managed in the Admin console; the group manages playgrounds and BU tags inside the folder.
+- **Project owners:** on every playground project, the folder's BU Admin group, the IT Admins group, and — if configured on that playground — its **optional Playground Admin group** (at most one per playground) each get full owner access.
 - **Projects are created only by the pipeline,** which gets project-creation rights on the Playground Folder and links each project to its billing account.
-- **Prerequisite:** the platform has billing rights on every billing account used for playgrounds, granted by the platform setup.
+- **Prerequisite:** the platform setup grants the required billing rights on every billing account used for playgrounds.
 
 ---
 
 ## IT-06 Update a Playground Folder
-As an IT Admin, I want to rename a Playground Folder, change its cost tags, budget or BU Admin group, to accomplish keeping it in line with the school.
+As an IT Admin, I want to rename a Playground Folder or change its IT cost tags, budget, or BU Admin group, to accomplish keeping it aligned with the school.
 
-- Changing cost tags also updates the labels on every project in the folder.
-- Swapping the BU Admin group moves the access from the old group to the new one.
-- The billing account and the parent folder can't be changed.
+- Changing IT cost tags runs as a **tracked job** that updates the folder's tag bindings and relabels every project below it.
+- Swapping the BU Admin group runs as a **tracked job** that moves folder and project access from the old group to the new one.
+- Updating the budget adjusts the Playground Folder's budget amount in the billing account's currency.
+- The billing account and the parent folder cannot be changed.
 
 ---
 
 ## IT-07 Decommission a Playground Folder
-As an IT Admin, I want to decommission an empty Playground Folder, to accomplish removing containers that are no longer used.
+As an IT Admin, I want to decommission a Playground Folder, to accomplish stopping all billing across its playgrounds and projects when the container is retired.
 
-- Only when it has no active playgrounds.
-- The budget and access are removed and the folder is deleted (GCP keeps it recoverable for 30 days).
-- The platform keeps the record, marked decommissioned.
+- Decommissioning a Playground Folder ensures **all underlying playgrounds and their associated projects have billing disabled** so cloud spend stops immediately, removes the folder budget, and marks the Playground Folder decommissioned in the platform.
+- **Never deleted from the platform or GCP:** neither the platform records nor the GCP folders, projects, or inside-project resources are deleted; resource and folder deletion is an external manual cleanup activity outside current scope.
 
 ---
 
 ## IT-08 Act on any Playground Folder or playground
-As an IT Admin, I want to do anything a BU Admin can do, anywhere, to accomplish helping BUs without switching accounts.
+As an IT Admin, I want to perform any BU Admin action on any Playground Folder or playground, to accomplish helping schools and courses directly without switching accounts.
 
-- IT Admins are owners of every playground project, and reach every Playground Folder through their standing access.
-- Every change records who asked for it.
+- IT Admins are owners of every playground project and reach every Playground Folder through their standing access and platform role.
+- Template upgrades are performed **per playground** (no bulk upgrade across playgrounds).
+- Every change records the acting IT Admin who requested it.
 
 ---
 
 ## Not in the platform
-- Adding or removing people in groups (done in the Admin console).
-- Creating ordinary folders, such as school folders (done in the Console).
-- A simulate or dry-run mode.
+- Adding or removing members of Google groups (done in the Admin console).
+- Creating ordinary organizational folders, such as school folders (done in the Cloud console).
+- Deleting decommissioned GCP projects, folders, or resources (handled as external manual cleanup).
+- Bulk upgrading multiple playgrounds at once, or a simulate / dry-run execution mode.

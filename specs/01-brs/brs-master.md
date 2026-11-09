@@ -99,11 +99,11 @@ flowchart TD
 - The platform **copies the tag values onto each project as labels**, so billing reports that work on labels show the same cost center, code and category. Tags are the source of truth; labels are the copy.
 - IT's three tags (cost center, code, category) are set only on the Playground Folder. The BU adds its own two (tracking code, subcategory) on each playground.
 
-**The service catalog.** Each service (for example Cloud SQL) is described once and **versioned**. A service version points to the **Terraform module** that builds it, and declares the APIs it enables, the services it needs first, its requirement mode (**mandatory**, **on by default**, or **optional**), its limits (max per project, min per student), its sizes, the groups it needs (for example students), and the **singleton** and **app resources** it gives students (section 2.5). Which roles each group gets is part of the Terraform module. One version is marked current.
+**The service catalog.** Every **service template** in the catalog maps to a **single GCP service** (for example Cloud SQL) and is **versioned**, with one version marked current. Each service version points to the **Terraform module** that builds it, sets its **playground availability mode** (**mandatory**, **enabled by default and optional**, or **disabled by default and optional** — allowing flexible rollout across templates), and declares the APIs it enables, the prerequisite services it needs first, **service configuration defaults** (sizes and settings), **quota per project**, **per-user defaults and bounds** (`min` and `max` per student), the user group slots it needs, and the **singleton** and **app resources** it gives students (section 2.5). Which roles each group gets is part of the Terraform module.
 
-**Playground templates.** A template is a ready-made playground shape, also **versioned**. A template version picks service versions (each mandatory, on by default, or optional), sets **students per project**, and lists the groups its services need. Every template is available in every Playground Folder.
+**Playground templates.** A playground template is a ready-made playground shape composed from pinned catalog service versions, also **versioned**. A template version inherits each included service's availability mode and bounds, sets the **maximum number of students per project** (shard capacity ceiling), and lists the user group slots its services need. Every active template is available in every Playground Folder.
 
-**Versioning and retiring.** Every change to a service or template creates a new version; nothing is edited in place, so existing playgrounds never change underneath their users. Anything in use (a service, a template, a tag value) can only be retired, which stops new use but keeps existing uses. Tag values can't be changed; a different value is a new entry.
+**Versioning and lifecycle.** Every change to a service or template creates a new version; nothing is edited in place, so existing playgrounds never change underneath their users. Services and templates in use are retired/disabled rather than deleted. Cost tag values (`cost-center-bu`, `cost-center-code`, `cost-category`) are configured by adding new values or marking obsolete ones **disabled** (never edited or deleted).
 
 ### 2.4 BU Admin level: playgrounds
 
@@ -140,9 +140,9 @@ The platform creates the projects, links them to the folder's billing account, c
 
 **Evolving and closing a playground.**
 - **Adding a service:** turning on another service creates a new version of the playground's configuration. The platform enables that service in **every project** of the playground, and students get its singleton resource the next time they enter. Services are **add-only**: once on, a service isn't turned off, so no student work is ever lost. Lowering per-student allowances is non-destructive (only gates new creations).
-- **Upgrading the template version:** BU Admins, Playground Admins (for their playground), and IT Admins (single or bulk) can upgrade a playground to a newer template version. Upgrades are additive and non-destructive: new mandatory/default services are added, already-enabled services stay enabled, and updated service module versions are applied.
+- **Upgrading the template version:** BU Admins, Playground Admins (for their playground), and IT Admins can upgrade a playground to a newer template version (one playground at a time; no bulk upgrade). Upgrades are additive and non-destructive: new mandatory/default services are added, already-enabled services stay enabled, and updated service module versions are applied.
 - **Expanding capacity:** increasing expected students (grow-only) adds new project shards initialized with all enabled services, leaving existing shards untouched.
-- **Decommissioning:** BU Admins and IT Admins (not Playground Admins) can decommission a playground, which disables billing on its projects to stop spend immediately without deleting projects, folders, or resources (deletion is external cleanup outside current scope).
+- **Decommissioning:** BU Admins and IT Admins (not Playground Admins) can decommission a playground, and IT Admins can decommission a Playground Folder. Decommissioning **disables billing** across all underlying playgrounds and associated projects to stop spend immediately, and marks them decommissioned in the platform — **nothing is deleted from the platform or GCP** (deletion of projects, folders, and resources is external manual cleanup outside current scope).
 
 ### 2.5 Student level: workspaces and app containers
 
@@ -257,7 +257,7 @@ Organization
 3. **Budgets:** one **required** budget per Playground Folder, one **required** budget per playground, and an **optional** per-project shard budget (less than or equal to the playground budget) — all in the billing account's currency with alert levels at 50, 75, 90 and 100% (notifications out of scope for now).
 4. **Versioned, never edited in place;** retire, don't delete, once in use.
 5. **Services are add-only** in a playground; capacity (`expected_students`) is grow-only; template upgrades are explicit and additive.
-6. **Decommissioning stops billing without deleting:** decommissioning a playground (BU/IT Admins only) disables billing on its projects; resource/project deletion is external cleanup outside current scope.
+6. **Decommissioning stops billing without deleting:** decommissioning a Playground Folder (IT Admin) or a playground (BU/IT Admin) disables billing across all underlying playgrounds and associated projects and marks them decommissioned in the platform; nothing is deleted from the platform or GCP (manual external cleanup).
 7. **Students work through the platform,** within allowances shared across their app containers.
 8. **No simulate or dry-run mode:** every action acts on real Google Cloud.
 9. **Every change records who asked for it.**
@@ -270,7 +270,7 @@ Organization
 |---|---|---|---|---|
 | Service catalog, templates, tag catalog | Manage | Read | none | none |
 | Playground Folder | Create, update, decommission | Read the folders whose group they're in | none | none |
-| Playground | Same as BU Admin (+ bulk template upgrade) | Create, configure, upgrade, expand, decommission | Configure, upgrade, expand their own playground (no decommission) | Sees the playgrounds they're mapped to |
+| Playground | Same as BU Admin | Create, configure, upgrade, expand, decommission | Configure, upgrade, expand their own playground (no decommission) | Sees the playgrounds they're mapped to |
 | Projects in a playground | Owner | Owner | Owner | Usage rights on their own resources |
 | Workspace and app containers | Same as BU Admin | To be specified | Same as BU Admin, in their playground | Initialize, create and delete through the platform |
 
