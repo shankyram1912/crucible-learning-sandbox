@@ -41,7 +41,7 @@ The one place where every setting of the Self Service APIs and the `lsb` CLI is 
 
 | Key | Required | Default | Meaning |
 |---|---|---|---|
-| `LSB_PLATFORM_ADMIN_GROUPS` | no | value of `BU_ADMINS_GROUP` | Groups whose members (transitively) are `PLATFORM_ADMIN` ([tdd-apis-common-models.md](tdd-apis-common-models.md) section 3). Today only `grp-lsb-bu-admins@` |
+| `LSB_PLATFORM_ADMIN_GROUPS` | no | value of `BU_ADMINS_GROUP` | Groups whose members (transitively) get the `PLATFORM_ADMIN` persona, **reserved for future use** (not used by the ACL yet; [tdd-apis-common-acl.md](tdd-apis-common-acl.md)) |
 | `LSB_ALLOWED_AUDIENCES` | no | `764086051850-6qr4p6gpi6hn506pt8ejuq83di341hur.apps.googleusercontent.com,32555940559.apps.googleusercontent.com` | OAuth client IDs (or Firebase project IDs) accepted as the `aud` of ID tokens ([tdd-apis-common-auth.md](tdd-apis-common-auth.md) section 1). The defaults are the two public clients `gcloud` signs in with: the ADC client used by current `gcloud auth application-default login`, and the gcloud CLI client used by older ADC logins. **This is the decided setup for the CLI** (no separate `lsb` OAuth client). The UI step adds the Firebase project ID. Not a secret; a setting rather than a code constant because it belongs to Google |
 | `LSB_API_VERSION` | no | `unknown` | Git commit the API was built from; returned by `health api` |
 | `LSB_API_PORT` | no | `8080` | Port the API listens on |
@@ -49,6 +49,8 @@ The one place where every setting of the Self Service APIs and the `lsb` CLI is 
 | `LSB_HEALTH_DB_READ_TIMEOUT_SECONDS` | no | `2` | Per-database read timeout in `health db` and `health service` |
 | `LSB_HEALTH_DB_TOTAL_TIMEOUT_SECONDS` | no | `5` | Overall limit for the parallel database reads |
 | `LSB_HEALTH_SERVICE_CACHE_SECONDS` | no | `10` | How long `health service` reuses its last result |
+| `LSB_ADMIN_ROSTER_REFRESH_SECONDS` | no | `300` | How often the in-memory admin roster (members of the admin groups) is refreshed after the startup load ([tdd-apis-platform-users.md](tdd-apis-platform-users.md) section 1) |
+| `LSB_ACL` | no | `DEFAULT_ACL` in `settings.py` (table in [tdd-apis-common-acl.md](tdd-apis-common-acl.md) section 3) | Access control list: JSON map of every operation to 1..N roles (`USER`, `IT_ADMIN`, `BU_ADMIN`, `PLATFORM_ADMIN`). Overrides the whole map. The API refuses to start if it does not match the operations in use |
 | `LSB_JOB_DISPATCHER` | no | `inline` | How JobAsync jobs are run: `inline` (in the API process), `http` (local worker), `cloudtasks` ([tdd-apis-common-jobs.md](tdd-apis-common-jobs.md) section 6.3) |
 | `LSB_WORKER_URL` | no | `http://127.0.0.1:8081` | Worker base URL (`http` and `cloudtasks` modes) |
 | `LSB_TASKS_QUEUE` | no | `lsb-jobs` | Cloud Tasks queue (`cloudtasks` mode, in `REGION`) |

@@ -7,8 +7,9 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse
 
-from lsb_api.context import RequestContext, get_context, require_persona
-from lsb_api.models.common import ErrorResponse, Persona
+from lsb_api.acl import allow
+from lsb_api.context import RequestContext
+from lsb_api.models.common import ErrorResponse
 from lsb_api.models.health import (CheckStatus, DatabaseRole, HealthApiResponse, HealthDbResponse,
                                    HealthServiceResponse, ServiceStatus)
 
@@ -17,7 +18,7 @@ ERRORS = {401: {"model": ErrorResponse}, 403: {"model": ErrorResponse}, 500: {"m
 
 
 @router.get("/api", response_model=HealthApiResponse, responses=ERRORS)
-def health_api(request: Request, ctx: RequestContext = Depends(get_context)) -> HealthApiResponse:
+def health_api(request: Request, ctx: RequestContext = Depends(allow("health.api"))) -> HealthApiResponse:
     """Operation 01: the API process is up. No dependency calls."""
     return HealthApiResponse(version=request.app.state.settings.LSB_API_VERSION,
                              time=datetime.now(timezone.utc).replace(microsecond=0), caller=ctx.caller.email)
@@ -25,9 +26,8 @@ def health_api(request: Request, ctx: RequestContext = Depends(get_context)) -> 
 
 @router.get("/db", response_model=HealthDbResponse,
             responses={**ERRORS, 503: {"model": HealthDbResponse}})
-async def health_db(request: Request, ctx: RequestContext = Depends(get_context)):
-    """Operation 02: one read per Firestore database, with details. PLATFORM_ADMIN only."""
-    await asyncio.to_thread(require_persona, request, ctx, Persona.PLATFORM_ADMIN)
+async def health_db(request: Request, ctx: RequestContext = Depends(allow("health.db"))):
+    """Operation 02: one read per Firestore database, with details."""
     checks = await request.app.state.db_checker.check_all(ctx.request_id)
     ok = all(c.status == CheckStatus.OK for c in checks)
     body = HealthDbResponse(status=CheckStatus.OK if ok else CheckStatus.FAIL, databases=checks)
@@ -36,7 +36,7 @@ async def health_db(request: Request, ctx: RequestContext = Depends(get_context)
 
 @router.get("/service", response_model=HealthServiceResponse,
             responses={**ERRORS, 503: {"model": HealthServiceResponse}})
-async def health_service(request: Request, ctx: RequestContext = Depends(get_context)):
+async def health_service(request: Request, ctx: RequestContext = Depends(allow("health.service"))):
     """Operation 03: the same data check, answered only as OK / NOT_OK. Cached briefly."""
     state = request.app.state
     ttl = state.settings.LSB_HEALTH_SERVICE_CACHE_SECONDS

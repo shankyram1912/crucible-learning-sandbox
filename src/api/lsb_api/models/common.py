@@ -49,6 +49,7 @@ class ErrorResponse(BaseModel):
 
 
 class Persona(StrEnum):
+    USER = "USER"                      # any authenticated user of the domain
     IT_ADMIN = "IT_ADMIN"
     BU_ADMIN = "BU_ADMIN"
     PLATFORM_ADMIN = "PLATFORM_ADMIN"

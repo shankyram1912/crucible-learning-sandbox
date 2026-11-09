@@ -8,6 +8,8 @@ Developing `lsb` or running the API yourself: see [src/cli/README.md](../src/cli
 
 ## 1. Before you start
 
+**Most `lsb` commands are for IT Admins and BU Admins**; each command below says who can run it. Others get `PERMISSION_DENIED: This operation needs one of these roles: ...`. More commands for all users (for example students managing their own services) will be added later.
+
 You need:
 1. A Google account in your organization's domain (for this environment `shankyram.altostrat.com`).
 2. The [gcloud CLI](https://cloud.google.com/sdk/docs/install), used here only to sign in (section 3).
@@ -65,8 +67,8 @@ Add it to your shell profile (`~/.bashrc`, `~/.zshrc`) to keep it. For a single 
 
 | Command | Who can run it | Shows |
 |---|---|---|
-| `lsb health api` | Any signed-in user of the organization | API is up: version, the caller the API saw, latency |
-| `lsb health db` | **Platform Admins** (IT Admins and BU Admins) | Each data store with its role and latency, or an error code |
+| `lsb health api` | IT Admins, BU Admins | API is up: version, the caller the API saw, latency |
+| `lsb health db` | IT Admins | Each data store with its role and latency, or an error code |
 | `lsb health service` | Any signed-in user of the organization | Service, CONFIG and RUNTIME JOBS as OK or NOT OK only |
 
 ```
@@ -92,8 +94,21 @@ When a data store fails, `lsb health db` names the error:
 | `UNAVAILABLE` | Temporarily unavailable; try again |
 | `UNKNOWN` | Anything else; report it with the request ID |
 
-### 5.2 Coming next
-`lsb jobs`, `lsb templates`, `lsb playground-folder`, `lsb playground`, `lsb group members`, `lsb service`. This guide gains a section for each as it is released.
+### 5.2 Platform users
+
+| Command | Who can run it | Shows |
+|---|---|---|
+| `lsb platform-users role` | Any signed-in user of the organization | Your platform role: `IT_ADMIN`, `BU_ADMIN` or `OTHER`, and the group it comes from |
+| `lsb platform-users role <email>` | IT Admins, BU Admins | Someone else's platform role |
+
+```
+$ lsb platform-users role
+  ✔ lsb-it-admin1@shankyram.altostrat.com    IT_ADMIN (IT Admin)    member of grp-lsb-it-admins@shankyram.altostrat.com directly
+```
+Platform roles come from group membership, which your IT team manages in the directory; `lsb` cannot change them.
+
+### 5.3 Coming next
+`lsb jobs`, `lsb templates`, `lsb playground-folder`, `lsb playground`, `lsb service`. This guide gains a section for each as it is released.
 
 ---
 
@@ -139,4 +154,4 @@ Every call carries a **session ID** (one per terminal session, reused for 8 hour
 | `API unreachable at ...` | Wrong or missing `LSB_API_URL`, or no network path to the API |
 | `UNAUTHENTICATED: Caller is not in <domain>` | Signed in with a personal or other account: sign in again with your organization account |
 | `UNAUTHENTICATED: Invalid ID token: ...` | Sign-in expired or not accepted (`audience not accepted` means the API does not trust the app you signed in with): sign in again with `gcloud auth application-default login`; if it persists, contact the platform team with the request ID |
-| `PERMISSION_DENIED: This operation needs the PLATFORM_ADMIN persona` | `lsb health db` is for Platform Admins; use `lsb health service` |
+| `PERMISSION_DENIED: This operation needs one of these roles: ...` | Your account does not have one of the listed roles; ask your IT team if it should |

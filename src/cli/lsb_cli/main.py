@@ -25,6 +25,8 @@ SESSION_TTL_SECONDS = 8 * 3600
 app = typer.Typer(help="LSB Control Tower command line.", no_args_is_help=True, add_completion=False)
 health_app = typer.Typer(help="Health of the Self Service APIs.", no_args_is_help=True)
 app.add_typer(health_app, name="health")
+platform_users_app = typer.Typer(help="Platform users: who has which platform role.", no_args_is_help=True)
+app.add_typer(platform_users_app, name="platform-users")
 
 console = Console()
 err_console = Console(stderr=True)
@@ -79,12 +81,12 @@ def _session_id() -> str:
     return sid
 
 
-def _get(path: str) -> httpx.Response:
+def _get(path: str, params: dict | None = None) -> httpx.Response:
     headers = {"Authorization": f"Bearer {_id_token()}", "X-LSB-Session-Id": _session_id(),
                "User-Agent": f"lsb-cli/{VERSION}"}
     t0 = time.monotonic()
     try:
-        r = httpx.get(f"{opts.api}{path}", headers=headers, timeout=15)
+        r = httpx.get(f"{opts.api}{path}", headers=headers, params=params, timeout=15)
     except httpx.HTTPError as exc:
         _fail(3, f"API unreachable at {opts.api} ({type(exc).__name__})")
     r.elapsed_ms = int((time.monotonic() - t0) * 1000)  # type: ignore[attr-defined]
@@ -140,7 +142,7 @@ ERROR_HINTS = {
 
 @health_app.command("db")
 def health_db():
-    """Each Firestore database, with details (Platform Admins only)."""
+    """Each Firestore database, with details (IT Admins)."""
     r = _get("/v1/health/db")
     body = _handle_errors(r, (200, 503))
     if opts.json:
@@ -174,6 +176,29 @@ def health_service():
         console.print(f"\n  {mark} {fmt('Service', body['status'])}    {fmt('CONFIG', body['config'])}"
                       f"    {fmt('RUNTIME JOBS', body['runtime_jobs'])}\n")
     raise typer.Exit(0 if r.status_code == 200 else 1)
+
+
+# ---------------------------------------------------------------------------------------------
+# lsb platform-users role [EMAIL]
+# ---------------------------------------------------------------------------------------------
+ROLE_LABEL = {"IT_ADMIN": "IT Admin", "BU_ADMIN": "BU Admin", "OTHER": "no platform role"}
+
+
+@platform_users_app.command("role")
+def platform_role(email: str = typer.Argument(None, help="Another user's email; default: you")):
+    """Platform role (IT_ADMIN, BU_ADMIN or OTHER) from the configured admin groups."""
+    r = _get("/v1/platform-users/role", params={"email": email} if email else None)
+    body = _handle_errors(r, (200,))
+    if opts.json:
+        console.print_json(data=body)
+        return
+    role = body["platform_role"]
+    mark = "[green]✔[/green]" if role != "OTHER" else "[dim]–[/dim]"
+    via = ""
+    if body.get("matched_group"):
+        how = "directly" if body.get("relation") == "DIRECT" else "through a nested group"
+        via = f"    member of [bold magenta]{body['matched_group']}[/bold magenta] {how}"
+    console.print(f"\n  {mark} [bold magenta]{body['email']}[/bold magenta]    [bold]{role}[/bold] ({ROLE_LABEL.get(role, role)}){via}\n")
 
 
 if __name__ == "__main__":

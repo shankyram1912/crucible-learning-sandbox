@@ -11,12 +11,12 @@ Domain: `shankyram.altostrat.com`. All users are Cloud Identity Free users with 
 
 | Email | Persona | Groups (seeded, see section 1.1) | Used for |
 |---|---|---|---|
-| `lsb-it-admin1@` | IT Admin | `grp-lsb-it-admins@` | Tag binding test now; creates Playground Folders (API op 06) |
+| `lsb-it-admin1@` | IT Admin | `grp-lsb-it-admins@` | Tag binding test now; creates Playground Folders (API op 07) |
 | `lsb-bu-biz1@` | BU Admin, Business | `grp-lsb-bu-admins@` | BU tag test now; controller of the Business Playground Folder |
 | `lsb-bu-cs1@` | BU Admin, Computing | `grp-lsb-bu-admins@` | Controller of the Computing Playground Folder; isolation tests against Business |
 | `lsb-owner-ba101@` | Playground owner | none | Owner of the BA 101 playground's projects |
 | `lsb-owner-cs100@` | Playground owner | none | Owner of the CS 100 playground's projects |
-| `lsb-student1@` to `lsb-student4@` | Student | none | Students 1 and 2 in BA 101, 3 and 4 in CS 100 (API op 08) |
+| `lsb-student1@` to `lsb-student4@` | Student | none | Students 1 and 2 in BA 101, 2 to 4 in CS 100 (mapped student groups, section 1.1) |
 
 **Users, groups and memberships are created by an IT Admin with directory rights (a person), never by the platform**, matching how the university manages its directory. The platform only reads groups; playground admins later **map** the student groups to playground slots.
 

@@ -15,10 +15,7 @@ Health tells an operator whether the Self Service APIs are up and whether they c
 ## 1. Common rules
 
 1. **Authentication is required** for all three, like every other call ([tdd-apis-master.md](tdd-apis-master.md) principle 9, [tdd-apis-common-auth.md](tdd-apis-common-auth.md)). Both also get the common request and response headers and the RequestContext ([tdd-apis-common-models.md](tdd-apis-common-models.md)). There is no unauthenticated health endpoint. On Cloud Run later, the service uses the default TCP startup probe, so no HTTP probe needs to call these endpoints.
-2. **Authorization:**
-   - `health api` and `health service`: any authenticated user of the org domain.
-   - `health db`: **`PLATFORM_ADMIN` only** (member of any group in `LSB_PLATFORM_ADMIN_GROUPS`, today `grp-lsb-bu-admins@`, which includes IT Admins; [tdd-apis-common-config.md](tdd-apis-common-config.md), [tdd-apis-common-models.md](tdd-apis-common-models.md) section 3). Others get `403 PERMISSION_DENIED` and should use `health service`.
-   - No response contains secrets or internal error text.
+2. **Authorization:** by the common ACL ([tdd-apis-common-acl.md](tdd-apis-common-acl.md)), whatever the client: `health.api` for `IT_ADMIN` and `BU_ADMIN`, `health.db` for `IT_ADMIN`, `health.service` for any user (`USER`). Responses contain no secrets and no internal error text.
 3. **Read-only.** No operation writes anything, anywhere.
 4. **Synchronous.** All return the result directly (`200` or `503`), never a job.
 5. **Platform identity for data checks.** `health db` and `health service` read Firestore with the API's own runtime identity (locally the developer's ADC, on Cloud Run `sa-lsb-api`), not the caller's access token, because it checks the platform's access, not the caller's.
@@ -67,7 +64,7 @@ $ lsb health api
 
 ## 3. Operation 02: health db
 
-**Purpose:** readiness of the data layer, with details for operators. The API can reach both Firestore databases with its own identity. **Platform Admins only** (section 1).
+**Purpose:** readiness of the data layer, with details for operators. The API can reach both Firestore databases with its own identity. Allowed roles: section 1 rule 2.
 
 **Request:** `GET /v1/health/db`, no body, no parameters.
 
@@ -137,7 +134,7 @@ $ lsb health db
 
 ## 4. Operation 03: health service
 
-**Purpose:** a data-layer check that is safe to show anyone signed in, the counterpart of `health db` for non-admins. It runs the same check as `health db` (one read per database, through the API's own Firestore client), but answers only whether the service and each data area are OK. No database IDs, latency, error codes or project details are returned.
+**Purpose:** a data-layer check that is safe to show anyone signed in, the counterpart of `health db` without database details. It runs the same check as `health db` (one read per database, through the API's own Firestore client), but answers only whether the service and each data area are OK. No database IDs, latency, error codes or project details are returned.
 
 **Request:** `GET /v1/health/service`, no body, no parameters.
 
@@ -182,7 +179,7 @@ $ lsb health service
 |---|---|---|---|
 | `0` | API ok | All databases ok | Service OK |
 | `1` | n/a | At least one database failed (`503`) | Service NOT_OK (`503`) |
-| `2` | `401` (not signed in or token rejected) | `401`, or `403` if not a Platform Admin | `401` |
+| `2` | `401`, or `403` (role not allowed) | `401` or `403` | `401` or `403` |
 | `3` | API unreachable or `500` | API unreachable or `500` | API unreachable or `500` |
 
 `--json` prints the raw response for all three commands ([tdd-apis-common-cli.md](tdd-apis-common-cli.md) section 2). Exit code `1` for a failing `health db` or `health service` is the one addition to the common exit codes (section 3 there).
@@ -193,6 +190,6 @@ $ lsb health service
 
 1. `lsb health api` as any seed user: `0`, with the caller's email shown.
 2. `lsb health api` with no login: `2` (`401`).
-3. `lsb health db` as a Platform Admin (for example `lsb-it-admin1@`, once in its group) with the API's identity able to read both databases: `0`. As a student (`lsb-student1@`): `2` (`403`).
+3. `lsb health db` as an IT Admin (for example `lsb-it-admin1@`) with the API's identity able to read both databases: `0`. As a BU Admin or a student: `2` (`403`).
 4. Temporarily point `FIRESTORE_CONFIG_DATABASE` at a wrong ID: `1`, `DATABASE_NOT_FOUND` on the config row only.
 5. `lsb health service` in the same two states: `0` with `CONFIG OK`, then `1` with `CONFIG NOT OK`; the `--json` output contains no database ID, latency or error code.

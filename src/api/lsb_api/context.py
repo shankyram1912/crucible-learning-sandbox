@@ -8,10 +8,8 @@ import threading
 import time
 from dataclasses import dataclass, field
 
-import google.auth
 import requests
 from google.auth import jwt
-from google.auth.transport.requests import AuthorizedSession
 from fastapi import Request
 
 from lsb_api.errors import ApiError
@@ -22,7 +20,6 @@ log = logging.getLogger("lsb_api")
 
 GOOGLE_ISSUERS = {"accounts.google.com", "https://accounts.google.com"}
 GOOGLE_CERTS_URL = "https://www.googleapis.com/oauth2/v1/certs"
-CLOUD_IDENTITY = "https://cloudidentity.googleapis.com/v1"
 
 
 @dataclass
@@ -85,37 +82,6 @@ class TokenVerifier:
         return Caller(email=email, subject=str(claims.get("sub", "")), token_type=TokenType.GOOGLE), str(claims.get("aud"))
 
 
-class MembershipChecker:
-    """Transitive Google Group membership through the Cloud Identity API, as the API's own identity."""
-
-    def __init__(self, ttl_seconds: float = 60.0):
-        creds, _ = google.auth.default(scopes=["https://www.googleapis.com/auth/cloud-platform"])
-        self._session = AuthorizedSession(creds)
-        self._group_names: dict[str, str] = {}
-        self._cache: dict[tuple[str, str], tuple[float, bool]] = {}
-        self._ttl = ttl_seconds
-
-    def _group_name(self, group_email: str) -> str:
-        if group_email not in self._group_names:
-            r = self._session.get(f"{CLOUD_IDENTITY}/groups:lookup", params={"groupKey.id": group_email}, timeout=5)
-            r.raise_for_status()
-            self._group_names[group_email] = r.json()["name"]
-        return self._group_names[group_email]
-
-    def is_member(self, group_email: str, member_email: str) -> bool:
-        key = (group_email, member_email)
-        hit = self._cache.get(key)
-        if hit and time.time() - hit[0] < self._ttl:
-            return hit[1]
-        name = self._group_name(group_email)
-        r = self._session.get(f"{CLOUD_IDENTITY}/{name}/memberships:checkTransitiveMembership",
-                              params={"query": f"member_key_id == '{member_email}'"}, timeout=5)
-        r.raise_for_status()
-        result = bool(r.json().get("hasMembership", False))
-        self._cache[key] = (time.time(), result)
-        return result
-
-
 def _parse_user_agent(ua: str | None) -> tuple[str | None, str | None]:
     if not ua:
         return None, None
@@ -141,26 +107,35 @@ def get_context(request: Request) -> RequestContext:
     return ctx
 
 
-def personas(request: Request, ctx: RequestContext) -> set[Persona]:
-    """Resolve personas on demand (transitive group membership), cached on the context."""
-    if ctx._personas is not None:
-        return ctx._personas
-    s: Settings = request.app.state.settings
-    checker: MembershipChecker = request.app.state.membership
+def personas_from_groups(settings: Settings, groups: set[str]) -> set[Persona]:
+    """Personas from the set of groups a user is in (direct or nested), using the settings groups."""
     found: set[Persona] = set()
-    if any(checker.is_member(g, ctx.caller.email) for g in s.platform_admin_groups):
+    if settings.it_admins_group in groups:
+        found.add(Persona.IT_ADMIN)
+    if settings.bu_admins_group in groups:
+        found.add(Persona.BU_ADMIN)
+    if any(g in groups for g in settings.platform_admin_groups):
         found.add(Persona.PLATFORM_ADMIN)
-    ctx._personas = found
     return found
 
 
-def require_persona(request: Request, ctx: RequestContext, persona: Persona) -> None:
+def personas(request: Request, ctx: RequestContext) -> set[Persona]:
+    """The caller's personas from the in-memory admin roster (no directory call per request)."""
+    if ctx._personas is None:
+        groups = set(request.app.state.roster.groups_of(ctx.caller.email))
+        ctx._personas = {Persona.USER} | personas_from_groups(request.app.state.settings, groups)
+    return ctx._personas
+
+
+def require_persona(request: Request, ctx: RequestContext, persona: Persona,
+                    denied_message: str | None = None) -> None:
     try:
         ok = persona in personas(request, ctx)
     except ApiError:
         raise
     except Exception:
         log.exception("persona lookup failed request_id=%s", ctx.request_id)
-        raise ApiError(ErrorCode.INTERNAL, "Could not check group membership")
+        raise ApiError(ErrorCode.INTERNAL, "Admin roster not available yet")
     if not ok:
-        raise ApiError(ErrorCode.PERMISSION_DENIED, f"This operation needs the {persona.value} persona")
+        raise ApiError(ErrorCode.PERMISSION_DENIED,
+                       denied_message or f"This operation needs the {persona.value} persona")

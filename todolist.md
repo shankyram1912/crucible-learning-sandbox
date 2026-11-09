@@ -40,11 +40,11 @@ Built one operation at a time per [tdd-apis-master.md](specs/tdd-apis/tdd-apis-m
 | 01 | `health api` (`GET /v1/health/api`, `lsb health api`): the API process is up, no dependencies (liveness). Spec: [tdd-apis-health.md](specs/tdd-apis/tdd-apis-health.md) | ✅ Done (2026-11-09) |
 | 02 | `health db` (`GET /v1/health/db`, `lsb health db`): one small read on each Firestore database (`lsb-control-tower-config-db`, `lsb-control-tower-db`) with a short timeout; reports status and latency per database. Spec: [tdd-apis-health.md](specs/tdd-apis/tdd-apis-health.md) | ✅ Done (2026-11-09) |
 | 03 | `health service` (`GET /v1/health/service`, `lsb health service`): same data check as health db, answered only as `OK` / `NOT_OK` for the service, `config` and `runtime_jobs`; no database IDs, latency or error codes. Spec: [tdd-apis-health.md](specs/tdd-apis/tdd-apis-health.md) | ✅ Done (2026-11-09) |
-| 04 | `jobs` (list, show, watch) | ⬜ To do |
-| 05 | `templates` (list, show) | ⬜ To do |
-| 06 | `playground-folder create` / list / show (creation gate, controllers, playground tags) | ⬜ To do |
-| 07 | `playground create` (creation gate, owners, bu-tracking-code, bu-subcategory, template, N projects) | ⬜ To do |
-| 08 | `platform-users list` (who has which persona, read-only; membership itself is managed in the Admin console) | ⬜ To do |
+| 04 | `platform role` (`GET /v1/platform-users/role[?email=]`, `lsb platform-users role [EMAIL]`): IT_ADMIN / BU_ADMIN / OTHER from the in-memory admin roster (members of the settings groups, direct or nested; loaded at startup, refreshed every 5 minutes). Spec: [tdd-apis-platform-users.md](specs/tdd-apis/tdd-apis-platform-users.md) | 🔨 Built, to test live |
+| 05 | `jobs` (list, show, watch) | ⬜ To do |
+| 06 | `templates` (list, show) | ⬜ To do |
+| 07 | `playground-folder create` / list / show (creation gate, controllers, playground tags) | ⬜ To do |
+| 08 | `playground create` (creation gate, owners, bu-tracking-code, bu-subcategory, template, N projects) | ⬜ To do |
 | 09 | `service enable` (GCS) | ⬜ To do |
 
 ---
