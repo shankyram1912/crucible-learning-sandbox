@@ -1,0 +1,5 @@
+email,display_name,description,kind
+grp-lsb-it-admins@shankyram.altostrat.com,LSB IT Admins,Learning Sandbox IT Admins. Created by Day-0 step 4; skipped here if present.,service
+grp-lsb-bu-admins@shankyram.altostrat.com,LSB BU Admins,Learning Sandbox BU Admins (IT Admins nested). Created by Day-0 step 4; skipped here if present.,service
+grp-ba101-students@shankyram.altostrat.com,BA 101 Students,School-managed student group for BA 101 (seed). Mapped to the BA 101 playground students slot.,students
+grp-cs100-students@shankyram.altostrat.com,CS 100 Students,School-managed student group for CS 100 (seed). Mapped to the CS 100 playground students slot.,students

@@ -1,0 +1,9 @@
+group_email,member_email,note
+grp-lsb-it-admins@shankyram.altostrat.com,lsb-it-admin1@shankyram.altostrat.com,IT Admin
+grp-lsb-bu-admins@shankyram.altostrat.com,lsb-bu-biz1@shankyram.altostrat.com,BU Admin (Business)
+grp-lsb-bu-admins@shankyram.altostrat.com,lsb-bu-cs1@shankyram.altostrat.com,BU Admin (Computing)
+grp-ba101-students@shankyram.altostrat.com,lsb-student1@shankyram.altostrat.com,BA 101 student
+grp-ba101-students@shankyram.altostrat.com,lsb-student2@shankyram.altostrat.com,BA 101 student (also in CS 100: multi-group test)
+grp-cs100-students@shankyram.altostrat.com,lsb-student2@shankyram.altostrat.com,CS 100 student (also in BA 101: multi-group test)
+grp-cs100-students@shankyram.altostrat.com,lsb-student3@shankyram.altostrat.com,CS 100 student
+grp-cs100-students@shankyram.altostrat.com,lsb-student4@shankyram.altostrat.com,CS 100 student

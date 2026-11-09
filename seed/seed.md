@@ -1,15 +1,15 @@
 # LSB Control Tower Seed Data (proposal)
 
-Status: proposed 2026-11-08. Users in [users.csv](users.csv) (Admin console bulk upload format); **the 9 users were created on 2026-11-09** through the Admin console bulk upload. Catalog and scenarios not created yet. Replaces the defunct seed in `seed/backup/` (old cohort model).
+Status: proposed 2026-11-08. Users in [users.csv](users.csv) (Admin console bulk upload format), **created 2026-11-09**. Groups in [groups.csv](groups.csv) and memberships in [memberships.csv](memberships.csv), created by [create-groups.sh](create-groups.sh) (not run yet). Catalog and scenarios not created yet.
 
 ## Principle
-Seed only what the platform cannot create: **people** and the **tag value catalog**. Schools, Playground Folders and playgrounds are created through the Self Service API operations as test scenarios, so the seed exercises the real flows instead of bypassing them.
+Seed only what the platform does not create: **people**, **groups and their memberships** (the platform never writes to the directory), and the **tag value catalog**. Schools, Playground Folders and playgrounds are created through the Self Service API operations as test scenarios, so the seed exercises the real flows instead of bypassing them.
 
 Domain: `shankyram.altostrat.com`. All users are Cloud Identity Free users with **no GCP roles of their own**.
 
 ## 1. Users ([users.csv](users.csv))
 
-| Email | Persona | Service group (added through the platform) | Used for |
+| Email | Persona | Groups (seeded, see section 1.1) | Used for |
 |---|---|---|---|
 | `lsb-it-admin1@` | IT Admin | `grp-lsb-it-admins@` | Tag binding test now; creates Playground Folders (API op 06) |
 | `lsb-bu-biz1@` | BU Admin, Business | `grp-lsb-bu-admins@` | BU tag test now; controller of the Business Playground Folder |
@@ -18,7 +18,18 @@ Domain: `shankyram.altostrat.com`. All users are Cloud Identity Free users with 
 | `lsb-owner-cs100@` | Playground owner | none | Owner of the CS 100 playground's projects |
 | `lsb-student1@` to `lsb-student4@` | Student | none | Students 1 and 2 in BA 101, 3 and 4 in CS 100 (API op 08) |
 
-**The seed creates users only; it never adds group memberships.** All group membership (service groups, student and TA groups) is managed outside the platform by people with directory rights, in the Admin console; the platform only reads it. The only bootstrapped member is `IT_ADMINS_INITIAL_MEMBERS` (Day-0 step 4). All other access comes from the platform.
+**Users, groups and memberships are created by an IT Admin with directory rights (a person), never by the platform**, matching how the university manages its directory. The platform only reads groups; playground admins later **map** the student groups to playground slots.
+
+### 1.1 Groups and memberships ([groups.csv](groups.csv), [memberships.csv](memberships.csv))
+
+| Group | Kind | Members (seeded) | Used for |
+|---|---|---|---|
+| `grp-lsb-it-admins@` | Service (Day-0 step 4; skipped if present) | `admin@` (Day-0), `lsb-it-admin1@` | `IT_ADMIN` persona |
+| `grp-lsb-bu-admins@` | Service (Day-0 step 4; skipped if present) | `grp-lsb-it-admins@` (nested, Day-0), `lsb-bu-biz1@`, `lsb-bu-cs1@` | `BU_ADMIN` and `PLATFORM_ADMIN` personas |
+| `grp-ba101-students@` | Students (stands in for a school-managed group) | `lsb-student1@`, `lsb-student2@` | Mapped to the BA 101 playground `students` slot |
+| `grp-cs100-students@` | Students | `lsb-student2@`, `lsb-student3@`, `lsb-student4@` | Mapped to the CS 100 playground `students` slot |
+
+`lsb-student2@` is in both student groups, to test a user in several playgrounds ("which playgrounds am I in"). Playground owners stay individual users. New groups are security groups with no owner.
 
 ## 2. Tag value catalog (`seed/catalog.csv`, loaded into Firestore)
 
@@ -46,7 +57,7 @@ School folders are created once by IT as setup. Negative checks:
 
 ## 4. Tag binding test (needs only the first three users; can run before step 6)
 
-Prerequisite: `lsb-it-admin1@` and `lsb-bu-biz1@` are in their service groups, added by an admin in the Admin console (the platform never changes membership), so the test can run now. Setup as admin@: scratch folder `lsb-tag-test` under University Sandbox, Tag User on it for both users (stands in for the folder-level grants from step 6 and Playground Folder creation).
+Prerequisite: `lsb-it-admin1@` and `lsb-bu-biz1@` are in their service groups (seeded by `create-groups.sh`, section 1.1), so the test can run now.
 
 | User | Bind `cost-center-bu` | Bind `bu-subcategory` | Remove IT's `cost-center-bu` binding |
 |---|---|---|---|
@@ -78,7 +89,13 @@ rm ~/lsb-users-upload.csv
 
 [make-upload-csv.sh](make-upload-csv.sh) fills the Password column from `LSB_SEED_PASSWORD` (or a prompt), refuses to write inside the repo, and rejects passwords shorter than 8 characters or containing a comma. Setting the variable with `export` leaves it in your shell history; prefix the line with a space (if `HISTCONTROL` ignores spaces) or use the prompt to avoid that.
 
-Group memberships are **not** part of the seed: an admin adds them in the Admin console.
+### Creating the groups and memberships
+Run as an IT Admin with directory rights (Super Admin or Groups Admin), signed in to `gcloud` as yourself:
+```bash
+cd ~/git/learning-sandbox/seed            # or ~/work/code/learning-sandbox/seed on Cloudtop
+./create-groups.sh
+```
+[create-groups.sh](create-groups.sh) reads `DIRECTORY_CUSTOMER_ID` and `QUOTA_PROJECT` from `initialize.env`, creates missing groups (security label, no owner), adds missing memberships (a member reached through nesting counts as present), and never deletes anything. Re-run it if a membership fails right after a group or user was created.
 
 Notes:
 - **Licences:** users go into the root org unit. If the domain auto-assigns Google Workspace licences, each user takes one; otherwise they are Cloud Identity Free users.
@@ -88,5 +105,5 @@ Notes:
 ## Open decisions (continue here)
 1. Trim the set or keep all 9 users (the tag test needs only the first three).
 2. Delete or keep `seed/backup/`.
-3. Generate `catalog.csv` and `scenarios.md` (`users.csv` is done).
+3. Generate `catalog.csv` and `scenarios.md` (`users.csv`, `groups.csv`, `memberships.csv` are done).
 4. Tag binding test: memberships are added in the Admin console, so it no longer waits for an API operation.
