@@ -28,12 +28,15 @@ uv run pytest -q
 ```
 
 ## Run locally
-The API uses your ADC as its own identity (Firestore reads, group membership checks).
+The API uses your ADC as its own identity (Firestore reads, group membership checks). It runs in a tmux session `lsb-api`, so it survives a closed terminal or a dropped SSH connection.
 ```bash
-./start.sh                  # http://127.0.0.1:8080
-./start.sh --port 8090      # another port
-./start.sh --reload         # restart on code changes while developing
+./start.sh                  # start (if needed) in tmux and attach; detach with Ctrl-b d
+./start.sh --detach         # start (if needed) and return to the prompt
+./start.sh --status         # running? port, last log lines
+./start.sh --stop           # stop it
+./start.sh --port 8090      # another port (options apply when it starts)
+./start.sh --no-tmux --reload   # foreground, restart on code changes while developing
 ```
-[start.sh](start.sh) sources `src/terraform/control-tower/initialize.sh` (platform settings and quota project), sets `LSB_API_VERSION` to the current git commit, warns if ADC is missing, and runs uvicorn from `.venv`. Any `LSB_*` setting can be exported before running it.
+[start.sh](start.sh) sources `src/terraform/control-tower/initialize.sh` (platform settings and quota project, always this repo's `initialize.env`), sets `LSB_API_VERSION` to the current git commit, warns if ADC is missing, and runs uvicorn from `.venv`. Logs go to `logs/lsb-api.log` (gitignored). Any `LSB_*` setting can be exported before running it.
 
 Then use the CLI ([src/cli](../cli/README.md)): `lsb health api`, `lsb health db`, `lsb health service`.
