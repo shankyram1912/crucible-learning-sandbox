@@ -194,7 +194,7 @@ def test_unknown_path_uses_error_shape():
 
 
 ACL_MATRIX = {   # path -> (admin = IT_ADMIN, bu = BU_ADMIN only, student = USER only)
-    "/v1/health/api": (200, 200, 403),
+    "/v1/health/api": (200, 200, 200),
     "/v1/health/db": (200, 403, 403),
     "/v1/health/service": (200, 200, 200),
     "/v1/platform-users/me/roles": (200, 200, 200),
@@ -247,4 +247,5 @@ def test_user_role_does_not_need_the_roster():
     c, app = client()
     app.state.roster.loaded = False
     assert c.get("/v1/health/service", headers=auth("student")).status_code == 200
-    assert c.get("/v1/health/api", headers=auth("admin")).status_code == 500
+    assert c.get("/v1/health/api", headers=auth("student")).status_code == 200
+    assert c.get("/v1/health/db", headers=auth("admin")).status_code == 500

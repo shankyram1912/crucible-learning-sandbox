@@ -32,7 +32,7 @@ class Reader:
 
 # Cached roster: ADMIN is an IT Admin, STUDENT is nobody. Live directory: ADMIN was removed, STUDENT was added.
 CACHED = {IT: {ADMIN: "DIRECT"}, BU: {ADMIN: "INDIRECT"}}
-LIVE = {ADMIN: {OTHER_GROUP: "DIRECT"}, STUDENT: {BU: "DIRECT", OTHER_GROUP: "DIRECT"}}
+LIVE = {ADMIN: {OTHER_GROUP: "DIRECT"}, STUDENT: {IT: "DIRECT", OTHER_GROUP: "DIRECT"}}
 
 
 def app_with(use_cache, reader, load=True):
@@ -47,25 +47,25 @@ def app_with(use_cache, reader, load=True):
 def test_cache_mode_uses_roster_only():
     reader = Reader(CACHED, LIVE)
     c, _ = app_with(True, reader)
-    assert c.get("/v1/health/api", headers=auth("admin")).status_code == 200
-    assert c.get("/v1/health/api", headers=auth("student")).status_code == 403
+    assert c.get("/v1/health/db", headers=auth("admin")).status_code == 200
+    assert c.get("/v1/health/db", headers=auth("student")).status_code == 403
     assert reader.live_calls == []
 
 
 def test_live_mode_reads_directory_and_refreshes_roster():
     reader = Reader(CACHED, LIVE)
     c, roster = app_with(False, reader)
-    assert c.get("/v1/health/api", headers=auth("student")).status_code == 200   # added in the directory
-    assert c.get("/v1/health/api", headers=auth("admin")).status_code == 403     # removed in the directory
+    assert c.get("/v1/health/db", headers=auth("student")).status_code == 200   # added in the directory
+    assert c.get("/v1/health/db", headers=auth("admin")).status_code == 403     # removed in the directory
     assert reader.live_calls == [STUDENT, ADMIN]
-    assert roster.groups_of(STUDENT) == {BU: "DIRECT"}   # only admin groups are kept
+    assert roster.groups_of(STUDENT) == {IT: "DIRECT"}   # only admin groups are kept
     assert roster.groups_of(ADMIN) == {}
 
 
 def test_live_mode_user_operation_never_calls_directory():
     reader = Reader(CACHED, LIVE)
     c, _ = app_with(False, reader)
-    assert c.get("/v1/health/service", headers=auth("student")).status_code in (200, 503)
+    assert c.get("/v1/health/api", headers=auth("student")).status_code == 200
     assert c.get("/v1/platform-users/me/roles", headers=auth("student")).status_code == 200
     assert reader.live_calls == []
 
@@ -90,18 +90,18 @@ def test_live_mode_reuses_live_result_for_own_email():
 def test_live_mode_works_without_roster_load():
     reader = Reader(CACHED, LIVE)
     c, _ = app_with(False, reader, load=False)
-    assert c.get("/v1/health/api", headers=auth("student")).status_code == 200
+    assert c.get("/v1/health/db", headers=auth("student")).status_code == 200
 
 
 def test_live_mode_directory_failure_is_500_without_fallback():
     reader = Reader(CACHED, LIVE, fail_live=True)
     c, _ = app_with(False, reader)
-    r = c.get("/v1/health/api", headers=auth("admin"))   # the cache would have allowed it
+    r = c.get("/v1/health/db", headers=auth("admin"))   # the cache would have allowed it
     assert r.status_code == 500 and r.json()["error"]["code"] == "INTERNAL"
 
 
 def test_refresh_user_on_unloaded_roster_keeps_lookups_closed():
     roster = AdminRoster(settings(), Reader(CACHED, LIVE))
-    assert roster.refresh_user(STUDENT) == {BU: "DIRECT"}
+    assert roster.refresh_user(STUDENT) == {IT: "DIRECT"}
     with pytest.raises(RosterNotLoaded):
         roster.groups_of(STUDENT)

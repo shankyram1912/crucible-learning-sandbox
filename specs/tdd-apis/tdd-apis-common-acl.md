@@ -33,7 +33,7 @@ One access control list decides who may call each operation. It is **configurati
 
 | Operation | Route | Roles |
 |---|---|---|
-| `health.api` | `GET /v1/health/api` | `IT_ADMIN`, `BU_ADMIN` |
+| `health.api` | `GET /v1/health/api` | `USER` |
 | `health.db` | `GET /v1/health/db` | `IT_ADMIN` |
 | `health.service` | `GET /v1/health/service` | `USER` |
 | `platform_users.roles.self` | `GET /v1/platform-users/me/roles` | `USER` |

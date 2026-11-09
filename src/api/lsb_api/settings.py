@@ -22,7 +22,7 @@ DEFAULT_ALLOWED_AUDIENCES = f"{GCLOUD_ADC_CLIENT_ID},{GCLOUD_CLI_CLIENT_ID}"
 # Access control list (specs/tdd-apis/tdd-apis-common-acl.md): every operation mapped to 1..N roles.
 # Override with LSB_ACL as JSON, for example LSB_ACL='{"health.api": ["IT_ADMIN"], ...}' (the whole map).
 DEFAULT_ACL: dict[str, list[str]] = {
-    "health.api": ["IT_ADMIN", "BU_ADMIN"],
+    "health.api": ["USER"],
     "health.db": ["IT_ADMIN"],
     "health.service": ["USER"],
     "platform_users.roles.self": ["USER"],                    # GET /v1/platform-users/me/roles

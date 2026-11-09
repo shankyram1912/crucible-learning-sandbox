@@ -67,7 +67,7 @@ Add it to your shell profile (`~/.bashrc`, `~/.zshrc`) to keep it. For a single 
 
 | Command | Who can run it | Shows |
 |---|---|---|
-| `lsb health api` | IT Admins, BU Admins | API is up: version, the caller the API saw, latency |
+| `lsb health api` | Any signed-in user of the organization | API is up: version, the caller the API saw, latency |
 | `lsb health db` | IT Admins | Each data store with its role and latency, or an error code |
 | `lsb health service` | Any signed-in user of the organization | Service, CONFIG and RUNTIME JOBS as OK or NOT OK only |
 

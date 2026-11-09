@@ -15,7 +15,7 @@ Health tells an operator whether the Self Service APIs are up and whether they c
 ## 1. Common rules
 
 1. **Authentication is required** for all three, like every other call ([tdd-apis-master.md](tdd-apis-master.md) principle 9, [tdd-apis-common-auth.md](tdd-apis-common-auth.md)). Both also get the common request and response headers and the RequestContext ([tdd-apis-common-models.md](tdd-apis-common-models.md)). There is no unauthenticated health endpoint. On Cloud Run later, the service uses the default TCP startup probe, so no HTTP probe needs to call these endpoints.
-2. **Authorization:** by the common ACL ([tdd-apis-common-acl.md](tdd-apis-common-acl.md)), whatever the client: `health.api` for `IT_ADMIN` and `BU_ADMIN`, `health.db` for `IT_ADMIN`, `health.service` for any user (`USER`). Responses contain no secrets and no internal error text.
+2. **Authorization:** by the common ACL ([tdd-apis-common-acl.md](tdd-apis-common-acl.md)), whatever the client: `health.api` and `health.service` for any user (`USER`), `health.db` for `IT_ADMIN`. Responses contain no secrets and no internal error text.
 3. **Read-only.** No operation writes anything, anywhere.
 4. **Synchronous.** All return the result directly (`200` or `503`), never a job.
 5. **Platform identity for data checks.** `health db` and `health service` read Firestore with the API's own runtime identity (locally the developer's ADC, on Cloud Run `sa-lsb-api`), not the caller's access token, because it checks the platform's access, not the caller's.

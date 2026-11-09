@@ -76,7 +76,7 @@ def test_acl_and_roles_api_use_the_same_roles(monkeypatch):
     monkeypatch.setattr(acl, "personas", spy)
     c = app_with()
     for who in ("admin", "bu"):
-        c.get("/v1/health/api", headers=auth(who))   # IT_ADMIN/BU_ADMIN route, so the ACL reads roles
+        c.get("/v1/health/db", headers=auth(who))   # IT_ADMIN route, so the ACL reads roles
     assert len(seen) == 2
     for email, held in seen.items():
         api = c.get(f"/v1/platform-users/{email}/roles", headers=auth("admin")).json()
