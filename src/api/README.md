@@ -15,12 +15,11 @@ FastAPI service. Specs: [specs/tdd-apis/](../../specs/tdd-apis/tdd-apis-master.m
 | `start.sh` | Starts the API locally |
 
 ## Install
-Needs [uv](https://docs.astral.sh/uv/). On a Cloudtop, point uv at Corp Airlock for this shell:
+Needs [uv](https://docs.astral.sh/uv/) (it fetches a suitable Python itself).
 ```bash
-export UV_DEFAULT_INDEX=http://airlock-proxy.uplink.goog:999/python/artifact-foundry-prod/python-3p-limited-internal-use/simple/
-export UV_INSECURE_HOST=airlock-proxy.uplink.goog
 cd src/api && uv sync
 ```
+Googlers on corp machines: configure Corp Airlock once in `~/.config/uv/uv.toml` (see [src/cli/README.md](../cli/README.md)); nothing changes in the project.
 
 ## Test
 ```bash
@@ -39,4 +38,4 @@ The API uses your ADC as its own identity (Firestore reads, group membership che
 ```
 [start.sh](start.sh) sources `src/terraform/control-tower/initialize.sh` (platform settings and quota project, always this repo's `initialize.env`), sets `LSB_API_VERSION` to the current git commit, warns if ADC is missing, and runs uvicorn from `.venv`. Logs go to `logs/lsb-api.log` (gitignored). Any `LSB_*` setting can be exported before running it.
 
-Then use the CLI ([src/cli](../cli/README.md)): `lsb health api`, `lsb health db`, `lsb health service`.
+Then use the CLI ([user guide](../../guides/lsb-cli-user-guide.md), or `uv run lsb ...` from [src/cli](../cli/README.md)): `lsb health api`, `lsb health db`, `lsb health service`.

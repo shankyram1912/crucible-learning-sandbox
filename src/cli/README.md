@@ -1,26 +1,23 @@
-# lsb-cli: `lsb` command line
+# lsb-cli: `lsb` command line (developers)
 
-Typer + Rich client for the Self Service APIs. Conventions: [tdd-apis-common-cli.md](../../specs/tdd-apis/tdd-apis-common-cli.md).
+Typer + Rich client for the Self Service APIs. **Users: see the [lsb CLI user guide](../../guides/lsb-cli-user-guide.md)** (install from the git URL, sign in, commands). Conventions: [tdd-apis-common-cli.md](../../specs/tdd-apis/tdd-apis-common-cli.md).
 
-## Install
-On a Cloudtop, set the two `UV_*` variables from [src/api/README.md](../api/README.md) first.
+## Work on the CLI
 ```bash
-cd src/cli && uv sync
-alias lsb="$PWD/.venv/bin/lsb"
+cd src/cli
+uv sync                     # project environment in .venv
+uv run lsb health api       # run from the source tree
 ```
 
-## Sign in
-`lsb` uses your ADC; there is no separate login:
+## Use your working copy as the installed `lsb`
+An editable install runs the code in your clone, so edits apply immediately:
 ```bash
-gcloud auth application-default login
+uv tool install --editable --reinstall ~/work/code/learning-sandbox/src/cli
 ```
+Switch back to the released version with the install command from the user guide (`uv tool install --reinstall "git+https://github.com/..."`).
 
-## Use
-```bash
-lsb health api        # API up, shows the caller the API saw
-lsb health db         # each Firestore database (Platform Admins only)
-lsb health service    # OK / NOT OK only
-lsb --json health service
-lsb --api http://localhost:8080 health api    # or LSB_API_URL
-```
-Exit codes: `0` ok, `1` health check failing, `2` request rejected (401/403/...), `3` API unreachable or 500.
+## Against a local API
+Start the API with [src/api/start.sh](../api/README.md) (default `http://localhost:8080`, which is also `lsb`'s default URL).
+
+## Notes
+- Googlers on corp machines: uv must use Corp Airlock. Configure it once in `~/.config/uv/uv.toml` (default index = the airlock proxy URL from `/etc/pip.conf`, with `allow-insecure-host` for its host); no project file or command changes.
