@@ -34,7 +34,7 @@ gcloud services enable cloudresourcemanager.googleapis.com serviceusage.googleap
 1. Sign in to the Google Cloud console as the org admin and open **Cloud Shell**.
 2. Clone the repo and go to this folder:
    ```bash
-   git clone https://github.com/shankyram1912/learning-sandbox.git
+   git clone https://github.com/shankyram1912/crucible-learning-sandbox.git
    cd learning-sandbox/src/terraform/control-tower
    ```
 3. Create your settings file and fill it in:

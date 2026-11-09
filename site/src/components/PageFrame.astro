@@ -1,0 +1,66 @@
+---
+import Default from '@astrojs/starlight/components/PageFrame.astro';
+---
+
+<Default><slot name="header" slot="header" /><slot name="sidebar" slot="sidebar" /><slot /></Default>
+
+<script>
+  import mermaid from 'mermaid';
+
+  async function renderMermaidBlocks() {
+    // Expressive Code / Shiki marks ```mermaid blocks with data-language="mermaid"
+    const figures = document.querySelectorAll<HTMLElement>(
+      'figure[data-language="mermaid"], pre[data-language="mermaid"], pre:has(> code.language-mermaid)',
+    );
+    if (!figures.length) return;
+
+    const isLight = document.documentElement.dataset.theme === 'light';
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: isLight ? 'neutral' : 'dark',
+      fontFamily: 'Space Grotesk Variable, Space Grotesk, system-ui, sans-serif',
+      securityLevel: 'strict',
+    });
+
+    let idx = 0;
+    for (const el of figures) {
+      let source = el.dataset.mermaidSource;
+      if (!source) {
+        const codeEl = el.querySelector('code');
+        if (!codeEl) continue;
+        // Expressive code wraps lines in .ec-line; join lines cleanly
+        const lines = codeEl.querySelectorAll('.ec-line');
+        source = lines.length
+          ? Array.from(lines)
+              .map((l) => l.textContent ?? '')
+              .join('\n')
+          : (codeEl.textContent ?? '');
+      }
+      source = source.trim();
+      if (!source) continue;
+
+      const wrapper = document.createElement('div');
+      wrapper.className = 'crucible-mermaid';
+      wrapper.dataset.language = 'mermaid';
+      wrapper.dataset.mermaidSource = source;
+
+      try {
+        const id = `crucible-mmd-${Date.now()}-${idx++}`;
+        const { svg } = await mermaid.render(id, source);
+        wrapper.innerHTML = svg;
+        el.replaceWith(wrapper);
+      } catch (err) {
+        console.warn('Mermaid render warning:', err);
+      }
+    }
+  }
+
+  renderMermaidBlocks();
+  document.addEventListener('astro:page-load', renderMermaidBlocks);
+
+  // Re-render when the user toggles dark/light mode
+  new MutationObserver(() => {
+    const rendered = document.querySelectorAll<HTMLElement>('.crucible-mermaid[data-mermaid-source]');
+    if (rendered.length) renderMermaidBlocks();
+  }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+</script>

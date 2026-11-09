@@ -3,7 +3,7 @@
 > Master: [brs-master.md](brs-master.md) · Technical design: [tdd-master.md](../02-tdd/tdd-master.md)
 > Persona: IT Admin (members of `grp-lsb-it-admins@`)
 
-Each journey is one sentence, followed by the design decisions behind it. Questions still to settle are marked **Open**.
+Each journey is one sentence, followed by the design decisions behind it.
 
 ---
 
@@ -11,12 +11,12 @@ Each journey is one sentence, followed by the design decisions behind it. Questi
 As an IT Admin, I want to add, version, update and retire GCP service definitions, to accomplish one controlled list of services that templates are built from.
 
 - Each service has versions, and one version is marked current.
-- A version holds: name and description, the Terraform module and its pinned ref, the APIs it enables, the services it requires, whether it's on by default or optional, max per project, min per student, sizes and settings, and the groups it expects (for example students).
+- A version holds: name and description, the Terraform module and its pinned ref, the APIs it enables, the services it requires, its requirement mode (**mandatory**, **on by default**, or **optional**), max per project, min per student, sizes and settings, and the groups it expects (for example students).
+- Mandatory services (for example Service Account) are always enabled in every template and playground that includes them and cannot be unchecked.
 - Which roles each group gets is defined in the Terraform module, not in the catalog.
 - Elevated privileges are a separate service, not an option on an existing one.
 - New templates default to the current version; older versions stay selectable until retired.
 - A service or version that's in use can only be retired, never deleted. Deleting is allowed only if it was never used.
-- **Open:** should a service also be markable as **mandatory** (always on, can't be turned off), like Service Account?
 
 ---
 
@@ -24,7 +24,7 @@ As an IT Admin, I want to add, version, update and retire GCP service definition
 As an IT Admin, I want to build playground templates from service versions, to accomplish ready-made playground shapes that BU Admins choose from.
 
 - Each template has versions, and one version is marked current. Every edit creates a new version.
-- A version holds: name and description, the service versions it includes (each on by default or optional), students per project (which, with the playground's expected students, decides how many projects a playground gets), the groups it expects, and quota and size settings within each service's limits.
+- A version holds: name and description, the service versions it includes (each mandatory, on by default, or optional), students per project (which, with the playground's expected students, decides how many projects a playground gets), the groups it expects, and quota and size settings within each service's limits.
 - A playground keeps the template version it was created with, until it's explicitly upgraded.
 - Every template is available in every Playground Folder.
 - Retire, don't delete, once in use.

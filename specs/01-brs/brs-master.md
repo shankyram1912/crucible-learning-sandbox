@@ -99,9 +99,9 @@ flowchart TD
 - The platform **copies the tag values onto each project as labels**, so billing reports that work on labels show the same cost center, code and category. Tags are the source of truth; labels are the copy.
 - IT's three tags (cost center, code, category) are set only on the Playground Folder. The BU adds its own two (tracking code, subcategory) on each playground.
 
-**The service catalog.** Each service (for example Cloud SQL) is described once and **versioned**. A service version points to the **Terraform module** that builds it, and declares the APIs it enables, the services it needs first, whether it's on by default or optional, its limits (max per project, min per student), its sizes, the groups it needs (for example students), and the **singleton** and **app resources** it gives students (section 2.5). Which roles each group gets is part of the Terraform module. One version is marked current.
+**The service catalog.** Each service (for example Cloud SQL) is described once and **versioned**. A service version points to the **Terraform module** that builds it, and declares the APIs it enables, the services it needs first, its requirement mode (**mandatory**, **on by default**, or **optional**), its limits (max per project, min per student), its sizes, the groups it needs (for example students), and the **singleton** and **app resources** it gives students (section 2.5). Which roles each group gets is part of the Terraform module. One version is marked current.
 
-**Playground templates.** A template is a ready-made playground shape, also **versioned**. A template version picks service versions (each on by default or optional), sets **students per project**, and lists the groups its services need. Every template is available in every Playground Folder.
+**Playground templates.** A template is a ready-made playground shape, also **versioned**. A template version picks service versions (each mandatory, on by default, or optional), sets **students per project**, and lists the groups its services need. Every template is available in every Playground Folder.
 
 **Versioning and retiring.** Every change to a service or template creates a new version; nothing is edited in place, so existing playgrounds never change underneath their users. Anything in use (a service, a template, a tag value) can only be retired, which stops new use but keeps existing uses. Tag values can't be changed; a different value is a new entry.
 
@@ -122,7 +122,7 @@ flowchart TD
   PRJ -->|"linked to"| BA["Folder's billing account"]
 ```
 
-**Who runs a playground.** The Playground Folder's **BU Admin group** always runs it. A BU Admin can also name an optional **Playground Admin group** (for example the course's TAs). Playground Admins have the same rights as BU Admins, but for that one playground only: they own its projects, can manage them in the Cloud console, and can configure the playground through the platform. They have no rights on the Playground Folder or on other playgrounds.
+**Who runs a playground.** The Playground Folder's **BU Admin group** always runs it. A BU Admin can also name an optional **Playground Admin group** (for example the course's TAs). Playground Admins have the same rights as BU Admins, but for that one playground only (except decommissioning): they own its projects, can manage them in the Cloud console, and can configure the playground through the platform. They have no rights on the Playground Folder or on other playgrounds.
 
 **What a BU Admin sees.** Only the Playground Folders whose BU Admin group they're in, and the playgrounds inside them. A Playground Admin sees only the playgrounds whose Playground Admin group they're in.
 
@@ -130,14 +130,19 @@ flowchart TD
 1. **Picks a template.** The playground keeps that template version until it's explicitly upgraded.
 2. **Enters the expected number of students.** The platform creates expected students ÷ the template's students per project projects, rounded up (for example 350 students at 100 per project gives 4 projects).
 3. **Adds the BU tags:** a tracking code and subcategory, on top of the IT tags it inherits from the folder.
-4. **Optionally names a Playground Admin group** (at most one), for example the course's TAs, to run this playground alongside the BU Admins.
-5. **Chooses services:** the template's default services are on; optional ones can be turned on. Services a chosen service needs are added automatically.
-6. **Maps user groups:** existing groups of the people who will use the playground, students or other designated users (for example `grp-cs101-students@`), are mapped to the groups the template's services need. The platform never creates groups or changes their members.
-7. **Sets per-student allowances** for each service, within the limits the template and service allow.
+4. **Sets a required playground budget** (in the folder's billing account currency, with the same 50, 75, 90 and 100% alert levels), and **optionally sets a per-project shard budget** less than or equal to the playground budget.
+5. **Optionally names a Playground Admin group** (at most one), for example the course's TAs, to run this playground alongside the BU Admins.
+6. **Chooses services:** mandatory services are always on; default services start on; optional ones can be turned on. Services a chosen service needs are added automatically.
+7. **Maps user groups:** existing groups of the people who will use the playground, students or other designated users (for example `grp-cs101-students@`), are mapped to the groups the template's services need. The platform never creates groups or changes their members.
+8. **Sets per-student allowances** for each service, within the limits the template and service allow.
 
 The platform creates the projects, links them to the folder's billing account, copies the tags onto them as labels, and makes the BU Admin group, the IT Admins group and the Playground Admin group owners of every project.
 
-**Adding a service later.** Turning on another service creates a new version of the playground's configuration. The platform then enables that service in **every project** of the playground, and students get its singleton resource the next time they enter. Services are add-only: once on, a service isn't turned off, so no student work is ever lost.
+**Evolving and closing a playground.**
+- **Adding a service:** turning on another service creates a new version of the playground's configuration. The platform enables that service in **every project** of the playground, and students get its singleton resource the next time they enter. Services are **add-only**: once on, a service isn't turned off, so no student work is ever lost. Lowering per-student allowances is non-destructive (only gates new creations).
+- **Upgrading the template version:** BU Admins, Playground Admins (for their playground), and IT Admins (single or bulk) can upgrade a playground to a newer template version. Upgrades are additive and non-destructive: new mandatory/default services are added, already-enabled services stay enabled, and updated service module versions are applied.
+- **Expanding capacity:** increasing expected students (grow-only) adds new project shards initialized with all enabled services, leaving existing shards untouched.
+- **Decommissioning:** BU Admins and IT Admins (not Playground Admins) can decommission a playground, which disables billing on its projects to stop spend immediately without deleting projects, folders, or resources (deletion is external cleanup outside current scope).
 
 ### 2.5 Student level: workspaces and app containers
 
@@ -249,12 +254,13 @@ Organization
 
 1. **Cost attribution:** IT's three tags on every Playground Folder, the BU's two tags on every playground; projects inherit them as tags and carry them as labels.
 2. **One billing account per Playground Folder,** chosen at creation and never changed.
-3. **One budget per Playground Folder,** required, in the billing account's currency, with alert levels at 50, 75, 90 and 100%. Notifications are out of scope for now.
+3. **Budgets:** one **required** budget per Playground Folder, one **required** budget per playground, and an **optional** per-project shard budget (less than or equal to the playground budget) — all in the billing account's currency with alert levels at 50, 75, 90 and 100% (notifications out of scope for now).
 4. **Versioned, never edited in place;** retire, don't delete, once in use.
-5. **Services are add-only** in a playground.
-6. **Students work through the platform,** within allowances shared across their app containers.
-7. **No simulate or dry-run mode:** every action acts on real Google Cloud.
-8. **Every change records who asked for it.**
+5. **Services are add-only** in a playground; capacity (`expected_students`) is grow-only; template upgrades are explicit and additive.
+6. **Decommissioning stops billing without deleting:** decommissioning a playground (BU/IT Admins only) disables billing on its projects; resource/project deletion is external cleanup outside current scope.
+7. **Students work through the platform,** within allowances shared across their app containers.
+8. **No simulate or dry-run mode:** every action acts on real Google Cloud.
+9. **Every change records who asked for it.**
 
 ---
 
@@ -264,7 +270,7 @@ Organization
 |---|---|---|---|---|
 | Service catalog, templates, tag catalog | Manage | Read | none | none |
 | Playground Folder | Create, update, decommission | Read the folders whose group they're in | none | none |
-| Playground | Same as BU Admin | Create, configure, decommission | Configure their own playground | Sees the playgrounds they're mapped to |
+| Playground | Same as BU Admin (+ bulk template upgrade) | Create, configure, upgrade, expand, decommission | Configure, upgrade, expand their own playground (no decommission) | Sees the playgrounds they're mapped to |
 | Projects in a playground | Owner | Owner | Owner | Usage rights on their own resources |
 | Workspace and app containers | Same as BU Admin | To be specified | Same as BU Admin, in their playground | Initialize, create and delete through the platform |
 

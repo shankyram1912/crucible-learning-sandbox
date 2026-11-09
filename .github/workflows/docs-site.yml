@@ -1,0 +1,50 @@
+# Deploys the Crucible Starlight docs site (site/) to GitHub Pages.
+# Zero duplicated .md files: Astro's custom loader reads ../specs, ../guides, and ../todolist.md directly.
+# One-time setup on GitHub: Settings -> Pages -> Build and deployment -> Source: GitHub Actions.
+name: docs-site
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'specs/**'
+      - 'guides/**'
+      - 'todolist.md'
+      - 'site/**'
+      - '.github/workflows/docs-site.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --registry=https://registry.npmjs.org/
+        working-directory: site
+      - run: npm run build
+        working-directory: site
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

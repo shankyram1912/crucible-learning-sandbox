@@ -24,14 +24,14 @@ You need:
 ## 2. Install
 
 ```bash
-uv tool install "git+https://github.com/shankyram1912/learning-sandbox#subdirectory=src/cli"
+uv tool install "git+https://github.com/shankyram1912/crucible-learning-sandbox#subdirectory=src/cli"
 lsb --help
 ```
 uv puts `lsb` in its own environment and links the command into `~/.local/bin`. If `lsb` is not found afterwards, run `uv tool update-shell` and open a new terminal.
 
 | Task | Command |
 |---|---|
-| Update to the latest version | `uv tool install --reinstall "git+https://github.com/shankyram1912/learning-sandbox#subdirectory=src/cli"` |
+| Update to the latest version | `uv tool install --reinstall "git+https://github.com/shankyram1912/crucible-learning-sandbox#subdirectory=src/cli"` |
 | Uninstall | `uv tool uninstall lsb-cli` |
 
 ---

@@ -1,23 +1,25 @@
-# Learning Sandbox (`learning-sandbox`)
+# Crucible — Learning Sandbox (`crucible-learning-sandbox`)
 
-The **LSB Control Tower** manages Google Cloud learning sandboxes for a university: IT Admins create **Playground Folders** under school folders, BU Admins create **playgrounds** (folder plus projects from a template) inside them, and students get access to the services enabled in their playground. Everything is driven through the **Learning Sandbox Self Service APIs** and the `lsb` command line tool; Terraform is used only for Day-0 bootstrap, playground project creation and enabling services.
+**Crucible** (the **LSB Control Tower**) manages governed, multi-tenant Google Cloud & AI learning sandboxes: IT Admins set up **Playground Folders**, version-tracked **Service Catalogs**, and **Playground Templates**; BU Admins and optional **Playground Admins** create **playgrounds** (folder plus project shards from a template) inside them; and students initialize isolated workspaces and build **app containers** within pooled allowances. Everything is driven through the **Self Service APIs** and the `lsb` CLI.
+
+> **Documentation Site (Astro Starlight):** `https://shankyram1912.github.io/crucible-learning-sandbox/` (built directly in memory from `specs/`, `guides/`, and `todolist.md` via `site/` with zero duplicated `.md` files).
 
 ## Repository structure
 
 ```text
-learning-sandbox/
-├── specs/                          Current specs (source of truth)
-│   ├── tdd-master.md       Principles: Terraform, billing labels, playground tags, data split, IAM and access model
-│   ├── tdd-control-tower-master.md      Day-0 Control Tower bootstrap (run.sh and its operations)
-│   ├── tdd-apis-master.md         Self Service APIs and the lsb CLI
-│   ├── tdd-playground-master.md  Playground Terraform pipeline (Cloud Build)
-│   └── tdd-playground-services.md         GCP services offered in playgrounds
+crucible-learning-sandbox/
+├── specs/                          Current specifications (single source of truth)
+│   ├── 01-brs/                     Business Requirements (brs-master, IT Admin & BU Admin CUJs)
+│   └── 02-tdd/                     Technical Design (tdd-master, control-tower, apis, playground, data, tags-labels)
 ├── src/
-│   └── terraform/control-tower/    Day-0 bootstrap: run.sh, initialize.sh, one folder per operation
-├── seed/                           Test users and seed data proposal (seed.md, users.csv)
-├── guides/                         User guides (lsb-cli-user-guide.md)
+│   ├── terraform/control-tower/    Day-0 bootstrap: run.sh, initialize.sh, operations 01–05
+│   ├── api/                        FastAPI Self Service APIs (lsb_api) + lsb-api-server.sh
+│   └── cli/                        Typer CLI (lsb)
+├── site/                           Astro + Starlight docs site (reads ../specs & ../guides directly)
+├── seed/                           Test users, groups, and memberships
+├── guides/                         End-user guides (lsb-cli-user-guide.md)
 ├── todolist.md                     Build sequence and status
-└── specs-reference/                Earlier BRS and TDD (01-brs, 02-tdd), kept for reference only; superseded by specs/
+└── specs-reference/                Earlier BRS and TDD, kept for reference
 ```
 
 ## Getting started
