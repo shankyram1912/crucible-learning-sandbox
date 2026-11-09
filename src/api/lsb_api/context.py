@@ -12,6 +12,8 @@ import requests
 from google.auth import jwt
 from fastapi import Request
 
+from lsb_api.admin_roster import RosterNotLoaded
+from lsb_api.directory import DirectoryError
 from lsb_api.errors import ApiError
 from lsb_api.models.common import ErrorCode, Persona, TokenType
 from lsb_api.settings import Settings
@@ -43,7 +45,8 @@ class RequestContext:
     received_at: float
     caller: Caller
     client: Client
-    _personas: set[Persona] | None = field(default=None, repr=False)
+    _roles: "UserRoles | None" = field(default=None, repr=False)   # caller's roles, cached per request
+    _roles_live: bool = field(default=False, repr=False)            # _roles came from a live directory read
 
 
 class TokenVerifier:
@@ -119,23 +122,45 @@ def personas_from_groups(settings: Settings, groups: set[str]) -> set[Persona]:
     return found
 
 
-def personas(request: Request, ctx: RequestContext) -> set[Persona]:
-    """The caller's personas from the in-memory admin roster (no directory call per request)."""
-    if ctx._personas is None:
-        groups = set(request.app.state.roster.groups_of(ctx.caller.email))
-        ctx._personas = {Persona.USER} | personas_from_groups(request.app.state.settings, groups)
-    return ctx._personas
+ROLE_ORDER = [Persona.USER, Persona.BU_ADMIN, Persona.IT_ADMIN, Persona.PLATFORM_ADMIN]
 
 
-def require_persona(request: Request, ctx: RequestContext, persona: Persona,
-                    denied_message: str | None = None) -> None:
+@dataclass(frozen=True)
+class UserRoles:
+    email: str                 # lowercase
+    roles: list[Persona]       # every role held, in ROLE_ORDER; always includes USER
+    groups: dict[str, str]     # {admin group: DIRECT|INDIRECT} that give those roles
+
+
+def roles_of(request: Request, email: str, *, live: bool = False) -> UserRoles:
+    """The one place that derives a user's roles: admin groups plus personas_from_groups.
+
+    Groups come from the in-memory admin roster, or with `live` from the directory (written back into the
+    roster). Used by the ACL (through caller_roles) and by the platform roles API. 500 INTERNAL if the
+    roster has not loaded yet, or if the live directory read fails (no fallback to the cache).
+    """
+    email = email.strip().lower()
+    request_id = getattr(request.state, "request_id", None)
+    roster = request.app.state.roster
     try:
-        ok = persona in personas(request, ctx)
-    except ApiError:
-        raise
-    except Exception:
-        log.exception("persona lookup failed request_id=%s", ctx.request_id)
+        groups = roster.refresh_user(email) if live else roster.groups_of(email)
+    except RosterNotLoaded as exc:
+        log.warning("admin roster not loaded request_id=%s detail=%s", request_id, exc)
         raise ApiError(ErrorCode.INTERNAL, "Admin roster not available yet")
-    if not ok:
-        raise ApiError(ErrorCode.PERMISSION_DENIED,
-                       denied_message or f"This operation needs the {persona.value} persona")
+    except DirectoryError as exc:
+        log.error("live role check failed request_id=%s email=%s detail=%s", request_id, email, exc)
+        raise ApiError(ErrorCode.INTERNAL, "Directory read for the role check failed")
+    held = {Persona.USER} | personas_from_groups(request.app.state.settings, set(groups))
+    return UserRoles(email=email, roles=[r for r in ROLE_ORDER if r in held], groups=groups)
+
+
+def caller_roles(request: Request, ctx: RequestContext, *, live: bool = False) -> UserRoles:
+    """The caller's roles, computed once per request and cached on the context (a live read wins)."""
+    if ctx._roles is None or (live and not ctx._roles_live):
+        ctx._roles, ctx._roles_live = roles_of(request, ctx.caller.email, live=live), live
+    return ctx._roles
+
+
+def personas(request: Request, ctx: RequestContext, *, live: bool = False) -> set[Persona]:
+    """The caller's roles as a set, for ACL checks."""
+    return set(caller_roles(request, ctx, live=live).roles)

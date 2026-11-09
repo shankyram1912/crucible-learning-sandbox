@@ -9,6 +9,7 @@ import os
 import time
 import uuid
 from pathlib import Path
+from urllib.parse import quote
 
 import google.auth
 import httpx
@@ -179,26 +180,22 @@ def health_service():
 
 
 # ---------------------------------------------------------------------------------------------
-# lsb platform-users role [EMAIL]
+# lsb platform-users roles [EMAIL]
 # ---------------------------------------------------------------------------------------------
-ROLE_LABEL = {"IT_ADMIN": "IT Admin", "BU_ADMIN": "BU Admin", "OTHER": "no platform role"}
-
-
-@platform_users_app.command("role")
-def platform_role(email: str = typer.Argument(None, help="Another user's email; default: you")):
-    """Platform role (IT_ADMIN, BU_ADMIN or OTHER) from the configured admin groups."""
-    r = _get("/v1/platform-users/role", params={"email": email} if email else None)
+@platform_users_app.command("roles")
+def platform_roles(email: str = typer.Argument(None, help="Another user's email; default: you")):
+    """All platform roles (USER, BU_ADMIN, IT_ADMIN, PLATFORM_ADMIN) and the admin groups that give them."""
+    r = _get(f"/v1/platform-users/{quote(email, safe='@')}/roles" if email else "/v1/platform-users/me/roles")
     body = _handle_errors(r, (200,))
     if opts.json:
         console.print_json(data=body)
         return
-    role = body["platform_role"]
-    mark = "[green]✔[/green]" if role != "OTHER" else "[dim]–[/dim]"
-    via = ""
-    if body.get("matched_group"):
-        how = "directly" if body.get("relation") == "DIRECT" else "through a nested group"
-        via = f"    member of [bold magenta]{body['matched_group']}[/bold magenta] {how}"
-    console.print(f"\n  {mark} [bold magenta]{body['email']}[/bold magenta]    [bold]{role}[/bold] ({ROLE_LABEL.get(role, role)}){via}\n")
+    roles = "  ".join(f"[bold]{x}[/bold]" for x in body["roles"])
+    console.print(f"\n  [green]✔[/green] [bold magenta]{body['email']}[/bold magenta]    {roles}")
+    for g in body.get("groups", []):
+        how = "direct" if g["relation"] == "DIRECT" else "nested"
+        console.print(f"      member of [bold magenta]{g['group']}[/bold magenta] ({how})")
+    console.print()
 
 
 if __name__ == "__main__":

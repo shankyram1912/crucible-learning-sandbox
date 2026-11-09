@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import threading
 import time
 
 from lsb_api.directory import DirectoryReader
@@ -28,6 +29,7 @@ class AdminRoster:
         self._members: dict[str, dict[str, str]] = {}   # group email -> {user email: DIRECT|INDIRECT}
         self.loaded_at: float | None = None
         self.last_error: str | None = None
+        self._lock = threading.Lock()   # guards copy-on-write updates of _members
 
     @property
     def groups(self) -> list[str]:
@@ -39,7 +41,8 @@ class AdminRoster:
         reader = self._reader or DirectoryReader(cache_seconds=0)
         self._reader = reader
         fresh = {g: reader.group_members(g) for g in self.groups}
-        self._members, self.loaded_at, self.last_error = fresh, time.time(), None
+        with self._lock:
+            self._members, self.loaded_at, self.last_error = fresh, time.time(), None
         log.info("admin roster loaded: %s", ", ".join(f"{g}={len(m)}" for g, m in fresh.items()))
 
     def _require(self) -> None:
@@ -51,6 +54,29 @@ class AdminRoster:
         self._require()
         email = email.strip().lower()
         return {g: m[email] for g, m in self._members.items() if email in m}
+
+    def refresh_user(self, email: str) -> dict[str, str]:
+        """Live read of one user's admin groups ({group: DIRECT|INDIRECT}), written back into the roster.
+
+        One searchTransitiveGroups call; raises DirectoryError if it fails. Works even if the roster never
+        loaded (lookups through groups_of still need a full load).
+        """
+        email = email.strip().lower()
+        reader = self._reader or DirectoryReader(cache_seconds=0)
+        self._reader = reader
+        admin = set(self.groups)
+        live = {g.email: g.relation for g in reader.user_groups(email, refresh=True) if g.email in admin}
+        with self._lock:
+            members = {g: dict(m) for g, m in self._members.items()}
+            for g in admin:
+                m = members.setdefault(g, {})
+                if g in live:
+                    m[email] = live[g]
+                else:
+                    m.pop(email, None)
+            self._members = members
+        log.info("admin roster refreshed for %s: %s", email, ", ".join(sorted(live)) or "no admin groups")
+        return live
 
     async def run(self) -> None:
         """Background refresh loop (started after the initial load)."""

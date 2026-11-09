@@ -15,7 +15,7 @@ from lsb_api.errors import ApiError
 from lsb_api.models.common import ErrorCode, Persona
 from lsb_api.settings import Settings
 
-OPERATIONS: set[str] = set()   # every operation used by a route or an in-operation check
+OPERATIONS: set[str] = set()   # every operation used by a route (one route, one operation)
 
 
 def operation(name: str) -> str:
@@ -30,10 +30,9 @@ def check(request: Request, ctx: RequestContext, op: str) -> None:
         raise ApiError(ErrorCode.PERMISSION_DENIED, f"Operation {op} is not allowed for anyone")
     if Persona.USER in allowed:
         return  # any authenticated user; no roster needed
-    try:
-        held = personas(request, ctx)
-    except Exception:
-        raise ApiError(ErrorCode.INTERNAL, "Admin roster not available yet")
+    # Cached roster by default; LSB_ROLE_CHECK_USE_CACHE=false reads the directory live and refreshes the roster.
+    live = not request.app.state.settings.LSB_ROLE_CHECK_USE_CACHE
+    held = personas(request, ctx, live=live)   # 500 INTERNAL if roster not loaded or live read fails
     if not held & allowed:
         roles = ", ".join(sorted(r.value for r in allowed))
         raise ApiError(ErrorCode.PERMISSION_DENIED, f"This operation needs one of these roles: {roles}")

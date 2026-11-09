@@ -98,14 +98,16 @@ When a data store fails, `lsb health db` names the error:
 
 | Command | Who can run it | Shows |
 |---|---|---|
-| `lsb platform-users role` | Any signed-in user of the organization | Your platform role: `IT_ADMIN`, `BU_ADMIN` or `OTHER`, and the group it comes from |
-| `lsb platform-users role <email>` | IT Admins, BU Admins | Someone else's platform role |
+| `lsb platform-users roles` | Any signed-in user of the organization | All your roles (`USER`, `BU_ADMIN`, `IT_ADMIN`, `PLATFORM_ADMIN`) and the admin groups that give them |
+| `lsb platform-users roles <email>` | IT Admins, BU Admins | Someone else's roles |
 
 ```
-$ lsb platform-users role
-  ✔ lsb-it-admin1@shankyram.altostrat.com    IT_ADMIN (IT Admin)    member of grp-lsb-it-admins@shankyram.altostrat.com directly
+$ lsb platform-users roles
+  ✔ admin@shankyram.altostrat.com    USER  BU_ADMIN  IT_ADMIN  PLATFORM_ADMIN
+      member of grp-lsb-bu-admins@shankyram.altostrat.com (nested)
+      member of grp-lsb-it-admins@shankyram.altostrat.com (direct)
 ```
-Platform roles come from group membership, which your IT team manages in the directory; `lsb` cannot change them.
+Roles come from group membership, which your IT team manages in the directory; `lsb` cannot change them.
 
 ### 5.3 Coming next
 `lsb jobs`, `lsb templates`, `lsb playground-folder`, `lsb playground`, `lsb service`. This guide gains a section for each as it is released.

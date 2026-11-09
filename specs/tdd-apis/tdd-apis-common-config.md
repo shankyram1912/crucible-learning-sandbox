@@ -49,6 +49,7 @@ The one place where every setting of the Self Service APIs and the `lsb` CLI is 
 | `LSB_HEALTH_DB_READ_TIMEOUT_SECONDS` | no | `2` | Per-database read timeout in `health db` and `health service` |
 | `LSB_HEALTH_DB_TOTAL_TIMEOUT_SECONDS` | no | `5` | Overall limit for the parallel database reads |
 | `LSB_HEALTH_SERVICE_CACHE_SECONDS` | no | `10` | How long `health service` reuses its last result |
+| `LSB_ROLE_CHECK_USE_CACHE` | no | `true` | `false` makes every ACL role check read the caller's groups live from the directory and refresh that user in the admin roster; other reads still use the roster ([tdd-apis-platform-users.md](tdd-apis-platform-users.md) section 1, rule 6) |
 | `LSB_ADMIN_ROSTER_REFRESH_SECONDS` | no | `300` | How often the in-memory admin roster (members of the admin groups) is refreshed after the startup load ([tdd-apis-platform-users.md](tdd-apis-platform-users.md) section 1) |
 | `LSB_ACL` | no | `DEFAULT_ACL` in `settings.py` (table in [tdd-apis-common-acl.md](tdd-apis-common-acl.md) section 3) | Access control list: JSON map of every operation to 1..N roles (`USER`, `IT_ADMIN`, `BU_ADMIN`, `PLATFORM_ADMIN`). Overrides the whole map. The API refuses to start if it does not match the operations in use |
 | `LSB_JOB_DISPATCHER` | no | `inline` | How JobAsync jobs are run: `inline` (in the API process), `http` (local worker), `cloudtasks` ([tdd-apis-common-jobs.md](tdd-apis-common-jobs.md) section 6.3) |

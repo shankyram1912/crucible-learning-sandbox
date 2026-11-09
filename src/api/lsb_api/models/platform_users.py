@@ -4,11 +4,7 @@ from enum import StrEnum
 
 from pydantic import BaseModel
 
-
-class PlatformRole(StrEnum):
-    IT_ADMIN = "IT_ADMIN"
-    BU_ADMIN = "BU_ADMIN"
-    OTHER = "OTHER"
+from lsb_api.models.common import Persona
 
 
 class Relation(StrEnum):
@@ -16,8 +12,12 @@ class Relation(StrEnum):
     INDIRECT = "INDIRECT"
 
 
-class PlatformRoleResponse(BaseModel):
+class AdminGroupMembership(BaseModel):
+    group: str
+    relation: Relation
+
+
+class PlatformRolesResponse(BaseModel):
     email: str
-    platform_role: PlatformRole
-    matched_group: str | None = None
-    relation: Relation | None = None
+    roles: list[Persona]                  # every role the user holds, in the ACL vocabulary
+    groups: list[AdminGroupMembership]    # admin groups from settings that give those roles

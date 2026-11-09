@@ -197,8 +197,8 @@ ACL_MATRIX = {   # path -> (admin = IT_ADMIN, bu = BU_ADMIN only, student = USER
     "/v1/health/api": (200, 200, 403),
     "/v1/health/db": (200, 403, 403),
     "/v1/health/service": (200, 200, 200),
-    "/v1/platform-users/role": (200, 200, 200),
-    "/v1/platform-users/role?email=lsb-it-admin1@shankyram.altostrat.com": (200, 200, 403),   # someone else
+    "/v1/platform-users/me/roles": (200, 200, 200),
+    "/v1/platform-users/lsb-it-admin1@shankyram.altostrat.com/roles": (200, 200, 403),
 }
 
 
@@ -217,7 +217,7 @@ def test_acl_denied_message():
 
 def test_acl_from_settings_override():
     acl = {"health.api": ["USER"], "health.db": ["IT_ADMIN"], "health.service": ["USER"],
-           "platform_users.role": ["USER"], "platform_users.role.other": ["IT_ADMIN"]}
+           "platform_users.roles.self": ["USER"], "platform_users.roles": ["IT_ADMIN"]}
     c, _ = client(LSB_ACL=acl)
     assert c.get("/v1/health/api", headers=auth("student")).status_code == 200
 

@@ -25,8 +25,8 @@ DEFAULT_ACL: dict[str, list[str]] = {
     "health.api": ["IT_ADMIN", "BU_ADMIN"],
     "health.db": ["IT_ADMIN"],
     "health.service": ["USER"],
-    "platform_users.role": ["USER"],                         # own role
-    "platform_users.role.other": ["IT_ADMIN", "BU_ADMIN"],   # someone else's role (?email=)
+    "platform_users.roles.self": ["USER"],                    # GET /v1/platform-users/me/roles
+    "platform_users.roles": ["IT_ADMIN", "BU_ADMIN"],         # GET /v1/platform-users/{email}/roles
 }
 
 
@@ -59,6 +59,7 @@ class Settings(BaseSettings):
     LSB_HEALTH_DB_TOTAL_TIMEOUT_SECONDS: float = Field(5.0, gt=0)
     LSB_HEALTH_SERVICE_CACHE_SECONDS: float = Field(10.0, ge=0)
     LSB_ADMIN_ROSTER_REFRESH_SECONDS: float = Field(300.0, gt=0)
+    LSB_ROLE_CHECK_USE_CACHE: bool = True   # false: ACL role checks read the directory live and refresh the roster
     LSB_ACL: dict[str, list[str]] = Field(default_factory=lambda: {k: list(v) for k, v in DEFAULT_ACL.items()})
 
     @field_validator("DOMAIN")
