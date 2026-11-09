@@ -2,7 +2,7 @@
 
 > Parent: [tdd-master.md](../tdd-master.md) (decisions in sections 1.7 Billing labels and 1.8 Playground tags)
 
-How playground tags and project labels are bound: which permissions GCP checks, who can bind which key, how values are validated, why tags and labels never drift apart, and how GCP was observed to behave. tdd-master 1.7 and 1.8 hold the decisions (key set, kinds, where bound, immutability); this spec explains the binding mechanics behind them.
+How playground tags and project labels are bound: which permissions GCP checks, who can bind which key, how values are validated, why tags and labels never drift apart, and how GCP authorizes a binding. tdd-master 1.7 and 1.8 hold the decisions (key set, kinds, where bound, immutability); this spec explains the binding mechanics behind them.
 
 ---
 
@@ -27,14 +27,14 @@ How playground tags and project labels are bound: which permissions GCP checks, 
 1. **Two permission checks per binding.** Binding a tag needs `resourcemanager.tagValueBindings.create` (role Tag User, `roles/resourcemanager.tagUser`) on **both** sides:
    - **Resource side:** the folder being tagged.
    - **Tag side:** the tag value. A dynamic value has no resource of its own, so GCP checks the **tag key** (section 5).
-2. **Key grants decide who binds which keys.** Step 5 (`PlaygroundTagsCreate`) grants Tag User on the keys, and nothing else is needed at org level:
+2. **Key grants decide who binds which keys.** Day-0 step 5 (`PlaygroundTagsCreate`) grants Tag User on the keys, and nothing else is needed at org level:
 
    | Key | Tag User held by | Effect |
    |---|---|---|
    | `cost-center-bu`, `cost-center-code`, `cost-category` | `grp-lsb-it-admins@` | Only IT Admins bind the IT-governed keys, in the platform or in the Console |
    | `bu-tracking-code`, `bu-subcategory` | `grp-lsb-bu-admins@` | BU Admins, and IT Admins through nesting |
 
-3. **Resource grants decide where.** IT Admins get Tag User on the common ancestor of the folders where Playground Folders may be created (step 6, `ControlTowerIdentityCreate`; which ancestor is tdd-master open item 3.2.4), so they can tag any Playground Folder below it. The **one BU Admin group** of a Playground Folder gets Folder Admin and Tag User on that folder (tdd-master 2.4; no Project Creator), so it can tag the playgrounds below it and nothing outside it.
+3. **Resource grants decide where.** IT Admins get Tag User on the common ancestor of the folders where Playground Folders may be created (their standing grant, bound by Day-0 step 6 `ControlTowerIdentityCreate`; which ancestor is tdd-master open item 3.2.4), so they can tag any Playground Folder below it. The **one BU Admin group** of a Playground Folder gets Folder Admin and Tag User on that folder, bound by the folder-creation job (tdd-master 2.4; no Project Creator), so it can tag the playgrounds below it and nothing outside it.
 4. **Bound with the caller's own token.** Playground Folder create and playground create (API operations 07 and 08, JobSync) bind the tags as the calling IT or BU Admin, so GCP applies principles 1 to 3 to that person. No platform service account needs tag rights for these operations.
 5. **Two layers of value validation:**
    - **GCP checks the pattern** `^[a-z]([a-z0-9-]{0,61}[a-z0-9])?$` on every binding, from any client. A value that doesn't match is rejected with `INVALID_ARGUMENT` (section 5).
@@ -61,8 +61,8 @@ How playground tags and project labels are bound: which permissions GCP checks, 
 
 | Concern | Enforced by |
 |---|---|
-| Who may bind each key | GCP IAM: Tag User on the key (step 5) |
-| Where they may bind | GCP IAM: Tag User on the folder or its ancestor (step 6 for IT Admins; the Playground Folder grant for its BU Admin group) |
+| Who may bind each key | GCP IAM: Tag User on the key (Day-0 step 5, `PlaygroundTagsCreate`) |
+| Where they may bind | GCP IAM: Tag User on the folder or its ancestor (Day-0 step 6, `ControlTowerIdentityCreate`, for IT Admins; the Playground Folder grant for its BU Admin group) |
 | Value format | GCP: the key's allowed-values pattern |
 | Allowed values for IT-governed keys | API: Firestore catalog check (active entry) before binding |
 | Tags never change after creation | API: no update or re-tag operation exists; folder and playground tags are immutable fields |
@@ -70,13 +70,13 @@ How playground tags and project labels are bound: which permissions GCP checks, 
 
 ---
 
-## 5. How GCP behaves: the evidence
+## 5. How GCP checks a binding
 
-The principles in section 2 rest on how GCP checks a binding, which the documentation doesn't spell out for dynamic values. Observed live on 2026-11-09 with test users holding no org-level roles.
+GCP's documentation does not spell out how dynamic tag values are authorized; these are the facts the principles in section 2 rest on.
 
-**The tag side is checked on the key.** With no value resource to check, GCP checks Tag User on the key: a BU Admin's attempt on `cost-category` was denied on the key itself.
+**The tag side is checked on the key.** A dynamic value has no resource of its own, so GCP checks Tag User on the tag key. A BU Admin holding Tag User only on the BU keys is denied on `cost-category` at the key itself, whatever resource they target.
 
-**Each key follows its grant.** Every key behaved exactly as step 5 grants it:
+**Each key follows its grant.** Tag User on the key, combined with Tag User on the folder, is all a binding needs:
 
 | Key | IT Admin | BU Admin |
 |---|---|---|
@@ -86,6 +86,6 @@ The principles in section 2 rest on how GCP checks a binding, which the document
 | `bu-tracking-code` | Can bind (through nesting) | Can bind |
 | `bu-subcategory` | Can bind (through nesting) | Can bind |
 
-**GCP enforces the pattern itself.** A value that doesn't match the key's pattern (for example `Bad_Value`) is rejected with `INVALID_ARGUMENT`, so the API checks only the catalog, not the format.
+**GCP enforces the pattern itself.** A value that doesn't match the key's allowed-values pattern (for example `Bad_Value`) is rejected with `INVALID_ARGUMENT`, so the API checks only the catalog, not the format.
 
-**One value per key per folder.** Each user needed their own folder to bind the same BU keys, because a folder carries one value per key (principle 7 in section 2).
+**One value per key per folder.** A folder carries at most one binding per tag key; binding a second value for the same key on the same folder is rejected (principle 7 in section 2).

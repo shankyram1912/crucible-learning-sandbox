@@ -103,7 +103,7 @@ Folders cannot carry labels, and labels are never inherited. To cover every proj
 7. **One value format for tags and labels:** starts with a lowercase letter, then lowercase letters, digits and hyphens, ends with a letter or digit, max 63 characters (the pattern above), so the same value is valid as a tag value and a project label.
 8. **No separate `playground` key** for now: the playground folder identifies the playground in inventory.
 9. **Control Tower:** not tagged. It keeps its project labels (section 1.7 rule 4), using the same key names as the playground tags.
-10. **Who can bind (verified live 2026-11-09):** Tag User on the key and on the resource; for dynamic values GCP checks the key, so the key grants above decide who binds which keys. Details: [tdd-tags-labels-master.md](tdd-tags-labels/tdd-tags-labels-master.md).
+10. **Who can bind:** Tag User on the key and on the resource; for dynamic values GCP checks the key, so the key grants above decide who binds which keys. Details: [tdd-tags-labels-master.md](tdd-tags-labels/tdd-tags-labels-master.md).
 11. **Limits** (to verify against the official quotas): 1,000 tag keys per org, dynamic values unlimited (the 1,000 values per key limit applies only to defined keys), 50 tags attached directly per resource, short names up to 256 characters.
 
 ### 1.9 Control Tower data: config, runtime, jobs
