@@ -64,16 +64,19 @@ Teardown: remove the bindings, the test memberships and the folder.
 
 `gcloud` cannot create Cloud Identity or Workspace users, and Google blocks gcloud's own sign-in from requesting the Admin Directory scope ("This app is blocked", verified 2026-11-09). So users are created with the **Admin console bulk upload**, and only the group memberships are scripted.
 
-[users.csv](users.csv) keeps only the Admin console template columns we need (Directory > Users > Bulk update users): the five required ones (first name, last name, email, password, org unit `/`), Employee Title (persona) and Change Password at Next Sign-In (`False`). Header names must match the template exactly; optional columns can be left out. If an upload is ever rejected for missing columns, use the full template header instead. **The Password column is empty in the repo**; fill it in a copy outside the repo just before uploading:
+[users.csv](users.csv) keeps only the Admin console template columns we need (Directory > Users > Bulk update users): the five required ones (first name, last name, email, password, org unit `/`), Employee Title (persona) and Change Password at Next Sign-In (`False`). Header names must match the template exactly; optional columns can be left out. If an upload is ever rejected for missing columns, use the full template header instead. **The Password column is empty in the repo** (public repo); [make-upload-csv.sh](make-upload-csv.sh) fills it in a copy outside the repo just before uploading:
 
 ```bash
-cd ~/learning-sandbox/seed
-read -r -s -p "Seed password (min 8 chars): " PW; echo
-awk -F, -v OFS=, -v pw="$PW" 'NR>1{$4=pw}1' users.csv > ~/lsb-users-upload.csv; unset PW
+cd ~/git/learning-sandbox/seed            # Cloud Shell clone path
+export LSB_SEED_PASSWORD='...'            # or leave unset to be prompted (not echoed)
+./make-upload-csv.sh                      # writes ~/lsb-users-upload.csv (mode 600, outside the repo)
+unset LSB_SEED_PASSWORD
 # Admin console > Directory > Users > Bulk update users > upload ~/lsb-users-upload.csv
 # after the upload completes:
 rm ~/lsb-users-upload.csv
 ```
+
+[make-upload-csv.sh](make-upload-csv.sh) fills the Password column from `LSB_SEED_PASSWORD` (or a prompt), refuses to write inside the repo, and rejects passwords shorter than 8 characters or containing a comma. Setting the variable with `export` leaves it in your shell history; prefix the line with a space (if `HISTCONTROL` ignores spaces) or use the prompt to avoid that.
 
 Group memberships are **not** part of the seed: IT Admins add them through the platform (API op 06).
 
