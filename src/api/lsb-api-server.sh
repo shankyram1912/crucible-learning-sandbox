@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Starts the Learning Sandbox Self Service APIs locally, inside a tmux session.
+# lsb-api-server.sh: starts, attaches to, checks and stops the local Learning Sandbox Self Service APIs (tmux).
 #
-#   ./start.sh [--port 8080] [--host 127.0.0.1] [--reload]   start (if needed) in tmux session lsb-api and attach
-#   ./start.sh --detach  [same options]                      start (if needed) in tmux and return to the prompt
-#   ./start.sh --status                                      is it running, on which port, last log lines
-#   ./start.sh --stop                                        stop the API (kills the tmux session)
-#   ./start.sh --no-tmux [same options]                      run in the foreground of this terminal
+#   ./lsb-api-server.sh [--port 8080] [--host 127.0.0.1] [--reload]   start (if needed) in tmux session lsb-api and attach
+#   ./lsb-api-server.sh --detach  [same options]                      start (if needed) in tmux and return to the prompt
+#   ./lsb-api-server.sh --status                                      is it running, on which port, last log lines
+#   ./lsb-api-server.sh --stop                                        stop the API (kills the tmux session)
+#   ./lsb-api-server.sh --no-tmux [same options]                      run in the foreground of this terminal
 #
 # Detach from the attached session with Ctrl-b d (the API keeps running). Logs: src/api/logs/lsb-api.log.
 # Loads the platform settings from src/terraform/control-tower/initialize.env (via initialize.sh),
@@ -57,7 +57,7 @@ case "$MODE" in
   status)
     if running; then
       echo "lsb-api is running in tmux session '$SESSION' on port $(cat "$PORT_FILE" 2>/dev/null || echo '?')"
-      echo "  attach: ./start.sh    stop: ./start.sh --stop"
+      echo "  attach: ./lsb-api-server.sh    stop: ./lsb-api-server.sh --stop"
     else
       echo "lsb-api is not running"
     fi
@@ -78,7 +78,7 @@ case "$MODE" in
     else
       if running; then
         echo "lsb-api is already running in tmux session '$SESSION' on port $(cat "$PORT_FILE" 2>/dev/null || echo '?')"
-        [[ ${#PASS[@]} -gt 0 ]] && echo "  (options ignored; stop it first to change them: ./start.sh --stop)"
+        [[ ${#PASS[@]} -gt 0 ]] && echo "  (options ignored; stop it first to change them: ./lsb-api-server.sh --stop)"
       else
         mkdir -p "$LOG_DIR"
         printf -v inner '%q ' "$0" --no-tmux "${PASS[@]}"
@@ -93,11 +93,11 @@ case "$MODE" in
         echo "lsb-api started in tmux session '$SESSION' (port $(cat "$PORT_FILE" 2>/dev/null || echo "${PORT:-8080}"), log $LOG_FILE)"
       fi
       if [[ "$MODE" == "detach" ]]; then
-        echo "  attach: ./start.sh    status: ./start.sh --status    stop: ./start.sh --stop"
+        echo "  attach: ./lsb-api-server.sh    status: ./lsb-api-server.sh --status    stop: ./lsb-api-server.sh --stop"
         exit 0
       fi
       if [[ ! -t 0 || ! -t 1 ]]; then
-        echo "  not a terminal, so not attaching (attach later with ./start.sh)"
+        echo "  not a terminal, so not attaching (attach later with ./lsb-api-server.sh)"
         exit 0
       fi
       echo "  attaching; detach with Ctrl-b d (the API keeps running)"

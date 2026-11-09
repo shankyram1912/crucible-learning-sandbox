@@ -17,7 +17,7 @@ uv tool install --editable --reinstall ~/work/code/learning-sandbox/src/cli
 Switch back to the released version with the install command from the user guide (`uv tool install --reinstall "git+https://github.com/..."`).
 
 ## Against a local API
-Start the API with [src/api/start.sh](../api/README.md) (default `http://localhost:8080`, which is also `lsb`'s default URL).
+Start the API with [src/api/lsb-api-server.sh](../api/README.md) (default `http://localhost:8080`, which is also `lsb`'s default URL).
 
 ## Notes
 - Googlers on corp machines: uv must use Corp Airlock. Configure it once in `~/.config/uv/uv.toml` (default index = the airlock proxy URL from `/etc/pip.conf`, with `allow-insecure-host` for its host); no project file or command changes.
