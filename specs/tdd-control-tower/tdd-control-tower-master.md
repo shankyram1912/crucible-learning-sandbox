@@ -321,7 +321,7 @@ ControlTowerApisEnable_ERROR="firestore.googleapis.com: billing not ready"
   ✔ 1  ControlTowerProjectCreate   DONE         2026-11-08 12:30  admin@  67f86fe
   ✖ 2  ControlTowerApisEnable      FAILED       2026-11-08 12:41  billing not ready
 ```
-Colors follow [tdd-apis-master.md](../tdd-apis/tdd-apis-master.md) section 5.1.
+Colors follow [tdd-apis-common-cli.md](../tdd-apis/tdd-apis-common-cli.md) section 1.1.
 
 ---
 

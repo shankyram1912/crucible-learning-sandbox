@@ -17,7 +17,7 @@ Tracks the build sequence for the LSB Control Tower. Specs: [tdd-master.md](spec
 | 3d | Re-run `ControlTowerFirestoreCreate` to add the config database | ✅ Done (2026-11-09) | Add `FIRESTORE_CONFIG_DATABASE=lsb-control-tower-config-db` to `initialize.env`. Expected plan: 4 to add (config database `lsb-control-tower-config-db`, weekly backup schedule, TTL on `jobs.expireAt` and `tasks.expireAt` in `lsb-control-tower-db`, later removed, see 3e), existing database unchanged. Spec: tdd-master 1.9, tdd-control-tower-master step 3 |
 | 3e | Remove the TTL policies (keep job history forever) | ✅ Done (2026-11-09) | Re-run `ControlTowerFirestoreCreate`. Expected plan: 0 to add, 0 to change, **2 to destroy** (`google_firestore_field.ttl["jobs"]`, `["tasks"]`). LONG-RUNNING: 20 to 40 minutes; if Terraform times out, re-run to finish. Check with `gcloud firestore fields ttls list --database=lsb-control-tower-db --project=lsb-control-tower-e26` |
 | 4 | `PlaygroundGroupsCreate` | ✅ Done (2026-11-08) | Both groups created as locked security groups (locked label accepted through Terraform). Creates `grp-lsb-it-admins@` and `grp-lsb-bu-admins@` as **locked security groups** (Terraform, `initial_group_config = EMPTY`, no human owners), nests it-admins in bu-admins (Terraform), adds `IT_ADMINS_INITIAL_MEMBERS` (Cloud Identity API in post-apply hook). Runs before the tag step, which grants Tag User to these groups. Spec: tdd-control-tower-master step 4 |
-| 5 | `PlaygroundTagsCreate` | ✅ Done (2026-11-08) | Five **dynamic** playground tag keys at org level: `cost-center-bu`, `cost-center-code`, `cost-category`, `bu-tracking-code`, `bu-subcategory`, each with the allowed-values pattern `^[a-z]([a-z0-9-]{0,61}[a-z0-9])?$`, so no tag values are created in GCP. Grants **Tag User on `cost-center-bu`, `cost-center-code`, `cost-category` to `grp-lsb-it-admins@`** and **on `bu-tracking-code` and `bu-subcategory` to `grp-lsb-bu-admins@`**. Allowed values for the three IT-governed keys live in the Firestore catalog, checked by the API before binding. Terraform only: `google_tags_tag_key.allowed_values_regex` exists from google provider 7.20 (verified 2026-11-08: absent in 7.10, present in 7.20, 8.0, 8.10), so this operation pins `~> 8.0` in its own `versions.tf`; ops 1-4 stay on `~> 6.0`. Tag User on a dynamic key is assumed to be enough to bind any matching value (the key is the only IAM resource for a dynamic value); verify live after step 6 (which grants IT Admins Tag User on the school-folder ancestor) and before API op 04, using a test user who is in `grp-lsb-it-admins@` but holds no org-level roles; the Day-0 admin cannot prove it because its org-level roles would allow the binding anyway. Not applied to the Control Tower. Needs Tag Admin at org level. Spec: tdd-master 1.8 |
+| 5 | `PlaygroundTagsCreate` | ✅ Done (2026-11-08) | Five **dynamic** playground tag keys at org level: `cost-center-bu`, `cost-center-code`, `cost-category`, `bu-tracking-code`, `bu-subcategory`, each with the allowed-values pattern `^[a-z]([a-z0-9-]{0,61}[a-z0-9])?$`, so no tag values are created in GCP. Grants **Tag User on `cost-center-bu`, `cost-center-code`, `cost-category` to `grp-lsb-it-admins@`** and **on `bu-tracking-code` and `bu-subcategory` to `grp-lsb-bu-admins@`**. Allowed values for the three IT-governed keys live in the Firestore catalog, checked by the API before binding. Terraform only: `google_tags_tag_key.allowed_values_regex` exists from google provider 7.20 (verified 2026-11-08: absent in 7.10, present in 7.20, 8.0, 8.10), so this operation pins `~> 8.0` in its own `versions.tf`; ops 1-4 stay on `~> 6.0`. Tag User on a dynamic key is assumed to be enough to bind any matching value (the key is the only IAM resource for a dynamic value); verify live after step 6 (which grants IT Admins Tag User on the school-folder ancestor) and before API op 05, using a test user who is in `grp-lsb-it-admins@` but holds no org-level roles; the Day-0 admin cannot prove it because its org-level roles would allow the binding anyway. Not applied to the Control Tower. Needs Tag Admin at org level. Spec: tdd-master 1.8 |
 | 6 | `ControlTowerIdentityCreate` | ⬜ To design (section 3) | Service accounts and least-privilege IAM |
 | 6a | Playground project hook | ⬜ To do (after step 6) | For every project in a playground (platform- or Console-created): copies the effective playground tags onto the project as labels, and binds the playground owners as `roles/owner`. Event-driven (project-creation audit log → function in the Control Tower); re-tag / owner-change jobs update all projects. Spec: tdd-master 1.8 rule 5, 2.5 |
 | 6b | Shared Terraform runner core | ⬜ To do | Extract `run.sh`'s plan/apply/readiness/retry/trap/lock/status logic into one core used by Day-0 and the playground pipeline. Spec: tdd-playground-master 6 |
@@ -32,17 +32,18 @@ Tracks the build sequence for the LSB Control Tower. Specs: [tdd-master.md](spec
 
 ## 2. Self Service APIs (after Day-0 step 6)
 
-Built one operation at a time per [tdd-apis-master.md](specs/tdd-apis/tdd-apis-master.md) section 4: write the operation spec, implement in API and CLI, test live, mark done. The API first runs locally against the real Firestore (ADC), so it does not wait for steps 7 to 9.
+Built one operation at a time per [tdd-apis-master.md](specs/tdd-apis/tdd-apis-master.md) section 4: write the operation in its domain spec (`specs/tdd-apis/tdd-apis-<domain>.md`), implement in API and CLI, test live, mark done. The API first runs locally against the real Firestore (ADC), so it does not wait for steps 7 to 9.
 
 | # | Operation | Status |
 |---|---|---|
-| 01 | `health` (`GET /v1/health`, `lsb health`) | ⬜ To do |
-| 02 | `jobs` (list, show, watch) | ⬜ To do |
-| 03 | `templates` (list, show) | ⬜ To do |
-| 04 | `playground-folder create` / list / show (creation gate, controllers, playground tags) | ⬜ To do |
-| 05 | `playground create` (creation gate, owners, bu-tracking-code, bu-subcategory, template, N projects) | ⬜ To do |
-| 06 | `group members` (get / set; IT Admins only for the two service groups) | ⬜ To do |
-| 6 | `service enable` (GCS) | ⬜ To do |
+| 01 | `health api` (`GET /v1/health/api`, `lsb health api`): the API process is up, no dependencies (liveness). Spec: [tdd-apis-health.md](specs/tdd-apis/tdd-apis-health.md) | ⬜ To do (spec written) |
+| 02 | `health db` (`GET /v1/health/db`, `lsb health db`): one small read on each Firestore database (`lsb-control-tower-config-db`, `lsb-control-tower-db`) with a short timeout; reports status and latency per database. Spec: [tdd-apis-health.md](specs/tdd-apis/tdd-apis-health.md) | ⬜ To do (spec written) |
+| 03 | `jobs` (list, show, watch) | ⬜ To do |
+| 04 | `templates` (list, show) | ⬜ To do |
+| 05 | `playground-folder create` / list / show (creation gate, controllers, playground tags) | ⬜ To do |
+| 06 | `playground create` (creation gate, owners, bu-tracking-code, bu-subcategory, template, N projects) | ⬜ To do |
+| 07 | `group members` (get / set; IT Admins only for the two service groups) | ⬜ To do |
+| 08 | `service enable` (GCS) | ⬜ To do |
 
 ---
 
