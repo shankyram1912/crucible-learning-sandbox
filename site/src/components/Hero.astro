@@ -65,7 +65,7 @@ const { title = data.title, tagline } = data.hero || {};
                 <p>
                   IT Admins maintain the versioned service catalog, playground templates, and tag catalog, and create Playground Folders under existing org folders with an immutable billing account, required folder budget, IT cost tags, BU Admin group, and guardrails.
                 </p>
-                <span class="c-stage-code">cost-center-bu &middot; cost-center-code &middot; cost-category</span>
+                <span class="c-stage-code">03 IT cost tags: cost-center-bu &middot; cost-center-code &middot; cost-category</span>
               </div>
 
               <div class="c-stage-pane" id="c-pane-1" role="tabpanel" aria-labelledby="c-tab-1" data-cstage-pane="1">
@@ -95,174 +95,151 @@ const { title = data.title, tagline } = data.hero || {};
           </div>
         </div>
 
-        <!-- Contextual Circular Lifecycle -> AI Application Instrument -->
+        <!-- Hybrid 60fps Canvas2D + Precision SVG Orbital / Agentic AI Instrument -->
         <div class="crucible-dial-wrap">
           <div class="crucible-dial-header">
             <span class="c-dial-step" id="c-dial-step">01 / 04 &middot; IT ADMIN</span>
-            <span class="c-dial-status" id="c-dial-status">Playground Folder Governance</span>
+            <span class="c-dial-status" id="c-dial-status">Catalogs &amp; Playground Folder Governance</span>
           </div>
 
           <div class="crucible-dial-stage" id="crucible-dial-stage">
+            <!-- 60fps Canvas2D layer: astrolabe ticks, luminous comet trails, radial tag-to-label streams & Bézier AI app packets -->
+            <canvas id="crucible-dial-canvas" class="crucible-dial-canvas" aria-hidden="true"></canvas>
+
+            <!-- Crisp Vector SVG layer: rings & architectural pills inside strict [30..530] safe bounds -->
             <svg
               class="crucible-dial-svg"
               viewBox="0 0 560 560"
               role="img"
               aria-label="Concentric architecture ring from IT Admin Playground Folder to BU Admin Playground Shards, Student Workspace, and running AI Application"
             >
-              <defs>
-                <radialGradient id="c-core-glow" cx="50%" cy="50%" r="50%">
-                  <stop offset="0%" stop-color="#4285f4" stop-opacity="0.20" />
-                  <stop offset="65%" stop-color="#34a853" stop-opacity="0.06" />
-                  <stop offset="100%" stop-color="#4285f4" stop-opacity="0" />
-                </radialGradient>
-                <filter id="c-soft-glow" x="-20%" y="-20%" width="140%" height="140%">
-                  <feGaussianBlur stdDeviation="3" result="blur" />
-                  <feMerge>
-                    <feMergeNode in="blur" />
-                    <feMergeNode in="SourceGraphic" />
-                  </feMerge>
-                </filter>
-              </defs>
-
-              <!-- Subtle radial ambient center -->
-              <circle cx="280" cy="280" r="248" fill="url(#c-core-glow)" />
-
-              <!-- Crosshair reference axes -->
-              <g class="c-axes" aria-hidden="true">
-                <line x1="280" y1="26" x2="280" y2="534" />
-                <line x1="26" y1="280" x2="534" y2="280" />
-              </g>
-
               <!-- ============================================================
-                   RING 01 (OUTER, R=232): IT ADMIN — PLAYGROUND FOLDER
+                   RING 01 (OUTER, R=214): IT ADMIN — PLAYGROUND FOLDER
                    ============================================================ -->
               <g class="c-ring-layer c-ring-0" data-ring-click="0">
-                <circle class="c-ring-hit" cx="280" cy="280" r="232" />
-                <circle class="c-ring-track" cx="280" cy="280" r="232" />
-                <circle class="c-ring-orbit c-orbit-blue" cx="280" cy="280" r="232" stroke-dasharray="110 1350" />
+                <circle class="c-ring-hit" cx="280" cy="280" r="214" />
+                <circle class="c-ring-track c-track-blue" cx="280" cy="280" r="214" />
 
-                <!-- Radial tag inheritance lines inward when transitioning to shards -->
-                <g class="c-inherit-spokes">
-                  <line x1="280" y1="48" x2="280" y2="108" />
-                  <line x1="512" y1="280" x2="452" y2="280" />
-                  <line x1="280" y1="512" x2="280" y2="452" />
-                  <line x1="48" y1="280" x2="108" y2="280" />
-                </g>
-
-                <!-- 4 Perimeter Anchor Nodes on Outer Ring -->
-                <!-- Top: Playground Folder + Billing Account -->
-                <g class="c-node-pill" transform="translate(280, 48)">
-                  <rect x="-92" y="-15" width="184" height="30" rx="15" />
-                  <circle cx="-74" cy="0" r="4.5" class="c-dot-blue" />
+                <!-- Top: Playground Folder -->
+                <g class="c-node-pill c-pill-blue" transform="translate(280, 66)">
+                  <rect x="-86" y="-14" width="172" height="28" rx="14" />
+                  <circle cx="-69" cy="0" r="4" class="c-dot-blue" />
                   <text x="6" y="4" text-anchor="middle">Playground Folder</text>
                 </g>
 
-                <!-- Right: IT Cost Tags -->
-                <g class="c-node-pill" transform="translate(466, 152)">
-                  <rect x="-72" y="-14" width="144" height="28" rx="14" />
-                  <circle cx="-56" cy="0" r="4" class="c-dot-blue" />
-                  <text x="6" y="4" text-anchor="middle">IT Cost Tags (3)</text>
+                <!-- Top-Right: 03 IT Cost Tags (safe x: 446 +- 74 = [372..520]) -->
+                <g class="c-node-pill c-pill-blue" transform="translate(446, 162)">
+                  <rect x="-74" y="-14" width="148" height="28" rx="14" />
+                  <text x="0" y="4" text-anchor="middle">
+                    <tspan class="c-num-blue">03</tspan> IT Cost Tags
+                  </text>
                 </g>
 
-                <!-- Bottom-Right: Folder Budget -->
-                <g class="c-node-pill" transform="translate(462, 412)">
-                  <rect x="-70" y="-14" width="140" height="28" rx="14" />
-                  <circle cx="-54" cy="0" r="4" class="c-dot-blue" />
+                <!-- Bottom-Right: Folder Budget (safe x: 446 +- 68 = [378..514]) -->
+                <g class="c-node-pill c-pill-blue" transform="translate(446, 398)">
+                  <rect x="-68" y="-14" width="136" height="28" rx="14" />
+                  <circle cx="-52" cy="0" r="4" class="c-dot-blue" />
                   <text x="6" y="4" text-anchor="middle">Folder Budget</text>
                 </g>
 
-                <!-- Bottom-Left: Guardrails -->
-                <g class="c-node-pill" transform="translate(98, 412)">
-                  <rect x="-64" y="-14" width="128" height="28" rx="14" />
-                  <circle cx="-48" cy="0" r="4" class="c-dot-blue" />
+                <!-- Bottom-Left: Guardrails (safe x: 114 +- 62 = [52..176]) -->
+                <g class="c-node-pill c-pill-blue" transform="translate(114, 398)">
+                  <rect x="-62" y="-14" width="124" height="28" rx="14" />
+                  <circle cx="-46" cy="0" r="4" class="c-dot-blue" />
                   <text x="6" y="4" text-anchor="middle">Guardrails</text>
                 </g>
 
-                <!-- Top-Left: BU Admin Group + Billing -->
-                <g class="c-node-pill" transform="translate(96, 152)">
-                  <rect x="-76" y="-14" width="152" height="28" rx="14" />
-                  <circle cx="-60" cy="0" r="4" class="c-dot-blue" />
+                <!-- Top-Left: BU Admin Group (safe x: 114 +- 74 = [40..188]) -->
+                <g class="c-node-pill c-pill-blue" transform="translate(114, 162)">
+                  <rect x="-74" y="-14" width="148" height="28" rx="14" />
+                  <circle cx="-58" cy="0" r="4" class="c-dot-blue" />
                   <text x="6" y="4" text-anchor="middle">BU Admin Group</text>
+                </g>
+
+                <!-- Bottom: Billing Account -->
+                <g class="c-node-pill c-pill-blue" transform="translate(280, 494)">
+                  <rect x="-74" y="-14" width="148" height="28" rx="14" />
+                  <circle cx="-58" cy="0" r="4" class="c-dot-blue" />
+                  <text x="6" y="4" text-anchor="middle">Billing Account</text>
                 </g>
               </g>
 
               <!-- ============================================================
-                   RING 02 (MIDDLE, R=170): BU ADMIN — PLAYGROUND & SHARDS
+                   RING 02 (MIDDLE, R=152): BU ADMIN — PLAYGROUND & SHARDS
                    ============================================================ -->
               <g class="c-ring-layer c-ring-1" data-ring-click="1">
-                <circle class="c-ring-hit" cx="280" cy="280" r="170" />
-                <!-- 4 Segmented Project Shard Arcs around R=170 (circumference = 1068) -->
+                <circle class="c-ring-hit" cx="280" cy="280" r="152" />
+                <!-- 4 Segmented Project Shard Arcs around R=152 (circumference = 955) -->
                 <circle
                   class="c-shard-arc"
                   cx="280"
                   cy="280"
-                  r="170"
-                  stroke-dasharray="238 29 238 29 238 29 238 29"
+                  r="152"
+                  stroke-dasharray="212 26.75 212 26.75 212 26.75 212 26.75"
                   transform="rotate(-76 280 280)"
                 />
-                <circle class="c-ring-orbit c-orbit-green" cx="280" cy="280" r="170" stroke-dasharray="84 984" />
 
-                <!-- 4 Project Shard Badges on Middle Ring -->
-                <g class="c-node-pill c-pill-shard" transform="translate(398, 158)">
-                  <rect x="-52" y="-13" width="104" height="26" rx="13" />
-                  <circle cx="-37" cy="0" r="3.8" class="c-dot-green" />
+                <!-- 4 Project Shard Badges -->
+                <g class="c-node-pill c-pill-green" transform="translate(386, 174)">
+                  <rect x="-50" y="-13" width="100" height="26" rx="13" />
+                  <circle cx="-35" cy="0" r="3.6" class="c-dot-green" />
                   <text x="6" y="4" text-anchor="middle">Shard p01</text>
                 </g>
-                <g class="c-node-pill c-pill-shard" transform="translate(398, 402)">
-                  <rect x="-52" y="-13" width="104" height="26" rx="13" />
-                  <circle cx="-37" cy="0" r="3.8" class="c-dot-green" />
+                <g class="c-node-pill c-pill-green" transform="translate(386, 386)">
+                  <rect x="-50" y="-13" width="100" height="26" rx="13" />
+                  <circle cx="-35" cy="0" r="3.6" class="c-dot-green" />
                   <text x="6" y="4" text-anchor="middle">Shard p02</text>
                 </g>
-                <g class="c-node-pill c-pill-shard" transform="translate(162, 402)">
-                  <rect x="-52" y="-13" width="104" height="26" rx="13" />
-                  <circle cx="-37" cy="0" r="3.8" class="c-dot-green" />
+                <g class="c-node-pill c-pill-green" transform="translate(174, 386)">
+                  <rect x="-50" y="-13" width="100" height="26" rx="13" />
+                  <circle cx="-35" cy="0" r="3.6" class="c-dot-green" />
                   <text x="6" y="4" text-anchor="middle">Shard p03</text>
                 </g>
-                <g class="c-node-pill c-pill-shard" transform="translate(162, 158)">
-                  <rect x="-52" y="-13" width="104" height="26" rx="13" />
-                  <circle cx="-37" cy="0" r="3.8" class="c-dot-green" />
+                <g class="c-node-pill c-pill-green" transform="translate(174, 174)">
+                  <rect x="-50" y="-13" width="100" height="26" rx="13" />
+                  <circle cx="-35" cy="0" r="3.6" class="c-dot-green" />
                   <text x="6" y="4" text-anchor="middle">Shard p0N</text>
                 </g>
 
                 <!-- Top & Bottom Playground Metadata -->
-                <g class="c-node-pill c-pill-meta" transform="translate(280, 110)">
-                  <rect x="-82" y="-13" width="164" height="26" rx="13" />
+                <g class="c-node-pill c-pill-green" transform="translate(280, 128)">
+                  <rect x="-78" y="-13" width="156" height="26" rx="13" />
                   <text x="0" y="4" text-anchor="middle">Template (current)</text>
                 </g>
-                <g class="c-node-pill c-pill-meta" transform="translate(280, 450)">
+                <g class="c-node-pill c-pill-green" transform="translate(280, 432)">
                   <rect x="-86" y="-13" width="172" height="26" rx="13" />
-                  <text x="0" y="4" text-anchor="middle">Tags &rarr; Project Labels</text>
+                  <text x="0" y="4" text-anchor="middle">
+                    <tspan class="c-num-green">02</tspan> BU Tags &rarr; Labels
+                  </text>
                 </g>
               </g>
 
               <!-- ============================================================
-                   RING 03 (INNER, R=108): STUDENT / USER — WORKSPACE & APPS
+                   RING 03 (INNER, R=94): STUDENT / USER — WORKSPACE & APPS
                    ============================================================ -->
               <g class="c-ring-layer c-ring-2" data-ring-click="2">
-                <circle class="c-ring-hit" cx="280" cy="280" r="108" />
-                <circle class="c-ring-track c-track-amber" cx="280" cy="280" r="108" />
-                <circle class="c-ring-orbit c-orbit-amber" cx="280" cy="280" r="108" stroke-dasharray="64 615" />
+                <circle class="c-ring-hit" cx="280" cy="280" r="94" />
+                <circle class="c-ring-track c-track-amber" cx="280" cy="280" r="94" />
 
-                <!-- Singleton Resources & App Containers on Inner Ring -->
-                <g class="c-node-pill c-pill-ws" transform="translate(280, 172)">
-                  <rect x="-58" y="-13" width="116" height="26" rx="13" />
-                  <circle cx="-42" cy="0" r="3.8" class="c-dot-amber" />
-                  <text x="6" y="4" text-anchor="middle">sa-&lt;user&gt;</text>
+                <g class="c-node-pill c-pill-amber" transform="translate(280, 186)">
+                  <rect x="-54" y="-12.5" width="108" height="25" rx="12.5" />
+                  <circle cx="-39" cy="0" r="3.5" class="c-dot-amber" />
+                  <text x="5" y="4" text-anchor="middle">sa-&lt;user&gt;</text>
                 </g>
-                <g class="c-node-pill c-pill-ws" transform="translate(388, 280)">
-                  <rect x="-58" y="-13" width="116" height="26" rx="13" />
-                  <circle cx="-42" cy="0" r="3.8" class="c-dot-amber" />
-                  <text x="6" y="4" text-anchor="middle">bkt + db_&lt;u&gt;</text>
+                <g class="c-node-pill c-pill-amber" transform="translate(374, 280)">
+                  <rect x="-54" y="-12.5" width="108" height="25" rx="12.5" />
+                  <circle cx="-39" cy="0" r="3.5" class="c-dot-amber" />
+                  <text x="5" y="4" text-anchor="middle">bkt + db_&lt;u&gt;</text>
                 </g>
-                <g class="c-node-pill c-pill-ws" transform="translate(280, 388)">
-                  <rect x="-58" y="-13" width="116" height="26" rx="13" />
-                  <circle cx="-42" cy="0" r="3.8" class="c-dot-amber" />
-                  <text x="6" y="4" text-anchor="middle">app-lab1</text>
+                <g class="c-node-pill c-pill-amber" transform="translate(280, 374)">
+                  <rect x="-54" y="-12.5" width="108" height="25" rx="12.5" />
+                  <circle cx="-39" cy="0" r="3.5" class="c-dot-amber" />
+                  <text x="5" y="4" text-anchor="middle">app-lab1</text>
                 </g>
-                <g class="c-node-pill c-pill-ws" transform="translate(172, 280)">
-                  <rect x="-58" y="-13" width="116" height="26" rx="13" />
-                  <circle cx="-42" cy="0" r="3.8" class="c-dot-amber" />
-                  <text x="6" y="4" text-anchor="middle">min..max</text>
+                <g class="c-node-pill c-pill-amber" transform="translate(186, 280)">
+                  <rect x="-54" y="-12.5" width="108" height="25" rx="12.5" />
+                  <circle cx="-39" cy="0" r="3.5" class="c-dot-amber" />
+                  <text x="5" y="4" text-anchor="middle">min..max</text>
                 </g>
               </g>
 
@@ -270,77 +247,55 @@ const { title = data.title, tagline } = data.hero || {};
                    CENTER CORE (STAGES 01–03 SUMMARY BADGE)
                    ============================================================ -->
               <g class="c-center-summary" id="c-center-summary" data-ring-click="3">
-                <circle class="c-summary-disc" cx="280" cy="280" r="54" />
-                <text class="c-summary-kicker" id="c-summary-kicker" x="280" y="269" text-anchor="middle">GOVERNED</text>
-                <text class="c-summary-main" id="c-summary-main" x="280" y="288" text-anchor="middle">Folder</text>
-                <text class="c-summary-sub" id="c-summary-sub" x="280" y="304" text-anchor="middle">IT Admin</text>
+                <circle class="c-summary-disc" cx="280" cy="280" r="46" />
+                <text class="c-summary-kicker" id="c-summary-kicker" x="280" y="270" text-anchor="middle">GOVERNED</text>
+                <text class="c-summary-main" id="c-summary-main" x="280" y="287" text-anchor="middle">Folder</text>
+                <text class="c-summary-sub" id="c-summary-sub" x="280" y="302" text-anchor="middle">IT Admin</text>
               </g>
 
               <!-- ============================================================
                    STAGE 04 SHIFT: LIVE AI APPLICATION INSIDE app-lab1
-                   (Zooms forward when Stage 04 is active while rings form halo)
+                   (Canvas2D draws curved luminous Bézier packets behind these cards)
                    ============================================================ -->
               <g class="c-ai-app-scene" id="c-ai-app-scene">
-                <!-- App Container boundary card -->
-                <circle class="c-ai-arena" cx="280" cy="280" r="166" />
-                <circle class="c-ai-arena-ring" cx="280" cy="280" r="166" stroke-dasharray="8 8" />
+                <circle class="c-ai-arena-ring" cx="280" cy="280" r="172" stroke-dasharray="6 8" />
 
                 <!-- Container header pill -->
-                <g transform="translate(280, 114)">
-                  <rect class="c-ai-banner" x="-96" y="-14" width="192" height="28" rx="14" />
+                <g transform="translate(280, 108)">
+                  <rect class="c-ai-banner" x="-98" y="-14" width="196" height="28" rx="14" />
                   <text class="c-ai-banner-txt" x="0" y="4" text-anchor="middle">app-lab1 &middot; sa-&lt;user&gt;</text>
                 </g>
 
-                <!-- Animated Request / Data-Plane Connectors from Cloud Run Hub -->
-                <g class="c-ai-links" filter="url(#c-soft-glow)">
-                  <!-- Hub -> Gemini (Top-Right) -->
-                  <line class="c-ai-link-base" x1="280" y1="280" x2="378" y2="196" />
-                  <line class="c-ai-link-pulse c-pulse-1" x1="280" y1="280" x2="378" y2="196" />
-
-                  <!-- Hub -> Vertex AI Search (Bottom-Right) -->
-                  <line class="c-ai-link-base" x1="280" y1="280" x2="382" y2="362" />
-                  <line class="c-ai-link-pulse c-pulse-2" x1="280" y1="280" x2="382" y2="362" />
-
-                  <!-- Hub -> Cloud SQL (Bottom-Left) -->
-                  <line class="c-ai-link-base" x1="280" y1="280" x2="178" y2="362" />
-                  <line class="c-ai-link-pulse c-pulse-3" x1="280" y1="280" x2="178" y2="362" />
-
-                  <!-- Hub -> Cloud Storage (Top-Left) -->
-                  <line class="c-ai-link-base" x1="280" y1="280" x2="182" y2="196" />
-                  <line class="c-ai-link-pulse c-pulse-4" x1="280" y1="280" x2="182" y2="196" />
-                </g>
-
-                <!-- Satellite 1 (Top-Right): Gemini (Vertex AI) -->
-                <g class="c-ai-sat" transform="translate(384, 192)">
-                  <rect x="-66" y="-22" width="132" height="44" rx="12" />
-                  <text class="c-ai-sat-title" x="0" y="-3" text-anchor="middle">Gemini (Vertex AI)</text>
+                <!-- Satellite 0 (Top-Right): Gemini (Vertex AI) -->
+                <g class="c-ai-sat c-sat-blue" data-ai-sat="0" transform="translate(392, 190)">
+                  <rect x="-68" y="-23" width="136" height="46" rx="13" />
+                  <text class="c-ai-sat-title" x="0" y="-4" text-anchor="middle">Gemini (Vertex AI)</text>
                   <text class="c-ai-sat-sub" x="0" y="12" text-anchor="middle">sa-&lt;user&gt; access</text>
                 </g>
 
-                <!-- Satellite 2 (Bottom-Right): Vertex AI Search -->
-                <g class="c-ai-sat" transform="translate(384, 366)">
-                  <rect x="-68" y="-22" width="136" height="44" rx="12" />
-                  <text class="c-ai-sat-title" x="0" y="-3" text-anchor="middle">Vertex AI Search</text>
+                <!-- Satellite 1 (Bottom-Right): Vertex AI Search -->
+                <g class="c-ai-sat c-sat-red" data-ai-sat="1" transform="translate(392, 370)">
+                  <rect x="-68" y="-23" width="136" height="46" rx="13" />
+                  <text class="c-ai-sat-title" x="0" y="-4" text-anchor="middle">Vertex AI Search</text>
                   <text class="c-ai-sat-sub" x="0" y="12" text-anchor="middle">search-ds / app</text>
                 </g>
 
-                <!-- Satellite 3 (Bottom-Left): Cloud SQL -->
-                <g class="c-ai-sat" transform="translate(176, 366)">
-                  <rect x="-66" y="-22" width="132" height="44" rx="12" />
-                  <text class="c-ai-sat-title" x="0" y="-3" text-anchor="middle">Cloud SQL</text>
+                <!-- Satellite 2 (Bottom-Left): Cloud SQL -->
+                <g class="c-ai-sat c-sat-green" data-ai-sat="2" transform="translate(168, 370)">
+                  <rect x="-66" y="-23" width="132" height="46" rx="13" />
+                  <text class="c-ai-sat-title" x="0" y="-4" text-anchor="middle">Cloud SQL</text>
                   <text class="c-ai-sat-sub" x="0" y="12" text-anchor="middle">db_&lt;user&gt;.schema</text>
                 </g>
 
-                <!-- Satellite 4 (Top-Left): Cloud Storage -->
-                <g class="c-ai-sat" transform="translate(176, 192)">
-                  <rect x="-66" y="-22" width="132" height="44" rx="12" />
-                  <text class="c-ai-sat-title" x="0" y="-3" text-anchor="middle">Cloud Storage</text>
+                <!-- Satellite 3 (Top-Left): Cloud Storage -->
+                <g class="c-ai-sat c-sat-amber" data-ai-sat="3" transform="translate(168, 190)">
+                  <rect x="-66" y="-23" width="132" height="46" rx="13" />
+                  <text class="c-ai-sat-title" x="0" y="-4" text-anchor="middle">Cloud Storage</text>
                   <text class="c-ai-sat-sub" x="0" y="12" text-anchor="middle">apps/&lt;app&gt;/&lt;dir&gt;/</text>
                 </g>
 
                 <!-- Center Hub: Cloud Run Service -->
                 <g class="c-ai-hub" transform="translate(280, 280)">
-                  <circle class="c-ai-hub-pulse" cx="0" cy="0" r="54" />
                   <circle class="c-ai-hub-core" cx="0" cy="0" r="46" />
                   <text class="c-ai-hub-kicker" x="0" y="-12" text-anchor="middle">CLOUD RUN</text>
                   <text class="c-ai-hub-title" x="0" y="5" text-anchor="middle">AI Service</text>
@@ -348,8 +303,8 @@ const { title = data.title, tagline } = data.hero || {};
                 </g>
 
                 <!-- Container footer caption -->
-                <g transform="translate(280, 446)">
-                  <rect class="c-ai-footer" x="-126" y="-13" width="252" height="26" rx="13" />
+                <g transform="translate(280, 452)">
+                  <rect class="c-ai-footer" x="-128" y="-13" width="256" height="26" rx="13" />
                   <text class="c-ai-footer-txt" x="0" y="4" text-anchor="middle">Cloud Console &amp; Antigravity IDE &middot; Usage only</text>
                 </g>
               </g>
@@ -389,14 +344,20 @@ const { title = data.title, tagline } = data.hero || {};
 <script>
   function initCrucibleLifecycle() {
     const section = document.getElementById('crucible-launch');
-    if (!section || section.dataset.bound === '1') return;
+    const canvas = document.getElementById('crucible-dial-canvas') as HTMLCanvasElement | null;
+    const stageBox = document.getElementById('crucible-dial-stage');
+    if (!section || !canvas || !stageBox || section.dataset.bound === '1') return;
     section.dataset.bound = '1';
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
 
     const tabs = Array.from(section.querySelectorAll<HTMLButtonElement>('.c-stage-tab'));
     const bars = Array.from(section.querySelectorAll<HTMLElement>('.c-stage-progress'));
     const panes = Array.from(section.querySelectorAll<HTMLElement>('[data-cstage-pane]'));
     const legendBtns = Array.from(section.querySelectorAll<HTMLButtonElement>('[data-cstage-jump]'));
     const ringTargets = Array.from(section.querySelectorAll<SVGGElement>('[data-ring-click]'));
+    const satCards = Array.from(section.querySelectorAll<SVGGElement>('[data-ai-sat]'));
 
     const dialStep = document.getElementById('c-dial-step');
     const dialStatus = document.getElementById('c-dial-status');
@@ -428,7 +389,7 @@ const { title = data.title, tagline } = data.hero || {};
       },
       {
         step: '04 / 04 · AI PLAYGROUND TEMPLATE',
-        status: 'Running AI App Inside app-lab1',
+        status: 'Cloud Run (sa-<user>) ⇄ Gemini · Search · SQL · Storage',
         kicker: 'ACTIVE',
         main: 'app-lab1',
         sub: 'sa-<user>',
@@ -436,20 +397,57 @@ const { title = data.title, tagline } = data.hero || {};
     ];
 
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const STAGE_MS = 3500;
+    const STAGE_MS = 3800;
 
     let activeStage = 0;
     let stageStart = performance.now();
+    let transitionStart = performance.now();
     let pausedUntil = 0;
     let isHovered = false;
 
+    // Sonar shockwaves triggered on stage transitions
+    interface Ripple {
+      r0: number;
+      r1: number;
+      born: number;
+      dur: number;
+      rgb: string;
+    }
+    const ripples: Ripple[] = [];
+
+    const COLORS = {
+      blue: '66, 133, 244',
+      green: '52, 168, 83',
+      amber: '251, 188, 4',
+      red: '234, 67, 53',
+    };
+
+    const STAGE_RGB = [COLORS.blue, COLORS.green, COLORS.amber, COLORS.blue];
+    const STAGE_RADII = [214, 152, 94, 48];
+
+    function spawnRipple(idx: number, now: number) {
+      if (reduceMotion) return;
+      const baseR = STAGE_RADII[idx];
+      ripples.push({
+        r0: Math.max(24, baseR - 28),
+        r1: baseR + 34,
+        born: now,
+        dur: 850,
+        rgb: STAGE_RGB[idx],
+      });
+      if (ripples.length > 5) ripples.shift();
+    }
+
     function applyStage(idx: number, userTriggered: boolean) {
       const next = ((idx % 4) + 4) % 4;
+      const now = performance.now();
       activeStage = next;
-      stageStart = performance.now();
-      if (userTriggered) pausedUntil = stageStart + 7000;
+      stageStart = now;
+      transitionStart = now;
+      if (userTriggered) pausedUntil = now + 7000;
 
       section!.dataset.activeStage = String(next);
+      spawnRipple(next, now);
 
       tabs.forEach((tab, i) => {
         const on = i === next;
@@ -470,6 +468,10 @@ const { title = data.title, tagline } = data.hero || {};
 
       panes.forEach((p, i) => p.classList.toggle('is-active', i === next));
       legendBtns.forEach((b, i) => b.classList.toggle('is-active', i === next));
+
+      if (next !== 3) {
+        satCards.forEach((c) => c.classList.remove('is-firing'));
+      }
 
       const meta = STAGE_META[next];
       if (dialStep) dialStep.textContent = meta.step;
@@ -498,15 +500,146 @@ const { title = data.title, tagline } = data.hero || {};
       stageStart = performance.now();
     });
 
+    // Responsive DPI sizing mapped into the 560x560 SVG coordinate space
+    let dpr = 1;
+    let cssSize = 480;
+    function resizeCanvas() {
+      const rect = stageBox!.getBoundingClientRect();
+      cssSize = Math.max(240, rect.width);
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas!.width = Math.round(cssSize * dpr);
+      canvas!.height = Math.round(cssSize * dpr);
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas, { passive: true });
+
+    // Helper: draw a glowing tapered comet arc on radius R
+    function drawCometArc(
+      c: CanvasRenderingContext2D,
+      cx: number,
+      cy: number,
+      r: number,
+      headAngle: number,
+      arcLen: number,
+      dir: 1 | -1,
+      rgb: string,
+      alpha: number,
+      lineW: number,
+    ) {
+      const steps = 22;
+      for (let s = 0; s < steps; s++) {
+        const f0 = s / steps;
+        const f1 = (s + 1) / steps;
+        const a0 = headAngle - dir * arcLen * f1;
+        const a1 = headAngle - dir * arcLen * f0;
+        const segAlpha = alpha * Math.pow(1 - f0, 1.85);
+        c.beginPath();
+        c.arc(cx, cy, r, Math.min(a0, a1), Math.max(a0, a1));
+        c.strokeStyle = `rgba(${rgb}, ${segAlpha.toFixed(3)})`;
+        c.lineWidth = lineW * (0.35 + 0.65 * (1 - f0));
+        c.lineCap = 'round';
+        c.stroke();
+      }
+      // Glowing comet head dot
+      const hx = cx + Math.cos(headAngle) * r;
+      const hy = cy + Math.sin(headAngle) * r;
+      const grad = c.createRadialGradient(hx, hy, 0, hx, hy, lineW * 3.4);
+      grad.addColorStop(0, `rgba(${rgb}, ${(alpha * 0.95).toFixed(3)})`);
+      grad.addColorStop(0.45, `rgba(${rgb}, ${(alpha * 0.35).toFixed(3)})`);
+      grad.addColorStop(1, `rgba(${rgb}, 0)`);
+      c.fillStyle = grad;
+      c.beginPath();
+      c.arc(hx, hy, lineW * 3.4, 0, Math.PI * 2);
+      c.fill();
+    }
+
+    // Helper: quadratic Bézier point at t in [0..1]
+    function quadPt(x0: number, y0: number, qx: number, qy: number, x1: number, y1: number, t: number) {
+      const mt = 1 - t;
+      return {
+        x: mt * mt * x0 + 2 * mt * t * qx + t * t * x1,
+        y: mt * mt * y0 + 2 * mt * t * qy + t * t * y1,
+      };
+    }
+
+    // Helper: draw curved Bézier guide + animated glowing packet trail
+    function drawBezierPacket(
+      c: CanvasRenderingContext2D,
+      x0: number,
+      y0: number,
+      qx: number,
+      qy: number,
+      x1: number,
+      y1: number,
+      t: number,
+      rgb: string,
+      alpha: number,
+    ) {
+      // Subtle curved conduit track
+      c.beginPath();
+      c.moveTo(x0, y0);
+      c.quadraticCurveTo(qx, qy, x1, y1);
+      c.strokeStyle = `rgba(${rgb}, ${(alpha * 0.22).toFixed(3)})`;
+      c.lineWidth = 1.6;
+      c.stroke();
+
+      // Tapered packet trail behind head at t
+      const trailLen = 0.24;
+      const segs = 12;
+      for (let i = 0; i < segs; i++) {
+        const u0 = Math.max(0, t - (trailLen * (i + 1)) / segs);
+        const u1 = Math.max(0, t - (trailLen * i) / segs);
+        if (u1 <= u0) continue;
+        const p0 = quadPt(x0, y0, qx, qy, x1, y1, u0);
+        const p1 = quadPt(x0, y0, qx, qy, x1, y1, u1);
+        const fade = Math.pow(1 - i / segs, 1.7) * alpha;
+        c.beginPath();
+        c.moveTo(p0.x, p0.y);
+        c.lineTo(p1.x, p1.y);
+        c.strokeStyle = `rgba(${rgb}, ${fade.toFixed(3)})`;
+        c.lineWidth = 3.2 * (1 - (i / segs) * 0.6);
+        c.lineCap = 'round';
+        c.stroke();
+      }
+
+      // Packet head glow
+      const head = quadPt(x0, y0, qx, qy, x1, y1, t);
+      const g = c.createRadialGradient(head.x, head.y, 0, head.x, head.y, 11);
+      g.addColorStop(0, `rgba(255, 255, 255, ${(alpha * 0.95).toFixed(3)})`);
+      g.addColorStop(0.35, `rgba(${rgb}, ${(alpha * 0.85).toFixed(3)})`);
+      g.addColorStop(1, `rgba(${rgb}, 0)`);
+      c.fillStyle = g;
+      c.beginPath();
+      c.arc(head.x, head.y, 11, 0, Math.PI * 2);
+      c.fill();
+    }
+
+    // 4 AI Satellites in 560x560 space (matching SVG coordinates)
+    const AI_SATS = [
+      { x: 392, y: 190, qx: 348, qy: 204, rgb: COLORS.blue },  // Gemini (Vertex AI)
+      { x: 392, y: 370, qx: 356, qy: 344, rgb: COLORS.red },   // Vertex AI Search
+      { x: 168, y: 370, qx: 204, qy: 344, rgb: COLORS.green }, // Cloud SQL
+      { x: 168, y: 190, qx: 212, qy: 204, rgb: COLORS.amber }, // Cloud Storage
+    ];
+
+    // 6 Outer Folder Governance node angles (radians)
+    const FOLDER_ANGLES = [-Math.PI / 2, -0.51, 0.51, Math.PI / 2, Math.PI - 0.51, -Math.PI + 0.51];
+    // 4 Shard angles (radians)
+    const SHARD_ANGLES = [-Math.PI / 4, Math.PI / 4, (3 * Math.PI) / 4, (-3 * Math.PI) / 4];
+
     applyStage(0, false);
 
-    if (!reduceMotion) {
-      let rafId = 0;
-      function tick(now: number) {
-        if (!document.body.contains(section)) {
-          cancelAnimationFrame(rafId);
-          return;
-        }
+    let rafId = 0;
+    const t0 = performance.now();
+
+    function renderFrame(now: number) {
+      if (!document.body.contains(section)) {
+        cancelAnimationFrame(rafId);
+        return;
+      }
+
+      // Advance stage progress bar
+      if (!reduceMotion) {
         if (isHovered || now < pausedUntil) {
           bars[activeStage].style.transform = 'scaleX(1)';
         } else {
@@ -517,10 +650,198 @@ const { title = data.title, tagline } = data.hero || {};
             applyStage(activeStage + 1, false);
           }
         }
-        rafId = requestAnimationFrame(tick);
       }
-      rafId = requestAnimationFrame(tick);
+
+      const sec = reduceMotion ? 0 : (now - t0) * 0.001;
+      const isLight = document.documentElement.dataset.theme === 'light';
+      const scale = (cssSize * dpr) / 560;
+
+      ctx!.save();
+      ctx!.clearRect(0, 0, canvas!.width, canvas!.height);
+      ctx!.scale(scale, scale);
+
+      const CX = 280;
+      const CY = 280;
+
+      // 1. Ambient radial core glow matched to active stage
+      const coreRgb = STAGE_RGB[activeStage];
+      const amb = ctx!.createRadialGradient(CX, CY, 12, CX, CY, 250);
+      amb.addColorStop(0, `rgba(${coreRgb}, ${isLight ? 0.11 : 0.17})`);
+      amb.addColorStop(0.55, `rgba(${coreRgb}, ${isLight ? 0.04 : 0.06})`);
+      amb.addColorStop(1, `rgba(${coreRgb}, 0)`);
+      ctx!.fillStyle = amb;
+      ctx!.beginPath();
+      ctx!.arc(CX, CY, 250, 0, Math.PI * 2);
+      ctx!.fill();
+
+      // 2. Rotating Precision Astrolabe Perimeter Ticks (R = 242..249)
+      const tickCount = 96;
+      const tickRot = sec * 0.08;
+      for (let i = 0; i < tickCount; i++) {
+        const a = (i / tickCount) * Math.PI * 2 + tickRot;
+        const major = i % 8 === 0;
+        const rIn = major ? 239 : 243;
+        const rOut = 248;
+        ctx!.beginPath();
+        ctx!.moveTo(CX + Math.cos(a) * rIn, CY + Math.sin(a) * rIn);
+        ctx!.lineTo(CX + Math.cos(a) * rOut, CY + Math.sin(a) * rOut);
+        ctx!.strokeStyle = isLight
+          ? `rgba(60, 64, 67, ${major ? 0.24 : 0.11})`
+          : `rgba(154, 164, 178, ${major ? 0.28 : 0.11})`;
+        ctx!.lineWidth = major ? 1.4 : 1;
+        ctx!.stroke();
+      }
+
+      // 3. Expanding Sonar Ripples on stage switch
+      for (let i = ripples.length - 1; i >= 0; i--) {
+        const rp = ripples[i];
+        const u = (now - rp.born) / rp.dur;
+        if (u >= 1) {
+          ripples.splice(i, 1);
+          continue;
+        }
+        const ease = 1 - Math.pow(1 - u, 3);
+        const rr = rp.r0 + (rp.r1 - rp.r0) * ease;
+        const alpha = (1 - u) * (isLight ? 0.42 : 0.55);
+        ctx!.beginPath();
+        ctx!.arc(CX, CY, rr, 0, Math.PI * 2);
+        ctx!.strokeStyle = `rgba(${rp.rgb}, ${alpha.toFixed(3)})`;
+        ctx!.lineWidth = 2.2 * (1 - u * 0.5);
+        ctx!.stroke();
+      }
+
+      // 4. Stage-specific kinetic streams
+      if (activeStage === 0) {
+        // Dual counter-orbiting blue comets on Outer Playground Folder Ring (R=214)
+        drawCometArc(ctx!, CX, CY, 214, sec * 1.65, 1.15, 1, COLORS.blue, 0.95, 3.6);
+        drawCometArc(ctx!, CX, CY, 214, sec * 1.65 + Math.PI, 0.95, 1, COLORS.blue, 0.75, 3.0);
+
+        // Subtle radial governance pulses from center out to the 6 folder nodes
+        for (let k = 0; k < FOLDER_ANGLES.length; k++) {
+          const ang = FOLDER_ANGLES[k];
+          const p = (sec * 0.9 + k * 0.17) % 1;
+          const rCur = 52 + p * (214 - 52);
+          const px = CX + Math.cos(ang) * rCur;
+          const py = CY + Math.sin(ang) * rCur;
+          const alpha = Math.sin(p * Math.PI) * 0.65;
+          ctx!.beginPath();
+          ctx!.moveTo(CX + Math.cos(ang) * 50, CY + Math.sin(ang) * 50);
+          ctx!.lineTo(CX + Math.cos(ang) * 210, CY + Math.sin(ang) * 210);
+          ctx!.strokeStyle = `rgba(${COLORS.blue}, 0.10)`;
+          ctx!.lineWidth = 1;
+          ctx!.stroke();
+
+          ctx!.beginPath();
+          ctx!.arc(px, py, 2.8, 0, Math.PI * 2);
+          ctx!.fillStyle = `rgba(${COLORS.blue}, ${alpha.toFixed(3)})`;
+          ctx!.fill();
+        }
+      } else if (activeStage === 1) {
+        // Gentle outer governance frame comet + lively dual green comets on Shard Ring (R=152)
+        drawCometArc(ctx!, CX, CY, 214, sec * 0.8, 0.7, 1, COLORS.blue, 0.35, 2.2);
+        drawCometArc(ctx!, CX, CY, 152, -sec * 1.9, 1.05, -1, COLORS.green, 0.95, 3.8);
+        drawCometArc(ctx!, CX, CY, 152, -sec * 1.9 + Math.PI, 0.85, -1, COLORS.green, 0.75, 3.2);
+
+        // Radial tag-to-label inheritance comets streaming INWARD from Outer Ring (214) -> Shard Ring (152)
+        for (let k = 0; k < SHARD_ANGLES.length; k++) {
+          const ang = SHARD_ANGLES[k];
+          const p = (sec * 1.35 + k * 0.25) % 1;
+          const rCur = 214 - p * (214 - 152);
+          const x0 = CX + Math.cos(ang) * 214;
+          const y0 = CY + Math.sin(ang) * 214;
+          const x1 = CX + Math.cos(ang) * 152;
+          const y1 = CY + Math.sin(ang) * 152;
+
+          ctx!.beginPath();
+          ctx!.moveTo(x0, y0);
+          ctx!.lineTo(x1, y1);
+          ctx!.strokeStyle = `rgba(${COLORS.green}, 0.24)`;
+          ctx!.lineWidth = 1.5;
+          ctx!.stroke();
+
+          const hx = CX + Math.cos(ang) * rCur;
+          const hy = CY + Math.sin(ang) * rCur;
+          const g = ctx!.createRadialGradient(hx, hy, 0, hx, hy, 8);
+          g.addColorStop(0, `rgba(${COLORS.green}, 0.95)`);
+          g.addColorStop(1, `rgba(${COLORS.green}, 0)`);
+          ctx!.fillStyle = g;
+          ctx!.beginPath();
+          ctx!.arc(hx, hy, 8, 0, Math.PI * 2);
+          ctx!.fill();
+        }
+      } else if (activeStage === 2) {
+        // Outer & Middle quiet comets + fast golden Workspace comets on Inner Ring (R=94)
+        drawCometArc(ctx!, CX, CY, 214, sec * 0.6, 0.55, 1, COLORS.blue, 0.22, 1.8);
+        drawCometArc(ctx!, CX, CY, 152, -sec * 0.9, 0.65, -1, COLORS.green, 0.32, 2.2);
+        drawCometArc(ctx!, CX, CY, 94, sec * 2.3, 1.2, 1, COLORS.amber, 0.95, 3.8);
+        drawCometArc(ctx!, CX, CY, 94, sec * 2.3 + Math.PI, 0.9, 1, COLORS.amber, 0.8, 3.0);
+
+        // Shard -> Workspace placement stream from Shard p01 (-45deg, R=152) into Workspace (R=94)
+        for (let k = 0; k < 4; k++) {
+          const ang = (k * Math.PI) / 2;
+          const p = (sec * 1.5 + k * 0.25) % 1;
+          const rCur = 152 - p * (152 - 94);
+          const hx = CX + Math.cos(ang) * rCur;
+          const hy = CY + Math.sin(ang) * rCur;
+
+          ctx!.beginPath();
+          ctx!.moveTo(CX + Math.cos(ang) * 150, CY + Math.sin(ang) * 150);
+          ctx!.lineTo(CX + Math.cos(ang) * 96, CY + Math.sin(ang) * 96);
+          ctx!.strokeStyle = `rgba(${COLORS.amber}, 0.22)`;
+          ctx!.lineWidth = 1.4;
+          ctx!.stroke();
+
+          const g = ctx!.createRadialGradient(hx, hy, 0, hx, hy, 7);
+          g.addColorStop(0, `rgba(${COLORS.amber}, 0.95)`);
+          g.addColorStop(1, `rgba(${COLORS.amber}, 0)`);
+          ctx!.fillStyle = g;
+          ctx!.beginPath();
+          ctx!.arc(hx, hy, 7, 0, Math.PI * 2);
+          ctx!.fill();
+        }
+      } else {
+        // Stage 04: Outer governed halo comet + Live Round-Trip Agentic AI Application Telemetry
+        drawCometArc(ctx!, CX, CY, 222, sec * 0.75, 0.85, 1, COLORS.blue, 0.35, 2.2);
+        drawCometArc(ctx!, CX, CY, 172, -sec * 1.1, 0.75, -1, COLORS.amber, 0.55, 2.4);
+
+        // Pulsing radar aura around Cloud Run center hub
+        const hubPulse = (sec * 1.2) % 1;
+        ctx!.beginPath();
+        ctx!.arc(CX, CY, 46 + hubPulse * 26, 0, Math.PI * 2);
+        ctx!.strokeStyle = `rgba(${COLORS.blue}, ${((1 - hubPulse) * 0.5).toFixed(3)})`;
+        ctx!.lineWidth = 2;
+        ctx!.stroke();
+
+        // Round-trip request & response packets to all 4 GCP AI services
+        const elapsedStage = Math.max(0, now - transitionStart);
+        const fadeIn = Math.min(1, elapsedStage / 260);
+
+        AI_SATS.forEach((sat, idx) => {
+          // Staggered phase per service so packets cascade rhythmically
+          const cycle = (sec * 1.15 + idx * 0.25) % 1;
+          // Outbound 0..0.5, Inbound 0.5..1.0
+          const outbound = cycle < 0.5;
+          const localT = outbound ? cycle * 2 : (cycle - 0.5) * 2;
+
+          if (outbound) {
+            drawBezierPacket(ctx!, CX, CY, sat.qx, sat.qy, sat.x, sat.y, localT, sat.rgb, 0.95 * fadeIn);
+          } else {
+            drawBezierPacket(ctx!, sat.x, sat.y, sat.qx, sat.qy, CX, CY, localT, sat.rgb, 0.9 * fadeIn);
+          }
+
+          // Highlight the SVG satellite card right as the packet arrives (cycle 0.38..0.66)
+          const card = satCards[idx];
+          if (card) {
+            card.classList.toggle('is-firing', cycle > 0.36 && cycle < 0.68);
+          }
+        });
+      }
+
+      ctx!.restore();
+      rafId = requestAnimationFrame(renderFrame);
     }
+
+    rafId = requestAnimationFrame(renderFrame);
   }
 
   initCrucibleLifecycle();

@@ -28,8 +28,8 @@
   --c-surface-2: #1c2330;
   --c-border: #252e3d;
   --c-border-strong: #374357;
-  --c-dial-bg: radial-gradient(circle at 50% 50%, #161d29 0%, #10151e 72%, #0d1117 100%);
-  --c-pill-bg: #161d28;
+  --c-dial-bg: radial-gradient(circle at 50% 50%, #172030 0%, #101620 68%, #0c1017 100%);
+  --c-pill-bg: rgba(20, 26, 36, 0.94);
   --c-shadow-1: 0 1px 3px rgba(0, 0, 0, 0.35), 0 4px 12px rgba(0, 0, 0, 0.25);
   --c-shadow-2: 0 8px 24px rgba(0, 0, 0, 0.45), 0 16px 36px -8px rgba(0, 0, 0, 0.4);
   --c-hero-bg: linear-gradient(180deg, #0d1117 0%, #101620 75%, #131923 100%);
@@ -61,8 +61,8 @@
   --c-surface-2: #f1f3f4;
   --c-border: #e3e6ea;
   --c-border-strong: #dadce0;
-  --c-dial-bg: radial-gradient(circle at 50% 50%, #ffffff 0%, #f8faff 72%, #f1f4f9 100%);
-  --c-pill-bg: #ffffff;
+  --c-dial-bg: radial-gradient(circle at 50% 50%, #ffffff 0%, #f6f9ff 68%, #eef3fa 100%);
+  --c-pill-bg: rgba(255, 255, 255, 0.96);
   --c-shadow-1: 0 1px 2px rgba(60, 64, 67, 0.06), 0 2px 6px rgba(60, 64, 67, 0.05);
   --c-shadow-2: 0 6px 18px rgba(60, 64, 67, 0.08), 0 14px 30px -6px rgba(60, 64, 67, 0.12);
   --c-hero-bg: linear-gradient(180deg, #ffffff 0%, #fbfcff 75%, #f6f8fb 100%);
@@ -215,21 +215,21 @@ h4 {
 }
 
 /* ======================================================================
-   Splash Landing Hero: Left Story + Right Concentric Ring / AI App Dial
+   Splash Page Container Reset (fixes Starlight --sl-content-margin-inline overflow)
+   Both Hero & Documentation share a crisp centered 1080px track
    ====================================================================== */
-[data-has-hero] .content-panel:first-of-type {
+[data-has-hero] .content-panel {
   padding: 0 !important;
+  border-top: none !important;
   border-bottom: none !important;
 }
 
-[data-has-hero] .content-panel:first-of-type > .sl-container {
+[data-has-hero] .content-panel > .sl-container {
   max-width: 100% !important;
+  width: 100% !important;
   margin: 0 !important;
   padding: 0 !important;
-}
-
-[data-has-hero] .content-panel:nth-of-type(2) > .sl-container {
-  max-width: 1240px !important;
+  --sl-content-margin-inline: 0 !important;
 }
 
 .crucible-launch {
@@ -237,37 +237,39 @@ h4 {
   overflow: hidden;
   background: var(--c-hero-bg);
   border-bottom: 1px solid var(--c-border);
-  padding: 48px 28px 60px;
+  padding: 40px clamp(20px, 4.5vw, 40px) 48px;
+  box-sizing: border-box;
 }
 
 .crucible-launch-grid {
-  max-width: 1240px;
+  max-width: 1080px;
   width: 100%;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: minmax(0, 560px) minmax(0, 1fr);
-  gap: 48px;
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+  gap: 36px;
   align-items: center;
+  box-sizing: border-box;
 }
 
 .crucible-eyebrow {
   font-family: var(--sl-font-mono);
-  font-size: 0.75rem;
+  font-size: 0.73rem;
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--c-action);
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
 .crucible-title {
   font-family: var(--sl-font);
   font-weight: 600;
-  font-size: clamp(2.15rem, 3.8vw, 3.25rem);
-  line-height: 1.08;
+  font-size: clamp(2rem, 3.3vw, 2.85rem);
+  line-height: 1.09;
   letter-spacing: -0.028em;
   color: var(--c-ink);
-  margin: 0 0 18px;
+  margin: 0 0 16px;
 }
 
 .crucible-title span {
@@ -276,10 +278,10 @@ h4 {
 }
 
 .crucible-sub {
-  font-size: clamp(0.98rem, 1.12vw, 1.06rem);
-  line-height: 1.62;
+  font-size: clamp(0.95rem, 1.05vw, 1.02rem);
+  line-height: 1.6;
   color: var(--c-slate);
-  max-width: 54ch;
+  max-width: 52ch;
   margin: 0;
 }
 
@@ -288,18 +290,18 @@ h4 {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
-  margin-top: 26px;
+  gap: 9px;
+  margin-top: 22px;
 }
 
 .c-btn {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  padding: 10px 18px;
+  gap: 6px;
+  padding: 9px 16px;
   border-radius: 999px;
   font-family: var(--sl-font);
-  font-size: 0.88rem;
+  font-size: 0.85rem;
   font-weight: 500;
   text-decoration: none;
   transition:
@@ -336,7 +338,7 @@ h4 {
 }
 
 .c-btn-minimal {
-  padding: 10px 12px;
+  padding: 9px 10px;
   color: var(--c-slate) !important;
 }
 
@@ -346,15 +348,15 @@ h4 {
 
 /* 4-Stage Interactive Narrative Stepper */
 .crucible-stages {
-  margin-top: 34px;
-  padding-top: 22px;
+  margin-top: 28px;
+  padding-top: 20px;
   border-top: 1px solid var(--c-border);
 }
 
 .c-stage-tabs {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
 }
 
 .c-stage-tab {
@@ -379,7 +381,7 @@ h4 {
   border-radius: 999px;
   background: var(--c-border-strong);
   overflow: hidden;
-  margin-bottom: 8px;
+  margin-bottom: 7px;
 }
 
 .c-stage-progress {
@@ -389,7 +391,7 @@ h4 {
   background: var(--g-blue);
   transform: scaleX(0);
   transform-origin: left;
-  transition: transform 120ms linear;
+  transition: transform 90ms linear;
 }
 
 .c-stage-tab[data-cstage='1'] .c-stage-progress {
@@ -409,7 +411,7 @@ h4 {
 .c-stage-idx {
   display: block;
   font-family: var(--sl-font-mono);
-  font-size: 0.68rem;
+  font-size: 0.67rem;
   letter-spacing: 0.08em;
   color: var(--c-muted);
   margin-bottom: 2px;
@@ -422,7 +424,7 @@ h4 {
 
 .c-stage-name {
   display: block;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 550;
   line-height: 1.2;
 }
@@ -433,7 +435,7 @@ h4 {
 
 .c-stage-panes {
   position: relative;
-  margin-top: 14px;
+  margin-top: 12px;
   min-height: 138px;
 }
 
@@ -456,7 +458,7 @@ h4 {
 }
 
 .c-stage-pane h3 {
-  font-size: 1.02rem;
+  font-size: 0.98rem;
   font-weight: 560;
   margin: 0 0 6px;
   letter-spacing: -0.01em;
@@ -464,11 +466,11 @@ h4 {
 }
 
 .c-stage-pane p {
-  font-size: 0.87rem;
+  font-size: 0.85rem;
   color: var(--c-slate);
-  line-height: 1.56;
-  margin: 0 0 12px;
-  max-width: 54ch;
+  line-height: 1.55;
+  margin: 0 0 11px;
+  max-width: 52ch;
 }
 
 .c-stage-pane p code {
@@ -482,103 +484,80 @@ h4 {
 
 .c-stage-code {
   display: inline-block;
-  padding: 4px 12px;
+  padding: 4px 11px;
   border-radius: 999px;
   background: var(--c-surface);
   border: 1px solid var(--c-border);
   font-family: var(--sl-font-mono);
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   color: var(--c-action);
 }
 
 /* ======================================================================
-   Right Column: Concentric Ring Architecture -> AI App Instrument
+   Right Column: Hybrid 60fps Canvas2D + SVG Orbital / AI App Instrument
    ====================================================================== */
-@keyframes orbitRotateCw {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes orbitRotateCcw {
-  to {
-    transform: rotate(-360deg);
-  }
-}
-
-@keyframes linkFlow {
-  from {
-    stroke-dashoffset: 36;
-  }
-  to {
-    stroke-dashoffset: 0;
-  }
-}
-
-@keyframes hubBreath {
-  0%,
-  100% {
-    transform: scale(1);
-    opacity: 0.32;
-  }
-  50% {
-    transform: scale(1.12);
-    opacity: 0.62;
-  }
-}
-
 .crucible-dial-wrap {
   background: var(--c-dial-bg);
   border: 1px solid var(--c-border);
-  border-radius: 24px;
-  padding: 18px 20px 16px;
+  border-radius: 22px;
+  padding: 16px 18px 14px;
   box-shadow: var(--c-shadow-2);
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
+  box-sizing: border-box;
 }
 
 .crucible-dial-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 0 4px;
+  gap: 8px;
+  padding: 0 2px;
   font-family: var(--sl-font-mono);
-  font-size: 0.72rem;
+  font-size: 0.68rem;
 }
 
 .c-dial-step {
   color: var(--c-action);
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
 }
 
 .c-dial-status {
   color: var(--c-slate);
   text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .crucible-dial-stage {
+  position: relative;
   width: 100%;
-  max-width: 520px;
+  max-width: 460px;
   margin: 0 auto;
   aspect-ratio: 1 / 1;
 }
 
-.crucible-dial-svg {
+.crucible-dial-canvas {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   display: block;
-  overflow: visible;
-  font-family: var(--sl-font);
+  pointer-events: none;
+  z-index: 1;
 }
 
-.c-axes line {
-  stroke: var(--c-border);
-  stroke-width: 1;
-  stroke-dasharray: 3 6;
-  opacity: 0.55;
+.crucible-dial-svg {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  display: block;
+  font-family: var(--sl-font);
 }
 
 /* Ring shared styles */
@@ -586,24 +565,27 @@ h4 {
   cursor: pointer;
   transform-origin: 280px 280px;
   transition:
-    opacity 280ms var(--c-ease),
-    transform 320ms var(--c-ease);
+    opacity 260ms var(--c-ease),
+    transform 300ms var(--c-ease);
 }
 
 .c-ring-hit {
   fill: none;
   stroke: transparent;
-  stroke-width: 28;
+  stroke-width: 26;
 }
 
 .c-ring-track {
   fill: none;
-  stroke: var(--g-blue);
-  stroke-width: 2;
-  opacity: 0.35;
+  stroke-width: 1.75;
+  opacity: 0.3;
   transition:
     stroke-width 240ms var(--c-ease),
     opacity 240ms var(--c-ease);
+}
+
+.c-track-blue {
+  stroke: var(--g-blue);
 }
 
 .c-track-amber {
@@ -613,45 +595,12 @@ h4 {
 .c-shard-arc {
   fill: none;
   stroke: var(--g-green);
-  stroke-width: 3;
+  stroke-width: 2.6;
   stroke-linecap: round;
-  opacity: 0.45;
+  opacity: 0.36;
   transition:
     stroke-width 240ms var(--c-ease),
     opacity 240ms var(--c-ease);
-}
-
-.c-ring-orbit {
-  fill: none;
-  stroke-width: 3.5;
-  stroke-linecap: round;
-  transform-origin: 280px 280px;
-  opacity: 0;
-  transition: opacity 240ms var(--c-ease);
-}
-
-.c-orbit-blue {
-  stroke: var(--g-blue);
-  animation: orbitRotateCw 4.8s linear infinite;
-}
-
-.c-orbit-green {
-  stroke: var(--g-green);
-  animation: orbitRotateCcw 3.8s linear infinite;
-}
-
-.c-orbit-amber {
-  stroke: var(--g-amber);
-  animation: orbitRotateCw 3s linear infinite;
-}
-
-.c-inherit-spokes line {
-  stroke: var(--g-green);
-  stroke-width: 1.8;
-  stroke-dasharray: 4 5;
-  opacity: 0;
-  animation: linkFlow 0.75s linear infinite;
-  transition: opacity 240ms var(--c-ease);
 }
 
 /* Node pills on rings */
@@ -660,15 +609,25 @@ h4 {
   stroke: var(--c-border-strong);
   stroke-width: 1.25;
   transition:
-    stroke 350ms var(--c-ease),
-    fill 350ms var(--c-ease);
+    stroke 240ms var(--c-ease),
+    stroke-width 240ms var(--c-ease);
 }
 
 .c-node-pill text {
   fill: var(--c-ink);
   font-family: var(--sl-font-mono);
-  font-size: 11px;
+  font-size: 10.6px;
   font-weight: 500;
+}
+
+.c-num-blue {
+  fill: var(--g-blue);
+  font-weight: 700;
+}
+
+.c-num-green {
+  fill: var(--g-green);
+  font-weight: 700;
 }
 
 .c-dot-blue {
@@ -686,19 +645,19 @@ h4 {
   cursor: pointer;
   transform-origin: 280px 280px;
   transition:
-    opacity 420ms var(--c-ease),
-    transform 460ms var(--c-ease);
+    opacity 260ms var(--c-ease),
+    transform 300ms var(--c-ease);
 }
 
 .c-summary-disc {
   fill: var(--c-surface);
   stroke: var(--c-border-strong);
-  stroke-width: 1.8;
+  stroke-width: 1.6;
 }
 
 .c-summary-kicker {
   font-family: var(--sl-font-mono);
-  font-size: 9px;
+  font-size: 8.5px;
   font-weight: 700;
   letter-spacing: 0.1em;
   fill: var(--c-action);
@@ -706,99 +665,81 @@ h4 {
 
 .c-summary-main {
   font-family: var(--sl-font);
-  font-size: 14px;
+  font-size: 13.5px;
   font-weight: 600;
   fill: var(--c-ink);
 }
 
 .c-summary-sub {
   font-family: var(--sl-font-mono);
-  font-size: 10px;
+  font-size: 9.5px;
   fill: var(--c-slate);
 }
 
 /* Stage-specific focus choreography (Stages 01 -> 02 -> 03 -> 04) */
-/* Stage 0: Outer Playground Folder active */
 .crucible-launch[data-active-stage='0'] .c-ring-0 {
   opacity: 1;
 }
 .crucible-launch[data-active-stage='0'] .c-ring-0 .c-ring-track {
-  opacity: 0.85;
-  stroke-width: 2.8;
-}
-.crucible-launch[data-active-stage='0'] .c-ring-0 .c-ring-orbit {
-  opacity: 1;
+  opacity: 0.55;
+  stroke-width: 2.2;
 }
 .crucible-launch[data-active-stage='0'] .c-ring-0 .c-node-pill rect {
   stroke: var(--g-blue);
+  stroke-width: 1.6;
 }
 .crucible-launch[data-active-stage='0'] .c-ring-1 {
-  opacity: 0.28;
+  opacity: 0.24;
 }
 .crucible-launch[data-active-stage='0'] .c-ring-2 {
-  opacity: 0.22;
+  opacity: 0.18;
 }
 
-/* Stage 1: Middle Playground & Shards active */
 .crucible-launch[data-active-stage='1'] .c-ring-0 {
-  opacity: 0.42;
-}
-.crucible-launch[data-active-stage='1'] .c-ring-0 .c-inherit-spokes line {
-  opacity: 0.75;
+  opacity: 0.36;
 }
 .crucible-launch[data-active-stage='1'] .c-ring-1 {
   opacity: 1;
 }
 .crucible-launch[data-active-stage='1'] .c-ring-1 .c-shard-arc {
-  opacity: 0.95;
-  stroke-width: 4;
-}
-.crucible-launch[data-active-stage='1'] .c-ring-1 .c-ring-orbit {
-  opacity: 1;
+  opacity: 0.72;
+  stroke-width: 3.4;
 }
 .crucible-launch[data-active-stage='1'] .c-ring-1 .c-node-pill rect {
   stroke: var(--g-green);
+  stroke-width: 1.6;
 }
 .crucible-launch[data-active-stage='1'] .c-ring-2 {
-  opacity: 0.28;
+  opacity: 0.24;
 }
 
-/* Stage 2: Inner Workspace & App Containers active */
 .crucible-launch[data-active-stage='2'] .c-ring-0 {
-  opacity: 0.28;
+  opacity: 0.24;
 }
 .crucible-launch[data-active-stage='2'] .c-ring-1 {
-  opacity: 0.42;
+  opacity: 0.36;
 }
 .crucible-launch[data-active-stage='2'] .c-ring-2 {
   opacity: 1;
 }
 .crucible-launch[data-active-stage='2'] .c-ring-2 .c-ring-track {
-  opacity: 0.9;
-  stroke-width: 3;
-}
-.crucible-launch[data-active-stage='2'] .c-ring-2 .c-ring-orbit {
-  opacity: 1;
+  opacity: 0.65;
+  stroke-width: 2.4;
 }
 .crucible-launch[data-active-stage='2'] .c-ring-2 .c-node-pill rect {
   stroke: var(--g-amber);
+  stroke-width: 1.6;
 }
 
 /* Stage 3 (04 AI Apps): Outer rings recede into governed halo; AI App Scene zooms forward */
 .crucible-launch[data-active-stage='3'] .c-ring-0 {
-  opacity: 0.34;
+  opacity: 0.26;
   transform: scale(1.03);
 }
 .crucible-launch[data-active-stage='3'] .c-ring-0 .c-node-pill {
-  opacity: 0.45;
+  opacity: 0.32;
 }
-.crucible-launch[data-active-stage='3'] .c-ring-1 {
-  opacity: 0.16;
-  transform: scale(1.04);
-}
-.crucible-launch[data-active-stage='3'] .c-ring-1 .c-node-pill {
-  opacity: 0;
-}
+.crucible-launch[data-active-stage='3'] .c-ring-1,
 .crucible-launch[data-active-stage='3'] .c-ring-2 {
   opacity: 0;
   transform: scale(0.92);
@@ -813,12 +754,12 @@ h4 {
 /* AI Application Scene (Stage 04) */
 .c-ai-app-scene {
   opacity: 0;
-  transform: scale(0.84);
+  transform: scale(0.86);
   transform-origin: 280px 280px;
   pointer-events: none;
   transition:
-    opacity 280ms var(--c-ease),
-    transform 320ms var(--c-ease);
+    opacity 260ms var(--c-ease),
+    transform 300ms var(--c-ease);
 }
 
 .crucible-launch[data-active-stage='3'] .c-ai-app-scene {
@@ -827,16 +768,11 @@ h4 {
   pointer-events: auto;
 }
 
-.c-ai-arena {
-  fill: var(--c-canvas);
-  opacity: 0.94;
-}
-
 .c-ai-arena-ring {
   fill: none;
   stroke: var(--g-amber);
-  stroke-width: 2;
-  opacity: 0.75;
+  stroke-width: 1.5;
+  opacity: 0.45;
 }
 
 .c-ai-banner {
@@ -847,101 +783,99 @@ h4 {
 
 .c-ai-banner-txt {
   font-family: var(--sl-font-mono);
-  font-size: 11px;
+  font-size: 10.8px;
   font-weight: 700;
   fill: var(--c-ink);
 }
 
-.c-ai-link-base {
-  stroke: var(--c-border-strong);
-  stroke-width: 2;
-}
-
-.c-ai-link-pulse {
-  stroke-width: 3;
-  stroke-dasharray: 8 10;
-  stroke-linecap: round;
-  animation: linkFlow 0.75s linear infinite;
-}
-
-.c-pulse-1 {
-  stroke: var(--g-blue);
-}
-.c-pulse-2 {
-  stroke: var(--g-red);
-  animation-delay: -0.18s;
-}
-.c-pulse-3 {
-  stroke: var(--g-green);
-  animation-delay: -0.36s;
-}
-.c-pulse-4 {
-  stroke: var(--g-amber);
-  animation-delay: -0.54s;
+/* AI Satellite Cards + Live Packet Arrival Flash (.is-firing) */
+.c-ai-sat {
+  transition: transform 180ms var(--c-ease);
 }
 
 .c-ai-sat rect {
   fill: var(--c-pill-bg);
   stroke: var(--c-border-strong);
   stroke-width: 1.4;
+  transition:
+    stroke 160ms var(--c-ease),
+    stroke-width 160ms var(--c-ease),
+    filter 160ms var(--c-ease);
+}
+
+.c-sat-blue.is-firing rect {
+  stroke: var(--g-blue);
+  stroke-width: 2.2;
+  filter: drop-shadow(0 0 8px rgba(66, 133, 244, 0.45));
+}
+
+.c-sat-red.is-firing rect {
+  stroke: var(--g-red);
+  stroke-width: 2.2;
+  filter: drop-shadow(0 0 8px rgba(234, 67, 53, 0.45));
+}
+
+.c-sat-green.is-firing rect {
+  stroke: var(--g-green);
+  stroke-width: 2.2;
+  filter: drop-shadow(0 0 8px rgba(52, 168, 83, 0.45));
+}
+
+.c-sat-amber.is-firing rect {
+  stroke: var(--g-amber);
+  stroke-width: 2.2;
+  filter: drop-shadow(0 0 8px rgba(251, 188, 4, 0.45));
 }
 
 .c-ai-sat-title {
   font-family: var(--sl-font);
-  font-size: 11.5px;
+  font-size: 11.2px;
   font-weight: 600;
   fill: var(--c-ink);
 }
 
 .c-ai-sat-sub {
   font-family: var(--sl-font-mono);
-  font-size: 9.5px;
+  font-size: 9.4px;
   fill: var(--c-slate);
-}
-
-.c-ai-hub-pulse {
-  fill: rgba(66, 133, 244, 0.18);
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: hubBreath 1.5s ease-in-out infinite;
 }
 
 .c-ai-hub-core {
   fill: #1a73e8;
   stroke: #8ab4f8;
-  stroke-width: 2;
+  stroke-width: 2.2;
 }
 
 .c-ai-hub-kicker {
   font-family: var(--sl-font-mono);
-  font-size: 8.5px;
+  font-size: 8.4px;
   font-weight: 700;
   letter-spacing: 0.08em;
-  fill: rgba(255, 255, 255, 0.85);
+  fill: rgba(255, 255, 255, 0.86);
 }
 
 .c-ai-hub-title {
   font-family: var(--sl-font);
-  font-size: 13px;
+  font-size: 12.8px;
   font-weight: 700;
   fill: #ffffff;
 }
 
 .c-ai-hub-sub {
   font-family: var(--sl-font-mono);
-  font-size: 9.5px;
-  fill: rgba(255, 255, 255, 0.9);
+  font-size: 9.2px;
+  fill: rgba(255, 255, 255, 0.92);
 }
 
 .c-ai-footer {
-  fill: var(--c-surface);
+  fill: var(--c-pill-bg);
   stroke: var(--c-border-strong);
-  stroke-width: 1;
+  stroke-width: 1.1;
 }
 
 .c-ai-footer-txt {
   font-family: var(--sl-font-mono);
-  font-size: 10px;
+  font-size: 9.8px;
   fill: var(--c-slate);
 }
 
@@ -950,8 +884,8 @@ h4 {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 6px;
-  padding-top: 4px;
+  gap: 5px;
+  padding-top: 2px;
 }
 
 .c-legend-item {
@@ -959,13 +893,13 @@ h4 {
   background: var(--c-surface);
   border: 1px solid var(--c-border);
   border-radius: 999px;
-  padding: 4px 11px;
+  padding: 4px 10px;
   display: inline-flex;
   align-items: center;
   gap: 6px;
   cursor: pointer;
   font-family: var(--sl-font-mono);
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   color: var(--c-slate);
   transition:
     border-color 180ms var(--c-ease),
@@ -981,8 +915,8 @@ h4 {
 }
 
 .c-leg-dot {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
 }
 
@@ -1001,23 +935,27 @@ h4 {
 
 /* ======================================================================
    Below-the-Fold 3-Pillar Documentation Suite
-   (01 Conceptual Architecture -> 02 Specifications -> 03 Deployment & User Guides)
+   Exact same centered 1080px track + side padding as Hero above
    ====================================================================== */
 .c-pillars {
-  padding: 12px 0 28px;
+  max-width: 1080px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 44px clamp(20px, 4.5vw, 40px) 60px;
+  box-sizing: border-box;
 }
 
 .c-pillars-head {
-  margin-bottom: 24px;
+  margin-bottom: 22px;
 }
 
 .c-pillars-flow {
   display: inline-flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  gap: 9px;
   font-family: var(--sl-font-mono);
-  font-size: 0.74rem;
+  font-size: 0.72rem;
   color: var(--c-action);
   background: var(--c-surface);
   border: 1px solid var(--c-border);
@@ -1032,7 +970,7 @@ h4 {
 }
 
 .c-pillars-head h2 {
-  font-size: 1.65rem;
+  font-size: 1.55rem;
   margin: 0 0 6px !important;
   padding: 0 !important;
   border: 0 !important;
@@ -1041,26 +979,27 @@ h4 {
 .c-pillars-head p {
   margin: 0;
   color: var(--c-slate);
-  font-size: 0.96rem;
-  max-width: 68ch;
+  font-size: 0.93rem;
+  max-width: 64ch;
 }
 
 .c-card-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 22px;
+  gap: 18px;
 }
 
 .c-pillar-card {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 18px;
+  gap: 16px;
   background: var(--c-surface);
   border: 1px solid var(--c-border);
-  border-radius: 20px;
-  padding: 24px 24px 20px;
+  border-radius: 18px;
+  padding: 20px 20px 16px;
   box-shadow: var(--c-shadow-1);
+  box-sizing: border-box;
   transition:
     border-color 180ms var(--c-ease),
     box-shadow 180ms var(--c-ease);
@@ -1073,7 +1012,7 @@ h4 {
 
 .c-card-eyebrow {
   font-family: var(--sl-font-mono);
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -1082,8 +1021,8 @@ h4 {
 }
 
 .c-pillar-top h3 {
-  font-size: 1.18rem;
-  margin: 0 0 8px;
+  font-size: 1.1rem;
+  margin: 0 0 6px;
 }
 
 .c-pillar-top h3 a {
@@ -1096,8 +1035,8 @@ h4 {
 }
 
 .c-pillar-top p {
-  font-size: 0.88rem;
-  line-height: 1.56;
+  font-size: 0.85rem;
+  line-height: 1.54;
   color: var(--c-slate);
   margin: 0;
 }
@@ -1105,11 +1044,11 @@ h4 {
 .c-pillar-links {
   list-style: none;
   margin: 0;
-  padding: 14px 0 0;
+  padding: 12px 0 0;
   border-top: 1px solid var(--c-border);
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
 .c-pillar-links li {
@@ -1120,10 +1059,10 @@ h4 {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  padding: 7px 10px;
-  border-radius: 10px;
-  font-size: 0.84rem;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 9px;
+  font-size: 0.82rem;
   font-weight: 500;
   color: var(--c-ink) !important;
   text-decoration: none !important;
@@ -1134,6 +1073,7 @@ h4 {
 
 .c-pillar-links a i {
   font-style: normal;
+  flex-shrink: 0;
   color: var(--c-muted);
   transition:
     transform 160ms var(--c-ease),
@@ -1150,12 +1090,12 @@ h4 {
   color: var(--c-action);
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 980px) {
   .crucible-launch-grid {
     grid-template-columns: 1fr;
   }
   .crucible-dial-wrap {
-    max-width: 560px;
+    max-width: 500px;
     margin: 0 auto;
     width: 100%;
   }
