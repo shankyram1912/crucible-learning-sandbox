@@ -3,7 +3,7 @@
 > Master: [brs-master.md](brs-master.md) · Technical design: [tdd-master.md](../02-tdd/tdd-master.md)
 > Persona: IT Admin (members of `grp-lsb-it-admins@`)
 
-Each journey is framed as *"As an IT Admin, I want to ..., to accomplish ..."*, followed by the design decisions behind it.
+Each journey is framed as *"As an IT Admin, I want to ..., to accomplish ..."*, followed by the design decisions behind it. Every change runs as a **tracked job** — jobs are the platform's audit trail.
 
 ---
 
@@ -15,10 +15,11 @@ As an IT Admin, I want to configure and version single-service templates in the 
   1. **Mandatory:** always enabled in every playground that uses it; cannot be unchecked (for example Service Account).
   2. **Enabled by default and optional:** starts enabled on new playgrounds, and can be unchecked before creation.
   3. **Disabled by default and optional:** starts disabled on new playgrounds, ready to be enabled at creation or added later.
+- **Only mandatory services may define a user singleton resource.** Optional services (enabled or disabled by default) provide **app resources only**, so enabling an optional service on a playground later never requires re-initializing anyone's workspace.
 - Each service version also sets:
-  - Name, description, the **Terraform module** and its pinned ref, the GCP APIs it enables, the prerequisite services it requires, the user group slots it expects, and the **user singleton resources** and **app resources** it provides to playground users (students or other designated users).
+  - Name, description, the **Terraform module** and its pinned ref, the GCP APIs it enables, the prerequisite services it requires, the user group slots it expects, and the **user singleton resources** (mandatory services only) and **app resources** it provides to playground users (students or other designated users).
   - **Service configuration defaults** (sizes and underlying settings passed to Terraform, such as shared Cloud SQL tier or Cloud Run CPU/memory).
-  - **Quota per project** (maximum capacity per project shard) and **per-user bounds** (`min` is the minimum and default starting allowance per user, up to the `max` ceiling).
+  - **Quota per project** (maximum capacity per project shard) and **per-user bounds** (`min` is the minimum and default starting allowance per user, up to a **finite `max`** ceiling — there is no unlimited allowance).
 - Which GCP IAM roles each group gets is defined in the Terraform module, not in the catalog.
 - Elevated privileges are modeled as a separate service definition, not a flag on an existing one.
 - New playground template versions default to each service's `current` version; older non-retired service versions stay selectable when composing a template until retired.
@@ -76,16 +77,18 @@ As an IT Admin, I want to create a Playground Folder with a billing account, bud
 ## IT-06 Update a Playground Folder
 As an IT Admin, I want to rename a Playground Folder or update its budget, to accomplish keeping its name and spend alerts aligned with the school.
 
-- Updating the budget adjusts the Playground Folder's budget amount in the billing account's currency.
-- **Immutable once created:** the **parent folder, billing account, IT cost tags, and BU Admin group cannot be changed or swapped** after the Playground Folder is created (likewise, on a playground, its **template version, BU tags, and optional Playground Admin group** cannot be changed, swapped, or upgraded once created).
+- Renaming and updating the budget each run as a **tracked job**; the budget update adjusts the Playground Folder's budget amount in the billing account's currency.
+- **Only on an active folder:** a decommissioned Playground Folder is read-only until recommissioned (IT-10).
+- **Immutable once created:** the **parent folder, billing account, IT cost tags, and BU Admin group cannot be changed or swapped** after the Playground Folder is created (likewise, on a playground, its **template version, BU tags, optional Playground Admin group, and mapped user groups** cannot be changed, swapped, or upgraded once created).
 
 ---
 
 ## IT-07 Decommission a Playground Folder
-As an IT Admin, I want to decommission a Playground Folder, to accomplish stopping all billing across its playgrounds and projects when the container is retired.
+As an IT Admin, I want to decommission a Playground Folder, to accomplish stopping all billing across its playgrounds and projects when the container is paused or retired.
 
 - Decommissioning a Playground Folder runs as a **tracked job** that disables billing across all underlying playgrounds' associated projects so cloud spend stops immediately, and marks the Playground Folder along with **all underlying playgrounds and projects as decommissioned** in the platform.
-- **Never deleted from the platform or GCP:** neither the platform records nor the GCP folders, projects, budgets, or inside-project resources are deleted; deletion is an external manual cleanup activity outside current scope.
+- **Read-only while decommissioned:** the folder and everything inside it stay viewable (configuration and job history) by every persona, but every mutating action on the folder, its playgrounds, and its users' workspaces is blocked until the folder is recommissioned (IT-10).
+- **Never deleted from the platform or GCP:** neither the platform records nor the GCP folders, projects, budgets, workspaces, or inside-project resources are deleted; deletion is an external manual cleanup activity outside current scope.
 
 ---
 
@@ -101,8 +104,18 @@ As an IT Admin, I want to perform any BU Admin action on any Playground Folder o
 ## IT-09 View jobs across Playground Folders, playgrounds, projects, and users
 As an IT Admin, I want to view Playground Folder jobs and all jobs at a playground level filtered by projects and users, to accomplish operational visibility and troubleshooting across every folder and playground.
 
-- Every folder setup, provisioning, configuration update, shard expansion, workspace initialization, app-container or resource action, and decommission runs as a **tracked job** recorded in the platform.
+- Every folder setup, provisioning, rename or budget update, configuration update, shard expansion, portal access suspension or restore, workspace initialization, app-container or resource action, decommission, and recommission runs as a **tracked job** recorded in the platform — jobs are the only audit trail.
 - I can view **Playground Folder-level jobs** across all Playground Folders, and for any playground I can view all **playground-level jobs** filtered by **project (shard)** and by **user** (the requester or target workspace user), seeing job status, progress, errors, timestamps, and who triggered the job.
+
+---
+
+## IT-10 Recommission a Playground Folder
+As an IT Admin, I want to recommission a decommissioned Playground Folder, to accomplish restoring billing and activity across its playgrounds and projects when the school needs them again.
+
+- **Allowed for:** IT Admins only (the mirror of IT-07).
+- Recommissioning runs as a **tracked job** that re-enables billing (re-linking every project to the folder's billing account) across all underlying playgrounds' associated projects, and marks the Playground Folder along with **all underlying playgrounds and projects as active** again.
+- Because nothing was deleted, every playground configuration, workspace, singleton, and app resource is available again immediately; users see the playgrounds as active.
+- A playground inside a decommissioned Playground Folder cannot be recommissioned on its own (BU-09); the folder must be recommissioned first.
 
 ---
 
