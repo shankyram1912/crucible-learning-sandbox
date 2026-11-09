@@ -36,9 +36,9 @@ Built one operation at a time per [tdd-apis-master.md](specs/tdd-apis/tdd-apis-m
 
 | # | Operation | Status |
 |---|---|---|
-| 01 | `health api` (`GET /v1/health/api`, `lsb health api`): the API process is up, no dependencies (liveness). Spec: [tdd-apis-health.md](specs/tdd-apis/tdd-apis-health.md) | ⬜ To do (spec written) |
-| 02 | `health db` (`GET /v1/health/db`, `lsb health db`): one small read on each Firestore database (`lsb-control-tower-config-db`, `lsb-control-tower-db`) with a short timeout; reports status and latency per database. Spec: [tdd-apis-health.md](specs/tdd-apis/tdd-apis-health.md) | ⬜ To do (spec written) |
-| 03 | `health service` (`GET /v1/health/service`, `lsb health service`): same data check as health db, answered only as `OK` / `NOT_OK` for the service, `config` and `runtime_jobs`; no database IDs, latency or error codes. Spec: [tdd-apis-health.md](specs/tdd-apis/tdd-apis-health.md) | ⬜ To do (spec written) |
+| 01 | `health api` (`GET /v1/health/api`, `lsb health api`): the API process is up, no dependencies (liveness). Spec: [tdd-apis-health.md](specs/tdd-apis/tdd-apis-health.md) | ✅ Done (2026-11-09) |
+| 02 | `health db` (`GET /v1/health/db`, `lsb health db`): one small read on each Firestore database (`lsb-control-tower-config-db`, `lsb-control-tower-db`) with a short timeout; reports status and latency per database. Spec: [tdd-apis-health.md](specs/tdd-apis/tdd-apis-health.md) | ✅ Done (2026-11-09) |
+| 03 | `health service` (`GET /v1/health/service`, `lsb health service`): same data check as health db, answered only as `OK` / `NOT_OK` for the service, `config` and `runtime_jobs`; no database IDs, latency or error codes. Spec: [tdd-apis-health.md](specs/tdd-apis/tdd-apis-health.md) | ✅ Done (2026-11-09) |
 | 04 | `jobs` (list, show, watch) | ⬜ To do |
 | 05 | `templates` (list, show) | ⬜ To do |
 | 06 | `playground-folder create` / list / show (creation gate, controllers, playground tags) | ⬜ To do |

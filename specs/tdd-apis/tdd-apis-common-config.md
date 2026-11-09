@@ -8,7 +8,7 @@ The one place where every setting of the Self Service APIs and the `lsb` CLI is 
 
 ## 1. Rules
 
-1. **One settings object in code:** `src/api/settings.py` (a `pydantic-settings` `Settings` class) reads every setting below once at startup and validates it. The API **refuses to start** if a required setting is missing or invalid. No other code reads environment variables directly.
+1. **One settings object in code:** `src/api/lsb_api/settings.py` (a `pydantic-settings` `Settings` class) reads every setting below once at startup and validates it. The API **refuses to start** if a required setting is missing or invalid. No other code reads environment variables directly.
 2. **Two kinds of keys:**
    - **Platform keys** describe the Control Tower and use the **same names as `initialize.env`** (for example `CT_PROJECT_ID`), so one value has one name everywhere. Their values come from Day-0.
    - **API keys** exist only for the API or CLI and are prefixed **`LSB_`**.

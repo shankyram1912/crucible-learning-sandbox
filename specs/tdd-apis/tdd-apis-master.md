@@ -40,7 +40,7 @@ Operations are grouped into **domains**. Each domain has its own spec in this fo
 
 | Domain | Operations (build #) | CLI group | Spec | Status |
 |---|---|---|---|---|
-| Health | api (01), db (02), service (03) | `lsb health` | [tdd-apis-health.md](tdd-apis-health.md) | Spec written |
+| Health | api (01), db (02), service (03) | `lsb health` | [tdd-apis-health.md](tdd-apis-health.md) | Done (2026-11-09) |
 | Jobs | list, show, watch (04) | `lsb jobs` | `tdd-apis-jobs.md` (to write) | To do |
 | Templates | list, show (05) | `lsb templates` | `tdd-apis-templates.md` (to write) | To do |
 | Playground Folders | create, list, show (06) | `lsb playground-folder` | `tdd-apis-playground-folders.md` (to write) | To do |

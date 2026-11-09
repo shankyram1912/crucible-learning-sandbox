@@ -6,9 +6,9 @@ Health tells an operator whether the Self Service APIs are up and whether they c
 
 | # (build order) | Operation | REST | CLI | Status |
 |---|---|---|---|---|
-| 01 | Health api | `GET /v1/health/api` | `lsb health api` | To do |
-| 02 | Health db | `GET /v1/health/db` | `lsb health db` | To do |
-| 03 | Health service | `GET /v1/health/service` | `lsb health service` | To do |
+| 01 | Health api | `GET /v1/health/api` | `lsb health api` | Done (2026-11-09) |
+| 02 | Health db | `GET /v1/health/db` | `lsb health db` | Done (2026-11-09) |
+| 03 | Health service | `GET /v1/health/service` | `lsb health service` | Done (2026-11-09) |
 
 ---
 
@@ -50,7 +50,7 @@ Health tells an operator whether the Self Service APIs are up and whether they c
 | `time` | timestamp | yes | API server time (UTC) |
 | `caller` | string (email) | yes | Email from the verified token, so the same call confirms authentication end to end |
 
-Pydantic model: `HealthApiResponse` in `src/api/models/health.py`.
+Pydantic model: `HealthApiResponse` in `src/api/lsb_api/models/health.py`.
 
 **No dependency calls:** no Firestore, Cloud Identity or GCP call, so it stays fast and never fails because something else is slow.
 
@@ -100,7 +100,7 @@ $ lsb health api
 | `databases[].latency_ms` | integer | yes | Time for the read, or until it failed or timed out |
 | `databases[].error` | enum | only if `FAIL` | One of the codes below |
 
-Pydantic models: `HealthDbResponse`, `DatabaseCheck` in `src/api/models/health.py`.
+Pydantic models: `HealthDbResponse`, `DatabaseCheck` in `src/api/lsb_api/models/health.py`.
 
 On failure a database entry carries `"status": "FAIL"` and `"error"`, one of:
 
@@ -158,7 +158,7 @@ $ lsb health db
 | `config` | enum | yes | `OK` or `NOT_OK`: the config data area (desired state) can be read |
 | `runtime_jobs` | enum | yes | `OK` or `NOT_OK`: the runtime and jobs data area can be read |
 
-Pydantic model: `HealthServiceResponse` in `src/api/models/health.py`.
+Pydantic model: `HealthServiceResponse` in `src/api/lsb_api/models/health.py`.
 
 **Result caching:** the result is cached in the API process for `LSB_HEALTH_SERVICE_CACHE_SECONDS` (default 10), so frequent callers cost at most two Firestore reads per period per API instance.
 
