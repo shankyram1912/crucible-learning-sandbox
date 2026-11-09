@@ -9,7 +9,7 @@
 ```text
 crucible-learning-sandbox/
 ├── specs/                          Current specifications (single source of truth)
-│   ├── 01-brs/                     Business Requirements (brs-master, IT Admin & BU Admin CUJs)
+│   ├── 01-brs/                     Business Requirements (brs-master, IT Admin, BU Admin & Student CUJs)
 │   └── 02-tdd/                     Technical Design (tdd-master, control-tower, apis, playground, data, tags-labels)
 ├── src/
 │   ├── terraform/control-tower/    Day-0 bootstrap: run.sh, initialize.sh, operations 01–05

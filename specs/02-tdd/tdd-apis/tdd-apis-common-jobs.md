@@ -4,7 +4,7 @@
 
 > **Status: interim.** This is the working design for jobs. Each part becomes binding only when the first operation that needs it is built, and is refined then, so this spec will change as operations are built one by one. Each operation spec states which parts of this file it relies on.
 
-Every change the platform makes is a **job**: one record, made of ordered **tasks**, that says who asked, what was done, and how it ended. Jobs come in three **kinds** that differ only in who runs the work, as whom, and when. This spec defines the kinds, the shared lifecycle, storage, concurrency, the handler contract, and how each kind is run and tested. The jobs domain ([tdd-apis-jobs.md](tdd-apis-jobs.md), to write) exposes jobs to the CLI and UI. Models: [tdd-apis-common-models.md](tdd-apis-common-models.md) sections 6 and 7. Settings: [tdd-apis-common-config.md](tdd-apis-common-config.md).
+Every change the platform makes is a **job**: one record, made of ordered **tasks**, that says who asked, what was done, and how it ended. Jobs come in three **kinds** that differ only in who runs the work, as whom, and when. This spec defines the kinds, the shared lifecycle, storage, concurrency, the handler contract, and how each kind is run and tested. The jobs domain (`tdd-apis-jobs.md`, to write) exposes jobs to the CLI and UI. Models: [tdd-apis-common-models.md](tdd-apis-common-models.md) sections 6 and 7. Settings: [tdd-apis-common-config.md](tdd-apis-common-config.md).
 
 ---
 

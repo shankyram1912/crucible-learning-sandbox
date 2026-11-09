@@ -1,5 +1,5 @@
 /**
- * Single-source-of-truth map from repo Markdown files (../specs, ../guides, ../todolist.md)
+ * Single-source-of-truth map from repo Markdown files (../specs, ../src, ../guides, ../todolist.md)
  * to Starlight URL slugs — zero copied .md files on disk.
  */
 export const BASE = '/crucible-learning-sandbox';
@@ -18,46 +18,38 @@ export interface PageEntry {
 }
 
 export const PAGES: PageEntry[] = [
-  // Guides & Roadmap
-  {
-    source: 'guides/lsb-cli-user-guide.md',
-    slug: 'guides/cli',
-    title: 'lsb CLI User Guide',
-    description: 'Install, sign in, and run the lsb command-line interface.',
-  },
-  {
-    source: 'todolist.md',
-    slug: 'roadmap/todolist',
-    title: 'Build Sequence & To-Do',
-    description: 'Day-0 bootstrap steps, Self Service API build order, and verification status.',
-  },
-
-  // 01 — Business Requirements (BRS)
+  // 01 — Conceptual Architecture (specs/01-brs/)
   {
     source: 'specs/01-brs/brs-master.md',
     slug: 'brs/master',
-    title: 'BRS Master & Conceptual Framework',
-    description: 'Business problem, layered conceptual framework, personas, and core rules.',
+    title: 'Business Requirements & Conceptual Framework',
+    description: 'The business problem, layered conceptual framework, personas, playground organization, and core rules.',
   },
   {
     source: 'specs/01-brs/brs-it-admin-cuj.md',
     slug: 'brs/it-admin-cuj',
-    title: 'IT Admin Journeys (CUJ)',
-    description: 'Catalogs, templates, cost tags, and Playground Folder governance.',
+    title: 'IT Admin Journeys',
+    description: 'Service catalog, playground templates, cost centers and categories, Playground Folders, and tracked jobs.',
   },
   {
     source: 'specs/01-brs/brs-bu-admin-cuj.md',
     slug: 'brs/bu-admin-cuj',
-    title: 'BU Admin Journeys (CUJ)',
-    description: 'Playground creation, group mapping, service evolution, capacity, and decommissioning.',
+    title: 'BU Admin & Playground Admin Journeys',
+    description: 'Playground creation, budgets, service configuration, capacity expansion, portal access suspension, and decommissioning.',
+  },
+  {
+    source: 'specs/01-brs/brs-student-cuj.md',
+    slug: 'brs/student-cuj',
+    title: 'Student & Designated User Journeys',
+    description: 'Workspace initialization on first entry, singleton resources, app containers, per-user allowances, and tracked jobs.',
   },
 
-  // 02 — Technical Design (TDD)
+  // 02 — Specifications (specs/02-tdd/)
   {
     source: 'specs/02-tdd/tdd-master.md',
     slug: 'tdd/master',
-    title: 'TDD Master (Terraform & IAM)',
-    description: 'Guiding principles for Terraform, billing labels, dynamic tags, Firestore split, and IAM.',
+    title: 'Control Tower TDD: Terraform and IAM Principles',
+    description: 'Guiding principles for Terraform, billing labels, dynamic tags, Firestore databases, and IAM.',
   },
   {
     source: 'specs/02-tdd/tdd-control-tower/tdd-control-tower-master.md',
@@ -68,8 +60,8 @@ export const PAGES: PageEntry[] = [
   {
     source: 'specs/02-tdd/tdd-tags-labels/tdd-tags-labels-master.md',
     slug: 'tdd/tags-labels',
-    title: 'Tag & Label Binding Deep Dive',
-    description: 'Two-sided Tag User checks, dynamic regex validation, label sync, and live GCP behavior.',
+    title: 'Tag and Label Binding',
+    description: 'Two-sided Tag User checks, dynamic regex validation, label copy at project creation, and GCP behavior.',
   },
   {
     source: 'specs/02-tdd/tdd-playground/tdd-playground-master.md',
@@ -81,21 +73,35 @@ export const PAGES: PageEntry[] = [
     source: 'specs/02-tdd/tdd-playground/tdd-playground-services.md',
     slug: 'tdd/playground-services',
     title: 'Playground GCP Services',
-    description: 'Per-service Terraform modules, prerequisites, singletons, and app resources.',
+    description: 'Per-service Terraform modules, prerequisites, singleton resources, and app resources.',
   },
+
+  // 02 — Specifications: Firestore Data
   {
     source: 'specs/02-tdd/tdd-data/tdd-data-master.md',
     slug: 'tdd/data',
-    title: 'Firestore Data Design',
-    description: 'Config database vs. runtime-and-jobs database schema and invariants.',
+    title: 'Firestore Data Design (Master)',
+    description: 'Two-database trust boundary, conceptual configuration domains, ER model, and lifecycle invariants.',
+  },
+  {
+    source: 'specs/02-tdd/tdd-data/tdd-data-config.md',
+    slug: 'tdd/data/config',
+    title: 'Configuration Entities (Config DB)',
+    description: 'Physical Firestore collections, document JSON schemas, retrieval patterns, and composite indexes for lsb-control-tower-config-db.',
   },
 
-  // 02 — TDD: Self Service APIs
+  // 02 — Specifications: Self Service APIs
   {
     source: 'specs/02-tdd/tdd-apis/tdd-apis-master.md',
     slug: 'tdd/apis/master',
-    title: 'APIs Master',
+    title: 'Self Service APIs (Master)',
     description: 'REST interface principles, domain map, and lsb CLI mapping.',
+  },
+  {
+    source: 'specs/02-tdd/tdd-apis/tdd-apis-cuj-map.md',
+    slug: 'tdd/apis/cuj-map',
+    title: 'CUJ to Operation Map',
+    description: 'Reusable API operation catalog mapped to IT Admin, BU Admin, Playground Admin, and Student journeys.',
   },
   {
     source: 'specs/02-tdd/tdd-apis/tdd-apis-common-stack.md',
@@ -150,5 +156,37 @@ export const PAGES: PageEntry[] = [
     slug: 'tdd/apis/platform-users',
     title: 'Domain: Platform Users (04)',
     description: 'In-memory admin roster, optional live directory role checks, and platform roles routes.',
+  },
+
+  // 03 — Deployment & User Guides (src/.../README.md, guides/, todolist.md)
+  {
+    source: 'src/terraform/control-tower/README.md',
+    slug: 'deploy/control-tower',
+    title: 'Control Tower Day-0 Bootstrap Runbook',
+    description: 'Run Day-0 Terraform bootstrap operations in Google Cloud Shell.',
+  },
+  {
+    source: 'src/api/README.md',
+    slug: 'deploy/api',
+    title: 'lsb-api Developer & Local Server Guide',
+    description: 'Install, test, and run the FastAPI Self Service APIs server locally.',
+  },
+  {
+    source: 'src/cli/README.md',
+    slug: 'deploy/cli',
+    title: 'lsb-cli Developer Guide',
+    description: 'Work on and install the lsb command-line client from source.',
+  },
+  {
+    source: 'guides/lsb-cli-user-guide.md',
+    slug: 'guides/cli',
+    title: 'lsb CLI User Guide',
+    description: 'Install lsb, sign in with Application Default Credentials, and run commands.',
+  },
+  {
+    source: 'todolist.md',
+    slug: 'roadmap/todolist',
+    title: 'Build Sequence & Status',
+    description: 'Day-0 bootstrap steps, Self Service API build order, and verification status.',
   },
 ];

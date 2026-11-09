@@ -42,30 +42,64 @@ function rewriteLinks(body: string, sourceRelPath: string): string {
 
 function buildLandingPage() {
   const md = `
-## Architecture & Specification Suite
+<div class="c-pillars not-content">
+  <div class="c-pillars-head">
+    <div class="c-pillars-flow" aria-label="Documentation Reading Order">
+      <span>01 Conceptual Architecture</span>
+      <i aria-hidden="true">&rarr;</i>
+      <span>02 Specifications</span>
+      <i aria-hidden="true">&rarr;</i>
+      <span>03 Deployment &amp; User Guides</span>
+    </div>
+    <h2>Documentation</h2>
+    <p>Follow the platform from the conceptual framework and persona journeys, to technical specifications, to Day-0 bootstrap and CLI guides.</p>
+  </div>
 
-<div class="c-card-grid not-content">
-  <a class="c-card" href="${BASE}/brs/master/">
-    <div>
-      <div class="c-card-eyebrow">01 &middot; Business Requirements</div>
-      <h3>Conceptual Framework</h3>
+  <div class="c-card-grid">
+    <div class="c-pillar-card">
+      <div class="c-pillar-top">
+        <div class="c-card-eyebrow">01 &middot; Conceptual Architecture</div>
+        <h3><a href="${BASE}/brs/master/">Conceptual Framework &amp; Journeys</a></h3>
+        <p>The business problem, layered conceptual model, personas, playground organization, core business rules, and persona journeys.</p>
+      </div>
+      <ul class="c-pillar-links">
+        <li><a href="${BASE}/brs/master/"><span>Business Requirements &amp; Conceptual Framework</span><i>&rarr;</i></a></li>
+        <li><a href="${BASE}/brs/it-admin-cuj/"><span>IT Admin Journeys</span><i>&rarr;</i></a></li>
+        <li><a href="${BASE}/brs/bu-admin-cuj/"><span>BU Admin &amp; Playground Admin Journeys</span><i>&rarr;</i></a></li>
+        <li><a href="${BASE}/brs/student-cuj/"><span>Student &amp; Designated User Journeys</span><i>&rarr;</i></a></li>
+      </ul>
     </div>
-    <p>Layered conceptual model from Central IT governance down to Playground Folders, sharded Playgrounds, student singletons, and app containers.</p>
-  </a>
-  <a class="c-card" href="${BASE}/tdd/master/">
-    <div>
-      <div class="c-card-eyebrow">02 &middot; Technical Design</div>
-      <h3>Terraform &amp; IAM Principles</h3>
+
+    <div class="c-pillar-card">
+      <div class="c-pillar-top">
+        <div class="c-card-eyebrow">02 &middot; Specifications</div>
+        <h3><a href="${BASE}/tdd/master/">Technical Design (TDD)</a></h3>
+        <p>Control Tower Terraform and IAM principles, tag and label binding, playground pipeline and GCP services, Firestore data design, and Self Service APIs.</p>
+      </div>
+      <ul class="c-pillar-links">
+        <li><a href="${BASE}/tdd/master/"><span>Control Tower TDD: Terraform &amp; IAM Principles</span><i>&rarr;</i></a></li>
+        <li><a href="${BASE}/tdd/tags-labels/"><span>Tag and Label Binding</span><i>&rarr;</i></a></li>
+        <li><a href="${BASE}/tdd/playground-pipeline/"><span>Playground Pipeline &amp; GCP Services</span><i>&rarr;</i></a></li>
+        <li><a href="${BASE}/tdd/data/"><span>Firestore Data Design &amp; Config DB</span><i>&rarr;</i></a></li>
+        <li><a href="${BASE}/tdd/apis/master/"><span>Self Service APIs &amp; CUJ Operation Map</span><i>&rarr;</i></a></li>
+      </ul>
     </div>
-    <p>Dynamic Resource Manager tags &amp; label sync, dual-Firestore split, Cloud Build pipeline identities, and least-privilege access gates.</p>
-  </a>
-  <a class="c-card" href="${BASE}/guides/cli/">
-    <div>
-      <div class="c-card-eyebrow">03 &middot; Self Service CLI</div>
-      <h3>lsb User Guide &amp; APIs</h3>
+
+    <div class="c-pillar-card">
+      <div class="c-pillar-top">
+        <div class="c-card-eyebrow">03 &middot; Deployment &amp; User Guides</div>
+        <h3><a href="${BASE}/deploy/control-tower/">Deploy &amp; Operate</a></h3>
+        <p>Bootstrap the Control Tower in Google Cloud Shell, run the local API server, and use the <code>lsb</code> command-line interface.</p>
+      </div>
+      <ul class="c-pillar-links">
+        <li><a href="${BASE}/deploy/control-tower/"><span>Control Tower Day-0 Bootstrap Runbook</span><i>&rarr;</i></a></li>
+        <li><a href="${BASE}/deploy/api/"><span>lsb-api Local Server &amp; Developer Guide</span><i>&rarr;</i></a></li>
+        <li><a href="${BASE}/deploy/cli/"><span>lsb-cli Developer Guide</span><i>&rarr;</i></a></li>
+        <li><a href="${BASE}/guides/cli/"><span>lsb CLI User Guide</span><i>&rarr;</i></a></li>
+        <li><a href="${BASE}/roadmap/todolist/"><span>Build Sequence &amp; Status</span><i>&rarr;</i></a></li>
+      </ul>
     </div>
-    <p>Install <code>lsb</code> via <code>uv tool install</code>, authenticate with Google Cloud ADC, and inspect platform health and roles.</p>
-  </a>
+  </div>
 </div>
 `;
 
@@ -74,29 +108,28 @@ function buildLandingPage() {
     data: {
       title: 'Crucible',
       description:
-        'Governed, multi-tenant Google Cloud & AI learning sandboxes orchestrated from a central Control Tower.',
+        'Crucible (Learning Sandbox): a self-service platform run from a central Control Tower on Google Cloud.',
       template: 'splash' as const,
       hero: {
-        title: 'Governed cloud learning sandboxes. Built for scale.',
+        title: 'Govern once. Self-serve playgrounds and workspaces.',
         tagline:
-          'Crucible separates Central IT financial & guardrail governance from self-service shared playgrounds and isolated student app workspaces on Google Cloud.',
+          'Crucible (Learning Sandbox) runs from a central Control Tower on Google Cloud so IT Admins govern catalogs and Playground Folders once, while BU Admins and Playground Users serve themselves inside those rules.',
         actions: [
           {
-            text: 'Conceptual Framework',
+            text: 'Conceptual Architecture',
             link: `${BASE}/brs/master/`,
             icon: 'right-arrow' as const,
             variant: 'primary' as const,
           },
           {
-            text: 'Technical Design (TDD)',
+            text: 'Specifications',
             link: `${BASE}/tdd/master/`,
             variant: 'secondary' as const,
           },
           {
-            text: 'GitHub',
-            link: `https://github.com/shankyram1912/crucible-learning-sandbox`,
-            icon: 'external' as const,
-            variant: 'minimal' as const,
+            text: 'Deployment & Guides',
+            link: `${BASE}/deploy/control-tower/`,
+            variant: 'secondary' as const,
           },
         ],
       },
@@ -137,7 +170,7 @@ function repoMarkdownLoader(): Loader {
         rendered: landingRendered,
       });
 
-      // 2. Load every spec & guide directly from ../specs, ../guides, ../todolist.md (zero disk copy)
+      // 2. Load every spec & guide directly from ../specs, ../src, ../guides, ../todolist.md (zero disk copy)
       for (const page of PAGES) {
         const absPath = resolve(repoRoot, page.source);
         if (!existsSync(absPath)) {

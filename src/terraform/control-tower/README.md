@@ -35,7 +35,7 @@ gcloud services enable cloudresourcemanager.googleapis.com serviceusage.googleap
 2. Clone the repo and go to this folder:
    ```bash
    git clone https://github.com/shankyram1912/crucible-learning-sandbox.git
-   cd learning-sandbox/src/terraform/control-tower
+   cd crucible-learning-sandbox/src/terraform/control-tower
    ```
 3. Create your settings file and fill it in:
    ```bash
@@ -72,7 +72,7 @@ gcloud services enable cloudresourcemanager.googleapis.com serviceusage.googleap
 | `ControlTowerProjectCreate` | Control Tower folder (created, or existing via `CT_FOLDER_ID`), project with billing, Cloud Storage API, Terraform state bucket |
 | `ControlTowerApisEnable` | Baseline APIs on the Control Tower project (platform, observability, billing, Firestore, storage, Cloud Run, Artifact Registry, Cloud Build, Secret Manager, Cloud Identity, Directory) and the Cloud Run, Cloud Build and Artifact Registry service agents. Compute is not enabled (networking comes later) |
 | `ControlTowerFirestoreCreate` | Two Firestore databases (Native mode, in `REGION`) with point-in-time recovery and delete protection: `FIRESTORE_CONFIG_DATABASE` for config (desired state, weekly backups kept 14 weeks) and `FIRESTORE_DATABASE` for runtime state and jobs (kept indefinitely, no TTL) |
-| `PlaygroundGroupsCreate` | Playground service groups `IT_ADMINS_GROUP` and `BU_ADMINS_GROUP` (IT Admins nested in BU Admins), plus the initial IT Admins from `IT_ADMINS_INITIAL_MEMBERS`. Needs a Super Admin (or Groups Admin able to manage locked groups) and the Cloud Identity API on the quota project |
+| `PlaygroundGroupsCreate` | Playground service groups `IT_ADMINS_GROUP` and `BU_ADMINS_GROUP` (IT Admins nested in BU Admins), plus the initial IT Admins from `IT_ADMINS_INITIAL_MEMBERS`. Needs a Super Admin (or Groups Admin) and the Cloud Identity API on the quota project |
 | `PlaygroundTagsCreate` | Five dynamic playground tag keys at org level (`cost-center-bu`, `cost-center-code`, `cost-category`, `bu-tracking-code`, `bu-subcategory`, allowed-values pattern, no values) and Tag User on them: the first three for `IT_ADMINS_GROUP`, `bu-tracking-code` and `bu-subcategory` for `BU_ADMINS_GROUP`. Needs Tag Administrator (or Organization Administrator) on the org. Uses google provider `~> 8.0` |
 | `RunAll` | Runs bootstrap operations in order: `--from=<Operation>` (default: first) `--to=<Operation>` (default: last). Each operation still shows its description, validates, shows its plan and asks to proceed (unless `--yes`). Stops at the first failure and prints a summary |
 | `Status` | Progress of all operations: status, time, who ran it, git commit |

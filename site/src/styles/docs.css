@@ -1,7 +1,5 @@
 /* ======================================================================
-   Crucible Docs — CodeMod-inspired Look & Feel + Dark / Light / Auto
-   (Auto points to Light; Light = crisp Google Aurora & liquid elevation;
-    Dark = deep obsidian slate with glowing Google Blue/Iris accents)
+   Crucible Docs — Clean Functional Typography & Dark / Light Theme
    ====================================================================== */
 @import '@fontsource-variable/space-grotesk';
 @import '@fontsource/jetbrains-mono/400.css';
@@ -11,24 +9,30 @@
   --sl-font: 'Google Sans', 'Space Grotesk Variable', 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --sl-font-mono: 'JetBrains Mono', 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  --c-grad: linear-gradient(90deg, #4285f4 0%, #9b72cb 35%, #d96570 68%, #fbbc04 100%);
-  --c-ease-liquid: cubic-bezier(0.22, 1, 0.36, 1);
+  --c-ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Google 4-color semantic palette */
+  --g-blue: #4285f4;
+  --g-green: #34a853;
+  --g-amber: #fbbc04;
+  --g-red: #ea4335;
 
   /* Dark Mode Tokens */
   --c-ink: #edf1f7;
   --c-slate: #9aa4b2;
-  --c-muted: #6d7887;
+  --c-muted: #707b8a;
   --c-action: #8ab4f8;
   --c-action-hover: #aecbfa;
   --c-canvas: #0d1117;
-  --c-surface: #151a22;
-  --c-surface-2: #1e2530;
-  --c-border: #262f3d;
-  --c-border-strong: #394352;
-  --c-chip-bg: rgba(21, 26, 34, 0.88);
+  --c-surface: #141922;
+  --c-surface-2: #1c2330;
+  --c-border: #252e3d;
+  --c-border-strong: #374357;
+  --c-dial-bg: radial-gradient(circle at 50% 50%, #161d29 0%, #10151e 72%, #0d1117 100%);
+  --c-pill-bg: #161d28;
   --c-shadow-1: 0 1px 3px rgba(0, 0, 0, 0.35), 0 4px 12px rgba(0, 0, 0, 0.25);
-  --c-shadow-2: 0 6px 18px rgba(0, 0, 0, 0.45), 0 14px 32px -6px rgba(0, 0, 0, 0.4);
-  --c-hero-bg: linear-gradient(180deg, #0d1117 0%, #111722 70%, #151a22 100%);
+  --c-shadow-2: 0 8px 24px rgba(0, 0, 0, 0.45), 0 16px 36px -8px rgba(0, 0, 0, 0.4);
+  --c-hero-bg: linear-gradient(180deg, #0d1117 0%, #101620 75%, #131923 100%);
 
   --sl-color-accent-low: #172b4d;
   --sl-color-accent: #8ab4f8;
@@ -41,26 +45,27 @@
   --sl-color-gray-5: #232b36;
   --sl-color-gray-6: #151a22;
   --sl-color-black: #0d1117;
-  --sl-color-bg-nav: rgba(13, 17, 23, 0.9);
+  --sl-color-bg-nav: rgba(13, 17, 23, 0.92);
   --sl-color-bg-sidebar: #11161e;
 }
 
 :root[data-theme='light'] {
-  /* Light Mode Tokens — exact CodeMod crisp canvas & Google palette */
+  /* Light Mode Tokens */
   --c-ink: #202124;
   --c-slate: #5f6368;
-  --c-muted: #80868b;
+  --c-muted: #70757a;
   --c-action: #1a73e8;
   --c-action-hover: #174ea6;
   --c-canvas: #ffffff;
   --c-surface: #f8f9fa;
   --c-surface-2: #f1f3f4;
-  --c-border: #e8eaed;
+  --c-border: #e3e6ea;
   --c-border-strong: #dadce0;
-  --c-chip-bg: rgba(255, 255, 255, 0.92);
+  --c-dial-bg: radial-gradient(circle at 50% 50%, #ffffff 0%, #f8faff 72%, #f1f4f9 100%);
+  --c-pill-bg: #ffffff;
   --c-shadow-1: 0 1px 2px rgba(60, 64, 67, 0.06), 0 2px 6px rgba(60, 64, 67, 0.05);
-  --c-shadow-2: 0 4px 12px rgba(60, 64, 67, 0.08), 0 12px 28px -6px rgba(60, 64, 67, 0.12);
-  --c-hero-bg: linear-gradient(180deg, #ffffff 0%, #fbfcff 70%, #f8f9fa 100%);
+  --c-shadow-2: 0 6px 18px rgba(60, 64, 67, 0.08), 0 14px 30px -6px rgba(60, 64, 67, 0.12);
+  --c-hero-bg: linear-gradient(180deg, #ffffff 0%, #fbfcff 75%, #f6f8fb 100%);
 
   --sl-color-accent-low: #e8f0fe;
   --sl-color-accent: #1a73e8;
@@ -121,7 +126,7 @@ h2,
 h3,
 h4 {
   font-family: var(--sl-font);
-  font-weight: 550;
+  font-weight: 560;
   letter-spacing: -0.022em;
   color: var(--c-ink);
 }
@@ -173,16 +178,16 @@ h4 {
   color: var(--c-slate);
 }
 
-/* Next / Previous pagination cards (CodeMod rail-next style) */
+/* Next / Previous pagination cards */
 .pagination-links a {
   border: 1px solid var(--c-border) !important;
-  border-radius: 18px !important;
+  border-radius: 16px !important;
   background: var(--c-canvas) !important;
   box-shadow: var(--c-shadow-1) !important;
   transition:
-    transform 180ms var(--c-ease-liquid),
-    box-shadow 180ms var(--c-ease-liquid),
-    border-color 180ms var(--c-ease-liquid) !important;
+    transform 180ms var(--c-ease),
+    box-shadow 180ms var(--c-ease),
+    border-color 180ms var(--c-ease) !important;
 }
 
 .pagination-links a:hover {
@@ -210,9 +215,8 @@ h4 {
 }
 
 /* ======================================================================
-   Splash Landing Hero: WebGL Particle Metamorphosis + 4-Stage Stepper
+   Splash Landing Hero: Left Story + Right Concentric Ring / AI App Dial
    ====================================================================== */
-/* Break out of Starlight splash container padding on the hero */
 [data-has-hero] .content-panel:first-of-type {
   padding: 0 !important;
   border-bottom: none !important;
@@ -224,168 +228,58 @@ h4 {
   padding: 0 !important;
 }
 
+[data-has-hero] .content-panel:nth-of-type(2) > .sl-container {
+  max-width: 1240px !important;
+}
+
 .crucible-launch {
   position: relative;
   overflow: hidden;
-  isolation: isolate;
-  min-height: clamp(610px, calc(100vh - 64px), 800px);
-  display: flex;
-  align-items: center;
   background: var(--c-hero-bg);
   border-bottom: 1px solid var(--c-border);
-  padding: 44px 28px 64px;
-}
-
-#crucible-canvas {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  display: block;
-  z-index: 1;
-  pointer-events: none;
-}
-
-@keyframes aurora-drift {
-  0%,
-  100% {
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-  50% {
-    transform: translate3d(24px, -18px, 0) scale(1.06);
-  }
-}
-
-.crucible-aurora {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  overflow: hidden;
-  z-index: 0;
-}
-
-.crucible-aurora i {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(72px);
-  opacity: 0.34;
-  animation: aurora-drift 14s ease-in-out infinite;
-}
-
-.crucible-aurora i:nth-child(1) {
-  width: 480px;
-  height: 480px;
-  right: 8%;
-  top: -80px;
-  background: radial-gradient(circle, rgba(234, 67, 53, 0.3) 0%, rgba(251, 188, 4, 0.16) 60%, transparent 100%);
-}
-
-.crucible-aurora i:nth-child(2) {
-  width: 420px;
-  height: 420px;
-  right: 22%;
-  bottom: -90px;
-  background: radial-gradient(circle, rgba(66, 133, 244, 0.26) 0%, rgba(155, 114, 203, 0.16) 65%, transparent 100%);
-  animation-delay: -5s;
-}
-
-.crucible-aurora i:nth-child(3) {
-  width: 340px;
-  height: 340px;
-  left: 6%;
-  top: 22%;
-  background: radial-gradient(circle, rgba(66, 133, 244, 0.14) 0%, transparent 75%);
-  animation-delay: -9s;
+  padding: 48px 28px 60px;
 }
 
 .crucible-launch-grid {
-  position: relative;
-  z-index: 3;
-  max-width: 1200px;
+  max-width: 1240px;
   width: 100%;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: minmax(0, 560px) 1fr;
-  gap: 40px;
+  grid-template-columns: minmax(0, 560px) minmax(0, 1fr);
+  gap: 48px;
   align-items: center;
 }
 
-.crucible-launch-copy {
-  position: relative;
-  z-index: 3;
-}
-
-/* Gradient pill badge */
-.crucible-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 6px 14px 6px 8px;
-  border-radius: 999px;
-  border: 1px solid transparent;
-  background:
-    linear-gradient(var(--c-canvas), var(--c-canvas)) padding-box,
-    var(--c-grad) border-box;
-  box-shadow: var(--c-shadow-1);
-  font-family: var(--sl-font);
-  font-size: 0.84rem;
-  font-weight: 500;
-  color: var(--c-ink);
-  text-decoration: none;
-  margin-bottom: 22px;
-  transition:
-    transform 180ms var(--c-ease-liquid),
-    box-shadow 180ms var(--c-ease-liquid);
-}
-
-.crucible-badge:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--c-shadow-2);
-}
-
-.crucible-badge-dot {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: var(--c-grad);
-  display: inline-grid;
-  place-items: center;
-  color: #ffffff;
-  font-size: 0.72rem;
-  line-height: 1;
-}
-
-.crucible-badge-arrow {
+.crucible-eyebrow {
+  font-family: var(--sl-font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: var(--c-action);
-  transition: transform 180ms var(--c-ease-liquid);
-}
-
-.crucible-badge:hover .crucible-badge-arrow {
-  transform: translateX(3px);
+  margin-bottom: 14px;
 }
 
 .crucible-title {
   font-family: var(--sl-font);
   font-weight: 600;
-  font-size: clamp(2.35rem, 4.5vw, 3.65rem);
-  line-height: 1.06;
+  font-size: clamp(2.15rem, 3.8vw, 3.25rem);
+  line-height: 1.08;
   letter-spacing: -0.028em;
   color: var(--c-ink);
   margin: 0 0 18px;
 }
 
-.crucible-grad-text {
-  background: var(--c-grad);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+.crucible-title span {
+  color: var(--c-slate);
+  font-weight: 500;
 }
 
 .crucible-sub {
-  font-size: clamp(1rem, 1.18vw, 1.12rem);
+  font-size: clamp(0.98rem, 1.12vw, 1.06rem);
   line-height: 1.62;
   color: var(--c-slate);
-  max-width: 52ch;
+  max-width: 54ch;
   margin: 0;
 }
 
@@ -394,32 +288,32 @@ h4 {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   margin-top: 26px;
 }
 
 .c-btn {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 11px 22px;
+  gap: 7px;
+  padding: 10px 18px;
   border-radius: 999px;
   font-family: var(--sl-font);
-  font-size: 0.92rem;
+  font-size: 0.88rem;
   font-weight: 500;
   text-decoration: none;
   transition:
-    transform 180ms var(--c-ease-liquid),
-    box-shadow 180ms var(--c-ease-liquid),
-    background 180ms var(--c-ease-liquid),
-    border-color 180ms var(--c-ease-liquid);
+    transform 180ms var(--c-ease),
+    box-shadow 180ms var(--c-ease),
+    background 180ms var(--c-ease),
+    border-color 180ms var(--c-ease);
 }
 
 .c-btn-primary {
   background: #1a73e8;
   color: #ffffff !important;
   border: 1px solid #1a73e8;
-  box-shadow: 0 2px 8px rgba(26, 115, 232, 0.28);
+  box-shadow: 0 2px 8px rgba(26, 115, 232, 0.25);
 }
 
 .c-btn-primary:hover {
@@ -442,7 +336,7 @@ h4 {
 }
 
 .c-btn-minimal {
-  padding: 10px 14px;
+  padding: 10px 12px;
   color: var(--c-slate) !important;
 }
 
@@ -450,28 +344,29 @@ h4 {
   color: var(--c-ink) !important;
 }
 
-/* 4-Stage Interactive Stepper */
+/* 4-Stage Interactive Narrative Stepper */
 .crucible-stages {
   margin-top: 34px;
-  max-width: 530px;
+  padding-top: 22px;
+  border-top: 1px solid var(--c-border);
 }
 
 .c-stage-tabs {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
+  gap: 10px;
 }
 
 .c-stage-tab {
   appearance: none;
   background: transparent;
   border: 0;
-  padding: 8px 2px 6px;
+  padding: 4px 2px 8px;
   text-align: left;
   cursor: pointer;
-  color: var(--c-slate);
+  color: var(--c-muted);
   font-family: var(--sl-font);
-  transition: color 180ms var(--c-ease-liquid);
+  transition: color 180ms var(--c-ease);
 }
 
 .c-stage-tab:hover {
@@ -487,40 +382,49 @@ h4 {
   margin-bottom: 8px;
 }
 
-.c-stage-bar i {
+.c-stage-progress {
   display: block;
   height: 100%;
   width: 100%;
-  background: var(--c-grad);
+  background: var(--g-blue);
   transform: scaleX(0);
   transform-origin: left;
-  transition: transform 0.45s var(--c-ease-liquid);
+  transition: transform 120ms linear;
 }
 
-.c-stage-tab.is-done .c-stage-bar i {
-  transform: scaleX(1);
+.c-stage-tab[data-cstage='1'] .c-stage-progress {
+  background: var(--g-green);
+}
+.c-stage-tab[data-cstage='2'] .c-stage-progress {
+  background: var(--g-amber);
+}
+.c-stage-tab[data-cstage='3'] .c-stage-progress {
+  background: var(--g-red);
+}
+
+.c-stage-tab.is-done .c-stage-progress {
   opacity: 0.45;
 }
 
-.c-stage-tab.is-active .c-stage-bar i {
-  transform: scaleX(1);
-}
-
 .c-stage-idx {
+  display: block;
   font-family: var(--sl-font-mono);
   font-size: 0.68rem;
   letter-spacing: 0.08em;
   color: var(--c-muted);
-  margin-right: 5px;
+  margin-bottom: 2px;
 }
 
 .c-stage-tab.is-active .c-stage-idx {
   color: var(--c-action);
+  font-weight: 700;
 }
 
 .c-stage-name {
-  font-size: 0.84rem;
-  font-weight: 500;
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 550;
+  line-height: 1.2;
 }
 
 .c-stage-tab.is-active .c-stage-name {
@@ -529,8 +433,8 @@ h4 {
 
 .c-stage-panes {
   position: relative;
-  margin-top: 12px;
-  min-height: 108px;
+  margin-top: 14px;
+  min-height: 138px;
 }
 
 .c-stage-pane {
@@ -540,8 +444,8 @@ h4 {
   transform: translateY(6px);
   pointer-events: none;
   transition:
-    opacity 0.45s var(--c-ease-liquid),
-    transform 0.45s var(--c-ease-liquid);
+    opacity 360ms var(--c-ease),
+    transform 360ms var(--c-ease);
 }
 
 .c-stage-pane.is-active {
@@ -553,23 +457,32 @@ h4 {
 
 .c-stage-pane h3 {
   font-size: 1.02rem;
-  font-weight: 550;
-  margin: 0 0 5px;
+  font-weight: 560;
+  margin: 0 0 6px;
   letter-spacing: -0.01em;
   color: var(--c-ink);
 }
 
 .c-stage-pane p {
-  font-size: 0.86rem;
+  font-size: 0.87rem;
   color: var(--c-slate);
-  line-height: 1.52;
-  margin: 0 0 10px;
-  max-width: 50ch;
+  line-height: 1.56;
+  margin: 0 0 12px;
+  max-width: 54ch;
+}
+
+.c-stage-pane p code {
+  font-family: var(--sl-font-mono);
+  font-size: 0.84em;
+  color: var(--c-ink);
+  background: var(--c-surface-2);
+  padding: 1px 5px;
+  border-radius: 4px;
 }
 
 .c-stage-code {
   display: inline-block;
-  padding: 3px 11px;
+  padding: 4px 12px;
   border-radius: 999px;
   background: var(--c-surface);
   border: 1px solid var(--c-border);
@@ -578,185 +491,680 @@ h4 {
   color: var(--c-action);
 }
 
-/* Floating HUD Chips over the 3D WebGL Crucible Canvas */
-@keyframes chipFloat {
-  0%,
-  100% {
-    transform: translate(-50%, -50%) translateY(0);
-  }
-  50% {
-    transform: translate(-50%, -50%) translateY(-5px);
-  }
-}
-
-@keyframes chipSpin {
+/* ======================================================================
+   Right Column: Concentric Ring Architecture -> AI App Instrument
+   ====================================================================== */
+@keyframes orbitRotateCw {
   to {
     transform: rotate(360deg);
   }
 }
 
-.crucible-launch-viz {
-  position: relative;
-  min-height: 460px;
-  pointer-events: none;
+@keyframes orbitRotateCcw {
+  to {
+    transform: rotate(-360deg);
+  }
 }
 
-.crucible-chips {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  transition: opacity 0.5s var(--c-ease-liquid);
+@keyframes linkFlow {
+  from {
+    stroke-dashoffset: 36;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
 }
 
-.crucible-chips.is-on {
-  opacity: 1;
+@keyframes hubBreath {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.32;
+  }
+  50% {
+    transform: scale(1.12);
+    opacity: 0.62;
+  }
 }
 
-.crucible-chip {
-  position: absolute;
-  left: var(--x, 50%);
-  top: var(--y, 50%);
-  transform: translate(-50%, -50%);
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 13px;
-  border-radius: 999px;
-  background: var(--c-chip-bg);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
+.crucible-dial-wrap {
+  background: var(--c-dial-bg);
   border: 1px solid var(--c-border);
+  border-radius: 24px;
+  padding: 18px 20px 16px;
   box-shadow: var(--c-shadow-2);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.crucible-dial-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 4px;
   font-family: var(--sl-font-mono);
   font-size: 0.72rem;
-  color: var(--c-ink);
-  white-space: nowrap;
-  animation: chipFloat 4.6s ease-in-out infinite;
 }
 
-.crucible-chip:nth-child(2) {
-  animation-delay: -1.5s;
-}
-
-.crucible-chip:nth-child(3) {
-  animation-delay: -3s;
-}
-
-.crucible-chip b {
-  color: #188038;
-  font-weight: 600;
-}
-
-:root[data-theme='dark'] .crucible-chip b {
-  color: #81c995;
-}
-
-.crucible-chip em {
-  font-style: normal;
+.c-dial-step {
   color: var(--c-action);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.c-dial-status {
+  color: var(--c-slate);
+  text-align: right;
+}
+
+.crucible-dial-stage {
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+  aspect-ratio: 1 / 1;
+}
+
+.crucible-dial-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: visible;
+  font-family: var(--sl-font);
+}
+
+.c-axes line {
+  stroke: var(--c-border);
+  stroke-width: 1;
+  stroke-dasharray: 3 6;
+  opacity: 0.55;
+}
+
+/* Ring shared styles */
+.c-ring-layer {
+  cursor: pointer;
+  transform-origin: 280px 280px;
+  transition:
+    opacity 480ms var(--c-ease),
+    transform 520ms var(--c-ease);
+}
+
+.c-ring-hit {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 28;
+}
+
+.c-ring-track {
+  fill: none;
+  stroke: var(--g-blue);
+  stroke-width: 2;
+  opacity: 0.35;
+  transition:
+    stroke-width 400ms var(--c-ease),
+    opacity 400ms var(--c-ease);
+}
+
+.c-track-amber {
+  stroke: var(--g-amber);
+}
+
+.c-shard-arc {
+  fill: none;
+  stroke: var(--g-green);
+  stroke-width: 3;
+  stroke-linecap: round;
+  opacity: 0.45;
+  transition:
+    stroke-width 400ms var(--c-ease),
+    opacity 400ms var(--c-ease);
+}
+
+.c-ring-orbit {
+  fill: none;
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  transform-origin: 280px 280px;
+  opacity: 0;
+  transition: opacity 400ms var(--c-ease);
+}
+
+.c-orbit-blue {
+  stroke: var(--g-blue);
+  animation: orbitRotateCw 14s linear infinite;
+}
+
+.c-orbit-green {
+  stroke: var(--g-green);
+  animation: orbitRotateCcw 12s linear infinite;
+}
+
+.c-orbit-amber {
+  stroke: var(--g-amber);
+  animation: orbitRotateCw 10s linear infinite;
+}
+
+.c-inherit-spokes line {
+  stroke: var(--g-green);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 4;
+  opacity: 0;
+  transition: opacity 400ms var(--c-ease);
+}
+
+/* Node pills on rings */
+.c-node-pill rect {
+  fill: var(--c-pill-bg);
+  stroke: var(--c-border-strong);
+  stroke-width: 1.25;
+  transition:
+    stroke 350ms var(--c-ease),
+    fill 350ms var(--c-ease);
+}
+
+.c-node-pill text {
+  fill: var(--c-ink);
+  font-family: var(--sl-font-mono);
+  font-size: 11px;
   font-weight: 500;
 }
 
-.c-chip-ok {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: rgba(52, 168, 83, 0.16);
-  color: #188038;
-  display: inline-grid;
-  place-items: center;
-  font-size: 0.65rem;
+.c-dot-blue {
+  fill: var(--g-blue);
+}
+.c-dot-green {
+  fill: var(--g-green);
+}
+.c-dot-amber {
+  fill: var(--g-amber);
+}
+
+/* Center Summary Badge (Stages 0, 1, 2) */
+.c-center-summary {
+  cursor: pointer;
+  transform-origin: 280px 280px;
+  transition:
+    opacity 420ms var(--c-ease),
+    transform 460ms var(--c-ease);
+}
+
+.c-summary-disc {
+  fill: var(--c-surface);
+  stroke: var(--c-border-strong);
+  stroke-width: 1.8;
+}
+
+.c-summary-kicker {
+  font-family: var(--sl-font-mono);
+  font-size: 9px;
   font-weight: 700;
+  letter-spacing: 0.1em;
+  fill: var(--c-action);
 }
 
-:root[data-theme='dark'] .c-chip-ok {
-  color: #81c995;
+.c-summary-main {
+  font-family: var(--sl-font);
+  font-size: 14px;
+  font-weight: 600;
+  fill: var(--c-ink);
 }
 
-.c-chip-spin {
-  width: 12px;
-  height: 12px;
+.c-summary-sub {
+  font-family: var(--sl-font-mono);
+  font-size: 10px;
+  fill: var(--c-slate);
+}
+
+/* Stage-specific focus choreography (Stages 01 -> 02 -> 03 -> 04) */
+/* Stage 0: Outer Playground Folder active */
+.crucible-launch[data-active-stage='0'] .c-ring-0 {
+  opacity: 1;
+}
+.crucible-launch[data-active-stage='0'] .c-ring-0 .c-ring-track {
+  opacity: 0.85;
+  stroke-width: 2.8;
+}
+.crucible-launch[data-active-stage='0'] .c-ring-0 .c-ring-orbit {
+  opacity: 1;
+}
+.crucible-launch[data-active-stage='0'] .c-ring-0 .c-node-pill rect {
+  stroke: var(--g-blue);
+}
+.crucible-launch[data-active-stage='0'] .c-ring-1 {
+  opacity: 0.28;
+}
+.crucible-launch[data-active-stage='0'] .c-ring-2 {
+  opacity: 0.22;
+}
+
+/* Stage 1: Middle Playground & Shards active */
+.crucible-launch[data-active-stage='1'] .c-ring-0 {
+  opacity: 0.42;
+}
+.crucible-launch[data-active-stage='1'] .c-ring-0 .c-inherit-spokes line {
+  opacity: 0.75;
+}
+.crucible-launch[data-active-stage='1'] .c-ring-1 {
+  opacity: 1;
+}
+.crucible-launch[data-active-stage='1'] .c-ring-1 .c-shard-arc {
+  opacity: 0.95;
+  stroke-width: 4;
+}
+.crucible-launch[data-active-stage='1'] .c-ring-1 .c-ring-orbit {
+  opacity: 1;
+}
+.crucible-launch[data-active-stage='1'] .c-ring-1 .c-node-pill rect {
+  stroke: var(--g-green);
+}
+.crucible-launch[data-active-stage='1'] .c-ring-2 {
+  opacity: 0.28;
+}
+
+/* Stage 2: Inner Workspace & App Containers active */
+.crucible-launch[data-active-stage='2'] .c-ring-0 {
+  opacity: 0.28;
+}
+.crucible-launch[data-active-stage='2'] .c-ring-1 {
+  opacity: 0.42;
+}
+.crucible-launch[data-active-stage='2'] .c-ring-2 {
+  opacity: 1;
+}
+.crucible-launch[data-active-stage='2'] .c-ring-2 .c-ring-track {
+  opacity: 0.9;
+  stroke-width: 3;
+}
+.crucible-launch[data-active-stage='2'] .c-ring-2 .c-ring-orbit {
+  opacity: 1;
+}
+.crucible-launch[data-active-stage='2'] .c-ring-2 .c-node-pill rect {
+  stroke: var(--g-amber);
+}
+
+/* Stage 3 (04 AI Apps): Outer rings recede into governed halo; AI App Scene zooms forward */
+.crucible-launch[data-active-stage='3'] .c-ring-0 {
+  opacity: 0.34;
+  transform: scale(1.03);
+}
+.crucible-launch[data-active-stage='3'] .c-ring-0 .c-node-pill {
+  opacity: 0.45;
+}
+.crucible-launch[data-active-stage='3'] .c-ring-1 {
+  opacity: 0.16;
+  transform: scale(1.04);
+}
+.crucible-launch[data-active-stage='3'] .c-ring-1 .c-node-pill {
+  opacity: 0;
+}
+.crucible-launch[data-active-stage='3'] .c-ring-2 {
+  opacity: 0;
+  transform: scale(0.92);
+  pointer-events: none;
+}
+.crucible-launch[data-active-stage='3'] .c-center-summary {
+  opacity: 0;
+  transform: scale(0.75);
+  pointer-events: none;
+}
+
+/* AI Application Scene (Stage 04) */
+.c-ai-app-scene {
+  opacity: 0;
+  transform: scale(0.84);
+  transform-origin: 280px 280px;
+  pointer-events: none;
+  transition:
+    opacity 480ms var(--c-ease),
+    transform 520ms var(--c-ease);
+}
+
+.crucible-launch[data-active-stage='3'] .c-ai-app-scene {
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
+}
+
+.c-ai-arena {
+  fill: var(--c-canvas);
+  opacity: 0.94;
+}
+
+.c-ai-arena-ring {
+  fill: none;
+  stroke: var(--g-amber);
+  stroke-width: 2;
+  opacity: 0.75;
+}
+
+.c-ai-banner {
+  fill: var(--c-pill-bg);
+  stroke: var(--g-amber);
+  stroke-width: 1.5;
+}
+
+.c-ai-banner-txt {
+  font-family: var(--sl-font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  fill: var(--c-ink);
+}
+
+.c-ai-link-base {
+  stroke: var(--c-border-strong);
+  stroke-width: 2;
+}
+
+.c-ai-link-pulse {
+  stroke-width: 3;
+  stroke-dasharray: 8 10;
+  stroke-linecap: round;
+  animation: linkFlow 1.4s linear infinite;
+}
+
+.c-pulse-1 {
+  stroke: var(--g-blue);
+}
+.c-pulse-2 {
+  stroke: var(--g-red);
+  animation-delay: -0.35s;
+}
+.c-pulse-3 {
+  stroke: var(--g-green);
+  animation-delay: -0.7s;
+}
+.c-pulse-4 {
+  stroke: var(--g-amber);
+  animation-delay: -1.05s;
+}
+
+.c-ai-sat rect {
+  fill: var(--c-pill-bg);
+  stroke: var(--c-border-strong);
+  stroke-width: 1.4;
+}
+
+.c-ai-sat-title {
+  font-family: var(--sl-font);
+  font-size: 11.5px;
+  font-weight: 600;
+  fill: var(--c-ink);
+}
+
+.c-ai-sat-sub {
+  font-family: var(--sl-font-mono);
+  font-size: 9.5px;
+  fill: var(--c-slate);
+}
+
+.c-ai-hub-pulse {
+  fill: rgba(66, 133, 244, 0.18);
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: hubBreath 2.6s ease-in-out infinite;
+}
+
+.c-ai-hub-core {
+  fill: #1a73e8;
+  stroke: #8ab4f8;
+  stroke-width: 2;
+}
+
+.c-ai-hub-kicker {
+  font-family: var(--sl-font-mono);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  fill: rgba(255, 255, 255, 0.85);
+}
+
+.c-ai-hub-title {
+  font-family: var(--sl-font);
+  font-size: 13px;
+  font-weight: 700;
+  fill: #ffffff;
+}
+
+.c-ai-hub-sub {
+  font-family: var(--sl-font-mono);
+  font-size: 9.5px;
+  fill: rgba(255, 255, 255, 0.9);
+}
+
+.c-ai-footer {
+  fill: var(--c-surface);
+  stroke: var(--c-border-strong);
+  stroke-width: 1;
+}
+
+.c-ai-footer-txt {
+  font-family: var(--sl-font-mono);
+  font-size: 10px;
+  fill: var(--c-slate);
+}
+
+/* Interactive Legend Bar under Dial */
+.crucible-dial-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  padding-top: 4px;
+}
+
+.c-legend-item {
+  appearance: none;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: 999px;
+  padding: 4px 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-family: var(--sl-font-mono);
+  font-size: 0.7rem;
+  color: var(--c-slate);
+  transition:
+    border-color 180ms var(--c-ease),
+    color 180ms var(--c-ease),
+    background 180ms var(--c-ease);
+}
+
+.c-legend-item:hover,
+.c-legend-item.is-active {
+  color: var(--c-ink);
+  border-color: var(--c-action);
+  background: var(--c-surface-2);
+}
+
+.c-leg-dot {
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  border: 2px solid rgba(66, 133, 244, 0.25);
-  border-top-color: var(--c-action);
-  animation: chipSpin 1.1s linear infinite;
 }
 
-/* Landing page card grid below hero */
+.c-leg-blue {
+  background: var(--g-blue);
+}
+.c-leg-green {
+  background: var(--g-green);
+}
+.c-leg-amber {
+  background: var(--g-amber);
+}
+.c-leg-red {
+  background: var(--g-red);
+}
+
+/* ======================================================================
+   Below-the-Fold 3-Pillar Documentation Suite
+   (01 Conceptual Architecture -> 02 Specifications -> 03 Deployment & User Guides)
+   ====================================================================== */
+.c-pillars {
+  padding: 12px 0 28px;
+}
+
+.c-pillars-head {
+  margin-bottom: 24px;
+}
+
+.c-pillars-flow {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--sl-font-mono);
+  font-size: 0.74rem;
+  color: var(--c-action);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: 999px;
+  padding: 5px 14px;
+  margin-bottom: 12px;
+}
+
+.c-pillars-flow i {
+  font-style: normal;
+  color: var(--c-muted);
+}
+
+.c-pillars-head h2 {
+  font-size: 1.65rem;
+  margin: 0 0 6px !important;
+  padding: 0 !important;
+  border: 0 !important;
+}
+
+.c-pillars-head p {
+  margin: 0;
+  color: var(--c-slate);
+  font-size: 0.96rem;
+  max-width: 68ch;
+}
+
 .c-card-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
-  margin-top: 1.5rem;
+  gap: 22px;
 }
 
-.c-card {
+.c-pillar-card {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 10px;
-  background: var(--c-canvas);
+  gap: 18px;
+  background: var(--c-surface);
   border: 1px solid var(--c-border);
   border-radius: 20px;
-  padding: 24px 26px;
-  color: var(--c-ink) !important;
-  text-decoration: none !important;
+  padding: 24px 24px 20px;
   box-shadow: var(--c-shadow-1);
   transition:
-    transform 180ms var(--c-ease-liquid),
-    box-shadow 180ms var(--c-ease-liquid),
-    border-color 180ms var(--c-ease-liquid);
+    border-color 180ms var(--c-ease),
+    box-shadow 180ms var(--c-ease);
 }
 
-.c-card:hover {
-  transform: translateY(-3px);
+.c-pillar-card:hover {
+  border-color: var(--c-border-strong);
   box-shadow: var(--c-shadow-2);
-  border-color: var(--c-action);
 }
 
 .c-card-eyebrow {
   font-family: var(--sl-font-mono);
   font-size: 0.72rem;
-  letter-spacing: 0.1em;
+  font-weight: 600;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--c-action);
+  margin-bottom: 6px;
 }
 
-.c-card h3 {
-  font-size: 1.14rem;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.c-pillar-top h3 {
+  font-size: 1.18rem;
+  margin: 0 0 8px;
 }
 
-.c-card h3::after {
-  content: '→';
-  color: var(--c-action);
-  opacity: 0.7;
-  transition: transform 180ms var(--c-ease-liquid), opacity 180ms;
+.c-pillar-top h3 a {
+  color: var(--c-ink) !important;
+  text-decoration: none !important;
 }
 
-.c-card:hover h3::after {
-  transform: translateX(4px);
-  opacity: 1;
+.c-pillar-top h3 a:hover {
+  color: var(--c-action) !important;
 }
 
-.c-card p {
-  font-size: 0.9rem;
-  line-height: 1.55;
+.c-pillar-top p {
+  font-size: 0.88rem;
+  line-height: 1.56;
   color: var(--c-slate);
   margin: 0;
 }
 
-@media (max-width: 960px) {
+.c-pillar-links {
+  list-style: none;
+  margin: 0;
+  padding: 14px 0 0;
+  border-top: 1px solid var(--c-border);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.c-pillar-links li {
+  margin: 0;
+}
+
+.c-pillar-links a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: 10px;
+  font-size: 0.84rem;
+  font-weight: 500;
+  color: var(--c-ink) !important;
+  text-decoration: none !important;
+  transition:
+    background 160ms var(--c-ease),
+    color 160ms var(--c-ease);
+}
+
+.c-pillar-links a i {
+  font-style: normal;
+  color: var(--c-muted);
+  transition:
+    transform 160ms var(--c-ease),
+    color 160ms var(--c-ease);
+}
+
+.c-pillar-links a:hover {
+  background: var(--c-surface-2);
+  color: var(--c-action) !important;
+}
+
+.c-pillar-links a:hover i {
+  transform: translateX(3px);
+  color: var(--c-action);
+}
+
+@media (max-width: 1024px) {
   .crucible-launch-grid {
     grid-template-columns: 1fr;
   }
-  .crucible-launch-viz {
-    min-height: 340px;
+  .crucible-dial-wrap {
+    max-width: 560px;
+    margin: 0 auto;
+    width: 100%;
   }
   .c-card-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .c-stage-tabs {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
