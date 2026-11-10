@@ -89,6 +89,12 @@ export default defineConfig({
             { label: 'Build Sequence & Status', slug: 'roadmap/todolist' },
           ],
         },
+        {
+          label: '04 — Roadmap',
+          items: [
+            { label: 'Dedicated Playground Sandboxes', slug: 'roadmap/dedicated-playground-sandboxes' },
+          ],
+        },
       ],
       customCss: ['katex/dist/katex.min.css', './src/styles/docs.css'],
     }),

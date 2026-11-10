@@ -189,4 +189,10 @@ export const PAGES: PageEntry[] = [
     title: 'Build Sequence & Status',
     description: 'Day-0 bootstrap steps, Self Service API build order, and verification status.',
   },
+  {
+    source: 'specs/roadmap/dedicated-playground-sandboxes.md',
+    slug: 'roadmap/dedicated-playground-sandboxes',
+    title: 'Dedicated Playground Sandboxes',
+    description: 'First principles, tag-based progressive Org Policy relaxation, and two-layer bulk provisioning for 25,000+ personal GCP projects.',
+  },
 ];

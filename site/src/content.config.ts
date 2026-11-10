@@ -91,6 +91,7 @@ function buildLandingPage() {
     `<li><a href="${BASE}/deploy/cli/"><span>lsb-cli Developer Guide</span><i>&rarr;</i></a></li>`,
     `<li><a href="${BASE}/guides/cli/"><span>lsb CLI User Guide</span><i>&rarr;</i></a></li>`,
     `<li><a href="${BASE}/roadmap/todolist/"><span>Build Sequence &amp; Status</span><i>&rarr;</i></a></li>`,
+    `<li><a href="${BASE}/roadmap/dedicated-playground-sandboxes/"><span>Roadmap: Dedicated Playground Sandboxes</span><i>&rarr;</i></a></li>`,
     `</ul>`,
     `</div>`,
     `</div>`,
