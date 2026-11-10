@@ -10,6 +10,8 @@
   --sl-font-mono: 'JetBrains Mono', 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 
   --c-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --c-left-w: 17.5rem;
+  --c-right-w: 15.5rem;
 
   /* Google 4-color semantic palette */
   --g-blue: #4285f4;
@@ -158,11 +160,26 @@ h4 {
   box-shadow: var(--c-shadow-1) !important;
 }
 
-.sl-markdown-content table {
+.sl-markdown-content table:not(:where(.not-content *)) {
+  display: table !important;
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
   border: 1px solid var(--c-border);
   border-radius: 12px;
   overflow: hidden;
   box-shadow: var(--c-shadow-1);
+}
+
+@media (max-width: 64rem) {
+  .sl-markdown-content table:not(:where(.not-content *)) {
+    display: block !important;
+    overflow-x: auto;
+  }
+}
+
+.sl-markdown-content :is(th, td):not(:where(.not-content *)) {
+  padding: 0.65rem 1rem !important;
 }
 
 .sl-markdown-content th {
@@ -212,6 +229,215 @@ h4 {
 .crucible-mermaid svg {
   max-width: 100%;
   height: auto;
+}
+
+/* ======================================================================
+   Collapsible Left & Right Panels + Fluid Center Expansion (Doc Pages)
+   ====================================================================== */
+.c-panel-toggles {
+  display: none;
+}
+
+@media (min-width: 50rem) {
+  html[data-has-sidebar]:not([data-has-hero]) {
+    --sl-sidebar-width: var(--c-left-w);
+  }
+
+  .c-panel-toggles {
+    display: contents;
+  }
+
+  .c-panel-toggle {
+    appearance: none;
+    position: fixed;
+    z-index: 7;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border-radius: 8px;
+    border: 1px solid var(--c-border-strong);
+    background: var(--c-canvas);
+    color: var(--c-slate);
+    box-shadow: var(--c-shadow-1);
+    display: inline-grid;
+    place-items: center;
+    cursor: pointer;
+    transition:
+      left 240ms var(--c-ease),
+      right 240ms var(--c-ease),
+      color 160ms var(--c-ease),
+      border-color 160ms var(--c-ease),
+      background 160ms var(--c-ease),
+      box-shadow 160ms var(--c-ease);
+  }
+
+  .c-panel-toggle:hover {
+    color: var(--c-action);
+    border-color: var(--c-action);
+    background: var(--c-surface);
+    box-shadow: var(--c-shadow-2);
+  }
+
+  .c-panel-toggle svg .c-chev-left,
+  .c-panel-toggle svg .c-chev-right {
+    transition: transform 220ms var(--c-ease);
+  }
+
+  .c-panel-toggle-left {
+    top: calc(var(--sl-nav-height) + var(--sl-mobile-toc-height, 0rem) + 14px);
+    left: calc(var(--c-left-w) + 10px);
+  }
+
+  .c-panel-toggle-right {
+    display: none;
+  }
+
+  html[data-left-collapsed='true'] .c-panel-toggle-left {
+    left: 12px;
+  }
+
+  html[data-left-collapsed='true'] .c-panel-toggle-left svg .c-chev-left {
+    transform: rotate(180deg);
+    transform-origin: 11.75px 10px;
+  }
+
+  /* Smooth slide & center expansion for Left Sidebar */
+  html[data-has-sidebar]:not([data-has-hero]) .sidebar-pane {
+    width: var(--c-left-w) !important;
+    transform: translateX(0);
+    transition: transform 240ms var(--c-ease);
+  }
+
+  html[data-has-sidebar]:not([data-has-hero]) .main-frame {
+    padding-inline-start: var(--c-left-w) !important;
+    transition: padding-inline-start 240ms var(--c-ease);
+  }
+
+  html[data-has-sidebar][data-left-collapsed='true']:not([data-has-hero]) .sidebar-pane {
+    transform: translateX(-100%);
+    pointer-events: none;
+  }
+
+  html[data-has-sidebar][data-left-collapsed='true']:not([data-has-hero]) .main-frame {
+    padding-inline-start: 0rem !important;
+  }
+
+  html[data-has-sidebar]:not([data-has-hero]) .main-pane .content-panel {
+    padding-inline: clamp(3rem, 4vw, 3.75rem) !important;
+    transition: padding-inline 240ms var(--c-ease);
+  }
+
+  html[data-has-sidebar]:not([data-has-hero]) .main-pane .sl-container {
+    max-width: 62rem !important;
+    width: 100% !important;
+    margin-inline: auto !important;
+    transition: max-width 240ms var(--c-ease);
+  }
+}
+
+@media (min-width: 50rem) and (max-width: 71.999rem) {
+  html[data-has-sidebar][data-left-collapsed='true']:not([data-has-hero]) .main-pane .content-panel {
+    padding-inline: clamp(3.5rem, 6vw, 5rem) !important;
+  }
+
+  html[data-has-sidebar][data-left-collapsed='true']:not([data-has-hero]) .main-pane .sl-container {
+    max-width: 100% !important;
+  }
+}
+
+@media (min-width: 72rem) {
+  .c-panel-toggle-left {
+    top: calc(var(--sl-nav-height) + 14px);
+  }
+
+  .c-panel-toggle-right {
+    display: inline-grid;
+    top: calc(var(--sl-nav-height) + 14px);
+    right: calc(var(--c-right-w) + 10px);
+  }
+
+  html[data-right-collapsed='true'] .c-panel-toggle-right {
+    right: 12px;
+  }
+
+  html[data-right-collapsed='true'] .c-panel-toggle-right svg .c-chev-right {
+    transform: rotate(180deg);
+    transform-origin: 8.25px 10px;
+  }
+
+  /* 3-Column Flexbox Layout with Collapsible Right TOC */
+  html[data-has-sidebar][data-has-toc]:not([data-has-hero]) .right-sidebar-container {
+    width: var(--c-right-w) !important;
+    flex: 0 0 var(--c-right-w) !important;
+    transition:
+      width 240ms var(--c-ease),
+      flex-basis 240ms var(--c-ease);
+  }
+
+  html[data-has-sidebar][data-has-toc]:not([data-has-hero]) .right-sidebar {
+    width: var(--c-right-w) !important;
+    inset-inline-end: 0;
+    inset-inline-start: auto;
+    transform: translateX(0);
+    transition: transform 240ms var(--c-ease);
+  }
+
+  html[data-has-sidebar][data-has-toc]:not([data-has-hero]) .right-sidebar-panel .sl-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+  }
+
+  html[data-has-sidebar]:not([data-has-hero]) .main-pane {
+    --sl-content-margin-inline: auto !important;
+    flex: 1 1 auto !important;
+    min-width: 0;
+    width: calc(100% - var(--c-right-w)) !important;
+    transition: width 240ms var(--c-ease);
+  }
+
+  html[data-has-sidebar]:not([data-has-toc]):not([data-has-hero]) .main-pane {
+    width: 100% !important;
+  }
+
+  /* Right panel collapsed */
+  html[data-has-sidebar][data-has-toc][data-right-collapsed='true']:not([data-has-hero]) .right-sidebar-container {
+    width: 0rem !important;
+    flex: 0 0 0rem !important;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  html[data-has-sidebar][data-has-toc][data-right-collapsed='true']:not([data-has-hero]) .right-sidebar {
+    transform: translateX(100%);
+    pointer-events: none;
+  }
+
+  html[data-has-sidebar][data-has-toc][data-right-collapsed='true']:not([data-has-hero]) .main-pane {
+    width: 100% !important;
+  }
+
+  /* Expand center column horizontally with balanced side margins when ONE panel is collapsed */
+  html[data-has-sidebar][data-left-collapsed='true']:not([data-has-hero]) .main-pane .content-panel,
+  html[data-has-sidebar][data-right-collapsed='true']:not([data-has-hero]) .main-pane .content-panel {
+    padding-inline: clamp(3.75rem, 5.5vw, 5.25rem) !important;
+  }
+
+  html[data-has-sidebar][data-left-collapsed='true']:not([data-has-hero]) .main-pane .sl-container,
+  html[data-has-sidebar][data-right-collapsed='true']:not([data-has-hero]) .main-pane .sl-container {
+    max-width: 84rem !important;
+  }
+
+  /* Expand center column even wider with generous side margins when BOTH panels are collapsed */
+  html[data-has-sidebar][data-left-collapsed='true'][data-right-collapsed='true']:not([data-has-hero]) .main-pane .content-panel,
+  html[data-has-sidebar][data-left-collapsed='true']:not([data-has-toc]):not([data-has-hero]) .main-pane .content-panel {
+    padding-inline: clamp(4rem, 6.5vw, 6.5rem) !important;
+  }
+
+  html[data-has-sidebar][data-left-collapsed='true'][data-right-collapsed='true']:not([data-has-hero]) .main-pane .sl-container,
+  html[data-has-sidebar][data-left-collapsed='true']:not([data-has-toc]):not([data-has-hero]) .main-pane .sl-container {
+    max-width: 96rem !important;
+  }
 }
 
 /* ======================================================================

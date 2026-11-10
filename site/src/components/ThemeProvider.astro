@@ -10,6 +10,14 @@ import { Icon } from '@astrojs/starlight/components';
     const pref = stored === 'dark' || stored === 'light' ? stored : 'auto';
     // Auto points to Light (Google 4-color theme)
     document.documentElement.dataset.theme = pref === 'dark' ? 'dark' : 'light';
+    if (typeof localStorage !== 'undefined') {
+      if (localStorage.getItem('crucible-left-collapsed') === '1') {
+        document.documentElement.dataset.leftCollapsed = 'true';
+      }
+      if (localStorage.getItem('crucible-right-collapsed') === '1') {
+        document.documentElement.dataset.rightCollapsed = 'true';
+      }
+    }
     return {
       updatePickers(theme = pref) {
         document.querySelectorAll('starlight-theme-select').forEach((picker) => {

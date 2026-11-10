@@ -1,11 +1,133 @@
 ---
 import Default from '@astrojs/starlight/components/PageFrame.astro';
+
+const { hasSidebar, toc, entry } = Astro.locals.starlightRoute;
+const isDocPage = hasSidebar && !entry?.data?.hero;
+const hasToc = Boolean(toc);
 ---
 
 <Default><slot name="header" slot="header" /><slot name="sidebar" slot="sidebar" /><slot /></Default>
 
+{
+  isDocPage && (
+    <div class="c-panel-toggles print:hidden" aria-label="Layout panel controls">
+      <button
+        type="button"
+        id="c-toggle-left"
+        class="c-panel-toggle c-panel-toggle-left"
+        aria-expanded="true"
+        aria-controls="starlight__sidebar"
+        aria-label="Toggle left navigation panel"
+        title="Collapse navigation ([)"
+      >
+        <svg viewBox="0 0 20 20" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="2.5" y="3.5" width="15" height="13" rx="2.5" />
+          <line x1="7.5" y1="3.5" x2="7.5" y2="16.5" />
+          <polyline class="c-chev-left" points="13 8 10.5 10 13 12" />
+        </svg>
+      </button>
+
+      {hasToc && (
+        <button
+          type="button"
+          id="c-toggle-right"
+          class="c-panel-toggle c-panel-toggle-right"
+          aria-expanded="true"
+          aria-label="Toggle On this page panel"
+          title="Collapse On this page (])"
+        >
+          <svg viewBox="0 0 20 20" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="2.5" y="3.5" width="15" height="13" rx="2.5" />
+            <line x1="12.5" y1="3.5" x2="12.5" y2="16.5" />
+            <polyline class="c-chev-right" points="7 8 9.5 10 7 12" />
+          </svg>
+        </button>
+      )}
+    </div>
+  )
+}
+
 <script>
   import mermaid from 'mermaid';
+
+  function initPanelToggles() {
+    const root = document.documentElement;
+    const leftBtn = document.getElementById('c-toggle-left') as HTMLButtonElement | null;
+    const rightBtn = document.getElementById('c-toggle-right') as HTMLButtonElement | null;
+
+    function syncButtons() {
+      const leftCollapsed = root.dataset.leftCollapsed === 'true';
+      const rightCollapsed = root.dataset.rightCollapsed === 'true';
+
+      if (leftBtn) {
+        leftBtn.setAttribute('aria-expanded', leftCollapsed ? 'false' : 'true');
+        leftBtn.title = leftCollapsed ? 'Expand navigation ([)' : 'Collapse navigation ([)';
+      }
+      if (rightBtn) {
+        rightBtn.setAttribute('aria-expanded', rightCollapsed ? 'false' : 'true');
+        rightBtn.title = rightCollapsed ? 'Expand On this page (])' : 'Collapse On this page (])';
+      }
+    }
+
+    function toggleLeft() {
+      const next = root.dataset.leftCollapsed !== 'true';
+      if (next) {
+        root.dataset.leftCollapsed = 'true';
+        localStorage.setItem('crucible-left-collapsed', '1');
+      } else {
+        delete root.dataset.leftCollapsed;
+        localStorage.removeItem('crucible-left-collapsed');
+      }
+      syncButtons();
+    }
+
+    function toggleRight() {
+      const next = root.dataset.rightCollapsed !== 'true';
+      if (next) {
+        root.dataset.rightCollapsed = 'true';
+        localStorage.setItem('crucible-right-collapsed', '1');
+      } else {
+        delete root.dataset.rightCollapsed;
+        localStorage.removeItem('crucible-right-collapsed');
+      }
+      syncButtons();
+    }
+
+    if (leftBtn && leftBtn.dataset.bound !== '1') {
+      leftBtn.dataset.bound = '1';
+      leftBtn.addEventListener('click', toggleLeft);
+    }
+    if (rightBtn && rightBtn.dataset.bound !== '1') {
+      rightBtn.dataset.bound = '1';
+      rightBtn.addEventListener('click', toggleRight);
+    }
+
+    if (root.dataset.panelKeysBound !== '1') {
+      root.dataset.panelKeysBound = '1';
+      window.addEventListener('keydown', (e) => {
+        if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey) return;
+        const tgt = e.target as HTMLElement | null;
+        if (
+          tgt &&
+          (tgt.tagName === 'INPUT' ||
+            tgt.tagName === 'TEXTAREA' ||
+            tgt.tagName === 'SELECT' ||
+            tgt.isContentEditable)
+        ) {
+          return;
+        }
+        if (e.key === '[' && document.getElementById('c-toggle-left')) {
+          e.preventDefault();
+          toggleLeft();
+        } else if (e.key === ']' && document.getElementById('c-toggle-right')) {
+          e.preventDefault();
+          toggleRight();
+        }
+      });
+    }
+
+    syncButtons();
+  }
 
   async function renderMermaidBlocks() {
     // Expressive Code / Shiki marks ```mermaid blocks with data-language="mermaid"
@@ -55,8 +177,12 @@ import Default from '@astrojs/starlight/components/PageFrame.astro';
     }
   }
 
+  initPanelToggles();
   renderMermaidBlocks();
-  document.addEventListener('astro:page-load', renderMermaidBlocks);
+  document.addEventListener('astro:page-load', () => {
+    initPanelToggles();
+    renderMermaidBlocks();
+  });
 
   // Re-render when the user toggles dark/light mode
   new MutationObserver(() => {
