@@ -110,12 +110,12 @@ sequenceDiagram
     participant API as Self Service API
     participant CFG as Configuration database
 
-    C->>API: change <resource>/{id} (expected version N, delta)
+    C->>API: change resource {id} (expected version N, delta)
     Note over API,CFG: one Firestore transaction
-    API->>CFG: read <collection>/{id}
-    API->>API: version == N (else 409 CONFLICT); playground and its folder ACTIVE; validate delta; build N+1
-    API->>CFG: create versions/{N} = unchanged copy of N
-    API->>CFG: set <collection>/{id} = N+1 (version, updated_at, updated_by)
+    API->>CFG: read collection/{id}
+    API->>API: check version == N (else 409 CONFLICT), playground and folder ACTIVE, validate delta, build N+1
+    API->>CFG: create versions/{N} as unchanged copy of N
+    API->>CFG: set collection/{id} to N+1 (version, updated_at, updated_by)
     CFG-->>API: commit
     API-->>C: updated resource, or the job that applies N+1
 ```
