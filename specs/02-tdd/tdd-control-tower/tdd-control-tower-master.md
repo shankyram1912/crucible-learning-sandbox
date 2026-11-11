@@ -141,7 +141,7 @@ Any `LABEL_<NAME>` key becomes label `<name>` (lowercased, `_` to `-`); adding a
 ### 3.2 Outputs are written back to `initialize.env`
 - At the end of a successful operation, `run.sh` reads `terraform output` and **updates the matching keys in the generated section** of `initialize.env` (added if missing, replaced if present).
 - Example: `ControlTowerProjectCreate` creates the folder, then writes `CT_FOLDER_ID`. On a re-run, the folder ID is set, so the existing folder is used instead of creating another.
-- A copy of `initialize.env` is saved to the state bucket after each operation, so it can be recovered in a fresh Cloud Shell.
+- A copy of `initialize.env` is saved to the state bucket after each operation, so it can be recovered in a fresh Cloud Shell. Every run also compares the local file with that copy before it starts (section 5.5).
 
 ### 3.3 `initialize.sh`
 1. **Must be sourced** (`source ./initialize.sh`), never executed. If executed, it stops and prints the correct command.
@@ -173,14 +173,14 @@ Any `LABEL_<NAME>` key becomes label `<name>` (lowercased, `_` to `-`); adding a
 
 ## 4. `run.sh`
 
-Usage: `./run.sh --operation=<OperationName> [--validate-only] [--describe] [--yes] [--force] [--no-tmux]`, or `./run.sh --operation=RunAll [--from=<OperationName>] [--to=<OperationName>] [same flags]`
+Usage: `./run.sh --operation=<OperationName> [--validate-only] [--describe] [--auto-approve] [--force] [--no-tmux]`, or `./run.sh --operation=RunAll [--from=<OperationName>] [--to=<OperationName>] [same flags]`
 
 ### 4.1 Operations
 | Operation | Kind | Does |
 |---|---|---|
 | `RunAll` | utility | Runs the bootstrap operations in order from `--from` (default: first) to `--to` (default: last); neither = all. Each operation runs as its own `run.sh` process with the same flags (description, validation, plan and confirm, status, log are unchanged). Stops at the first failure and prints a summary (done / failed / not run). Runs in one tmux session; `--validate-only` and `--describe` apply to every operation in the range |
 | `Status` | utility | Table of all operations: status, time, who ran it, git commit |
-| `Restore` | utility | In a fresh Cloud Shell, pulls `initialize.env`, `controltower.status` and logs back from the state bucket |
+| `Restore` | utility | Pulls `initialize.env`, `controltower.status` and logs back from the state bucket (shows a diff and asks before replacing a local file). Used in a fresh Cloud Shell, or to take the bucket copy of `initialize.env` when a run reports a difference (section 5.5) |
 | `ControlTowerProjectCreate` | bootstrap (order 1) | Control Tower folder (or existing), project, billing link, state bucket |
 | `ControlTowerApisEnable` | bootstrap (order 2) | Enables the baseline APIs on the Control Tower project, creates the Cloud Run, Cloud Build and Artifact Registry service agents |
 | `ControlTowerFirestoreCreate` | bootstrap (order 3) | Creates the two Firestore databases for the Self Service APIs: config, and runtime + jobs |
@@ -256,16 +256,17 @@ $ ./run.sh --operation=ControlTowerProjectCreate
 ### 4.3 What a bootstrap operation does, in one go
 1. Loads config (`initialize.sh`) and validates the operation (section 4.4). Any problem stops the run before anything changes.
 2. Prints the long description (section 4.2).
-3. Checks the previous operation is `DONE`.
-4. Marks the operation `RUNNING`.
-5. `terraform init`, then `terraform plan -out=tfplan` and shows the plan summary.
-6. Asks for confirmation (skipped with `--yes`).
-7. `terraform apply tfplan`, applying exactly what was shown.
-8. Runs the readiness check.
-9. Writes outputs back to `initialize.env`.
-10. Marks the operation `DONE` (or `FAILED` on any error).
+3. Syncs the runner files with the state bucket (section 5.5).
+4. Checks the previous operation is `DONE`.
+5. Marks the operation `RUNNING`.
+6. `terraform init`, then `terraform plan -out=tfplan` and shows the plan summary.
+7. Asks for confirmation (skipped with `--auto-approve`).
+8. `terraform apply tfplan`, applying exactly what was shown.
+9. Runs the readiness check.
+10. Writes outputs back to `initialize.env`.
+11. Marks the operation `DONE` (or `FAILED` on any error).
 
-- `--validate-only` runs the operation's validation and stops; `--describe` only prints the description; `--yes` skips the confirmation prompt; `--force` runs an operation even if the previous one is not `DONE`; `--no-tmux` runs in the current shell instead of the tmux session.
+- `--validate-only` runs the operation's validation and stops; `--describe` only prints the description; `--auto-approve` approves the Terraform plan without the `Proceed?` prompt (named after the Terraform flag; it never approves saving `initialize.env` to the bucket, section 5.5); `--force` runs an operation even if the previous one is not `DONE`; `--no-tmux` runs in the current shell instead of the tmux session.
 - **tmux is built in:** in an interactive terminal, a bootstrap operation relaunches itself inside the tmux session `lsb-day0` (reattach with `tmux attach -t lsb-day0`). It is skipped for `Status`, `Restore`, `--describe`, `--validate-only`, `--no-tmux`, non-interactive runs, or when already inside tmux. If the session already exists, `run.sh` refuses to start a second run.
 - There is **no destroy operation**.
 
@@ -310,9 +311,9 @@ ControlTowerApisEnable_ERROR="firestore.googleapis.com: billing not ready"
 1. States: `NOT_STARTED` (no entry yet), `RUNNING`, `DONE`, `FAILED`.
 2. **Order is enforced:** an operation only runs when the previous one (by order) is `DONE` (unless `--force`).
 3. An operation left `RUNNING` (for example Cloud Shell closed mid-apply) is shown as **interrupted** by `Status`; re-running it is safe because Terraform picks up from its state.
-4. **Shared through the state bucket**, so a new Cloud Shell or a second admin sees the same progress (`restore`).
+4. **Shared through the state bucket:** every run pulls the status from the bucket before it starts (section 5.5), so a new Cloud Shell or a second admin sees the same progress.
 5. Re-running a `DONE` operation is safe: Terraform shows no changes, which also re-verifies it.
-6. **Stale state locks:** after `terraform init`, `run.sh` checks for a Terraform lock (`default.tflock`) in the operation's state prefix. It is treated as stale only if the operation's previous status was `RUNNING` (interrupted) or `FAILED`; the admin confirms removal (`terraform force-unlock`), or with `--yes` it is removed automatically only if older than 60 minutes. Otherwise the run stops without changing anything, printing the exact `force-unlock` command.
+6. **Stale state locks:** after `terraform init`, `run.sh` checks for a Terraform lock (`default.tflock`) in the operation's state prefix. It is treated as stale only if the operation's previous status was `RUNNING` (interrupted) or `FAILED`; the admin confirms removal (`terraform force-unlock`), or with `--auto-approve` it is removed automatically only if older than 60 minutes. Otherwise the run stops without changing anything, printing the exact `force-unlock` command.
 
 ### 5.4 Status output
 ```
@@ -322,6 +323,20 @@ ControlTowerApisEnable_ERROR="firestore.googleapis.com: billing not ready"
   ✖ 2  ControlTowerApisEnable      FAILED       2026-11-08 12:41  billing not ready
 ```
 Colors follow [tdd-apis-common-cli.md](../tdd-apis/tdd-apis-common-cli.md) section 1.1.
+
+### 5.5 Sync with the state bucket at the start of every run
+Terraform state is always read from the bucket. The runner files are synced once per bootstrap run, after validation and before the order check, as soon as the bucket exists (`gs://$TF_STATE_BUCKET/control-tower/_runner/`):
+
+1. **`controltower.status`:** replaced with the bucket copy, without asking. Only runs write it, so the bucket copy is always the latest.
+2. **`initialize.env`:** compared with the bucket copy.
+   - Same: the run continues.
+   - Different: the diff is shown and the admin is asked `Use your local initialize.env and save it to the bucket? [y/N]`. **y** saves it to the bucket and continues. **N** stops without changing anything; to use the bucket copy instead, run `./run.sh --operation=Restore`.
+   - With `--auto-approve`, a difference stops the run: the config is never saved to the bucket without the admin seeing the diff.
+3. Before the bucket exists (first `ControlTowerProjectCreate`), or when a file is not in the bucket yet, the local file is used.
+4. `RunAll` asks at most once: after the first operation saves the file, the next operations find no difference.
+5. `--describe`, `--validate-only`, `Status` and `Restore` do not sync.
+
+Fresh Cloud Shell: copy `initialize.env.example` to `initialize.env`, fill in `QUOTA_PROJECT` and `ORG_ID` (`TF_STATE_BUCKET` derives from them), and run `Restore`. Answer **N** if a run shows a diff you did not make, for example generated keys such as `CT_FOLDER_ID` that another admin's run wrote.
 
 ---
 

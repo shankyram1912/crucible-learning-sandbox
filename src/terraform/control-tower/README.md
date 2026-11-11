@@ -74,9 +74,9 @@ gcloud services enable cloudresourcemanager.googleapis.com serviceusage.googleap
 | `ControlTowerFirestoreCreate` | Two Firestore databases (Native mode, in `REGION`) with point-in-time recovery and delete protection: `FIRESTORE_CONFIG_DATABASE` for config (desired state, weekly backups kept 14 weeks) and `FIRESTORE_DATABASE` for runtime state and jobs (kept indefinitely, no TTL) |
 | `PlaygroundGroupsCreate` | Playground service groups `IT_ADMINS_GROUP` and `BU_ADMINS_GROUP` (IT Admins nested in BU Admins), plus the initial IT Admins from `IT_ADMINS_INITIAL_MEMBERS`. Needs a Super Admin (or Groups Admin) and the Cloud Identity API on the quota project |
 | `PlaygroundTagsCreate` | Five dynamic playground tag keys at org level (`cost-center-bu`, `cost-center-code`, `cost-category`, `bu-tracking-code`, `bu-subcategory`, allowed-values pattern, no values) and Tag User on them: the first three for `IT_ADMINS_GROUP`, `bu-tracking-code` and `bu-subcategory` for `BU_ADMINS_GROUP`. Needs Tag Administrator (or Organization Administrator) on the org. Uses google provider `~> 8.0` |
-| `RunAll` | Runs bootstrap operations in order: `--from=<Operation>` (default: first) `--to=<Operation>` (default: last). Each operation still shows its description, validates, shows its plan and asks to proceed (unless `--yes`). Stops at the first failure and prints a summary |
+| `RunAll` | Runs bootstrap operations in order: `--from=<Operation>` (default: first) `--to=<Operation>` (default: last). Each operation still shows its description, validates, shows its plan and asks to proceed (unless `--auto-approve`). Stops at the first failure and prints a summary |
 | `Status` | Progress of all operations: status, time, who ran it, git commit |
-| `Restore` | In a fresh Cloud Shell: pulls `initialize.env`, `controltower.status` and logs back from the state bucket |
+| `Restore` | Pulls `initialize.env`, `controltower.status` and logs back from the state bucket (shows a diff and asks before replacing a local file). Use it in a fresh Cloud Shell, or to take the bucket copy of `initialize.env` |
 
 Run them in order: `ControlTowerProjectCreate`, `ControlTowerApisEnable`, `ControlTowerFirestoreCreate`, `PlaygroundGroupsCreate`, `PlaygroundTagsCreate`, or use `RunAll`:
 ```bash
@@ -92,7 +92,7 @@ Run them in order: `ControlTowerProjectCreate`, `ControlTowerApisEnable`, `Contr
 |---|---|
 | `--validate-only` | Run the operation's checks only, change nothing |
 | `--describe` | Print the operation's long description only |
-| `--yes` | Skip the `Proceed?` prompt |
+| `--auto-approve` | Approve the Terraform plan without the `Proceed?` prompt. Never approves saving `initialize.env` to the bucket (see section 5) |
 | `--force` | Run even if the previous operation is not `DONE` |
 | `--no-tmux` | Run in the current shell instead of the `lsb-day0` tmux session |
 | `--from=<Operation>` / `--to=<Operation>` | `RunAll` only: first and last operation of the range (defaults: first and last) |
@@ -124,8 +124,12 @@ After each successful operation, `initialize.env`, `controltower.status` and `lo
 
 - **Re-running a `DONE` operation is safe.** Terraform shows no changes.
 - **Interrupted or failed run:** fix the cause shown in the error, then run the same operation again. Terraform continues from its state. An interruption (Ctrl-C, killed tmux session, recycled Cloud Shell VM) is recorded as `FAILED` with `interrupted (SIG...)`.
-- **Stale state lock:** if an interrupted run left a Terraform state lock in the bucket, the next run shows the lock (ID, who, age) and offers to remove it. It only does so when the previous run of that operation ended `FAILED` or interrupted; with `--yes` it removes it automatically only if the lock is older than 60 minutes.
-- **New Cloud Shell or another admin:** clone the repo, create `initialize.env` with at least `QUOTA_PROJECT` and `TF_STATE_BUCKET`, then:
+- **Stale state lock:** if an interrupted run left a Terraform state lock in the bucket, the next run shows the lock (ID, who, age) and offers to remove it. It only does so when the previous run of that operation ended `FAILED` or interrupted; with `--auto-approve` it removes it automatically only if the lock is older than 60 minutes.
+- **Every run syncs with the bucket first** (once the bucket exists). `controltower.status` is replaced with the bucket copy. If your `initialize.env` differs from the bucket copy, the run shows the diff and asks `Use your local initialize.env and save it to the bucket? [y/N]`:
+  - **y**: your file is saved to the bucket and the run continues (answer this after you edited a setting on purpose).
+  - **N**: nothing changes. Answer this if the diff shows changes you did not make (for example `CT_FOLDER_ID` written by another admin's run), then take the bucket copy with `./run.sh --operation=Restore`.
+  - With `--auto-approve`, a difference stops the run.
+- **New Cloud Shell or another admin:** clone the repo, create `initialize.env` from the example with at least `QUOTA_PROJECT` and `ORG_ID` (`TF_STATE_BUCKET` derives from them), then:
   ```bash
   ./run.sh --operation=Restore
   ./run.sh --operation=Status

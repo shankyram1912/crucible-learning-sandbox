@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Learning Sandbox Day-0 Control Tower bootstrap runner.
 #
-#   ./run.sh --operation=<OperationName> [--validate-only] [--describe] [--yes] [--force] [--no-tmux]
+#   ./run.sh --operation=<OperationName> [--validate-only] [--describe] [--auto-approve] [--force] [--no-tmux]
 #   ./run.sh --operation=RunAll [--from=<OperationName>] [--to=<OperationName>] [same flags]
 #
 # Operations:
@@ -17,7 +17,7 @@
 # Flags (bootstrap operations):
 #   --validate-only   run the operation's validation and stop (no changes)
 #   --describe        print the operation's long description and stop
-#   --yes             skip the confirmation prompt
+#   --auto-approve    approve the Terraform plan without the Proceed? prompt (never approves config sync)
 #   --force           run even if the previous operation is not DONE
 #   --no-tmux         do not relaunch inside the tmux session (default: interactive runs use tmux session lsb-day0)
 #
@@ -92,11 +92,11 @@ usage() {
 # ---------------------------------------------------------------------------
 # Arguments
 # ---------------------------------------------------------------------------
-OP=""; YES=0; FORCE=0; DESCRIBE=0; VALIDATE_ONLY=0; NO_TMUX=0; FROM_OP=""; TO_OP=""
+OP=""; AUTO_APPROVE=0; FORCE=0; DESCRIBE=0; VALIDATE_ONLY=0; NO_TMUX=0; FROM_OP=""; TO_OP=""
 for arg in "$@"; do
   case "$arg" in
     --operation=*) OP="${arg#*=}" ;;
-    --yes)         YES=1 ;;
+    --auto-approve) AUTO_APPROVE=1 ;;
     --force)       FORCE=1 ;;
     --describe)    DESCRIBE=1 ;;
     --validate-only) VALIDATE_ONLY=1 ;;
@@ -216,6 +216,48 @@ backup_runner_files() {
     gcloud storage rsync --recursive --quiet "$LOG_DIR" "$remote/logs" >/dev/null 2>&1 || warn "Backup of logs to bucket failed"
   fi
   return 0
+}
+
+# Start of every bootstrap run (TDD section 5.5): controltower.status always comes from the bucket;
+# initialize.env is compared with the bucket copy and saved to the bucket only after the admin
+# has seen the diff and confirmed. --auto-approve approves the plan only, never the config.
+sync_runner_files() {
+  bucket_exists || return 0
+  local remote="gs://${TF_STATE_BUCKET}/${RUNNER_PREFIX}" tmp
+  title "Sync with ${remote}"
+
+  tmp="$(mktemp)"
+  if gcloud storage cp --quiet "$remote/controltower.status" "$tmp" >/dev/null 2>&1; then
+    mv "$tmp" "$STATUS_FILE"
+    ok "controltower.status pulled from the bucket"
+  else
+    rm -f "$tmp"
+    info "no controltower.status in the bucket yet: using the local one"
+  fi
+
+  tmp="$(mktemp)"
+  if ! gcloud storage cp --quiet "$remote/initialize.env" "$tmp" >/dev/null 2>&1; then
+    rm -f "$tmp"
+    info "no initialize.env in the bucket yet: using the local one"
+    return 0
+  fi
+  if cmp -s "$tmp" "$LSB_ENV_FILE"; then
+    rm -f "$tmp"
+    ok "initialize.env matches the bucket copy"
+    return 0
+  fi
+  warn "initialize.env differs from the copy in the bucket (- bucket, + local):"
+  diff -u --label bucket --label local "$tmp" "$LSB_ENV_FILE" || true
+  rm -f "$tmp"
+  echo
+  if (( AUTO_APPROVE )); then
+    die "Not saving initialize.env to the bucket automatically (--auto-approve approves the plan only). Re-run without --auto-approve to review it, or take the bucket copy: ./run.sh --operation=Restore"
+  fi
+  confirm "Use your local initialize.env and save it to the bucket?" \
+    || die "Nothing was changed. To use the bucket copy instead: ./run.sh --operation=Restore"
+  gcloud storage cp --quiet "$LSB_ENV_FILE" "$remote/initialize.env" >/dev/null 2>&1 \
+    || die "Could not save initialize.env to gs://${TF_STATE_BUCKET}/${RUNNER_PREFIX}/initialize.env"
+  ok "initialize.env saved to the bucket"
 }
 
 # ---------------------------------------------------------------------------
@@ -365,7 +407,7 @@ tf_init() { # dir
 }
 
 confirm() { # [prompt]
-  (( YES )) && return 0
+  (( AUTO_APPROVE )) && return 0
   local ans="" prompt="${1:-Proceed?}"
   # Prefer the terminal; fall back to stdin when there is no controlling terminal (e.g. piped/automated runs).
   if { exec 3</dev/tty; } 2>/dev/null; then
@@ -719,8 +761,8 @@ check_stale_lock() { # dir prefix
     abort_unchanged "State is locked but the previous run is not marked interrupted or failed: another run may be in progress. If you are sure it is stale: terraform -chdir=${dir} force-unlock ${id}"
   fi
   warn "The previous run of this operation ended ${PREV_STATUS}, so this lock is most likely stale."
-  if (( YES )); then
-    (( age_min >= 60 )) || abort_unchanged "Not removing a lock younger than 60 minutes automatically (--yes). Re-run without --yes to confirm interactively."
+  if (( AUTO_APPROVE )); then
+    (( age_min >= 60 )) || abort_unchanged "Not removing a lock younger than 60 minutes automatically (--auto-approve). Re-run without --auto-approve to confirm interactively."
   else
     confirm "Remove the stale lock?" || abort_unchanged "Lock kept. Nothing was changed."
   fi
@@ -744,6 +786,7 @@ run_operation() { # op
   (( DESCRIBE )) && return 0
 
   validate "$op" || exit 2
+  sync_runner_files
 
   if (( idx > 0 )); then
     prev="${BOOTSTRAP_OPS[$((idx - 1))]}"
@@ -868,7 +911,7 @@ op_run_all() {
   fi
   (( from_i <= to_i )) || die "--from ${BOOTSTRAP_OPS[$from_i]} comes after --to ${BOOTSTRAP_OPS[$to_i]}"
 
-  (( YES )) && args+=(--yes)
+  (( AUTO_APPROVE )) && args+=(--auto-approve)
   (( FORCE )) && args+=(--force)
   (( DESCRIBE )) && args+=(--describe)
   (( VALIDATE_ONLY )) && args+=(--validate-only)
