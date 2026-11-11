@@ -12,8 +12,6 @@ Physical Firestore schema, collection organization, logical NoSQL relationships,
 
 `lsb-control-tower-config-db` contains **9 physical elements** (6 top-level collections and 3 subcollections).
 
-> **Note on `_health/ping`:** Nothing is stored at `_health/ping` and it is **not** a database element. In `src/api/lsb_api/firestore_check.py` ([tdd-apis-health.md](../tdd-apis/tdd-apis-health.md) section 3), calling `.get()` on a non-existent document path returns an empty snapshot (`exists=False`) without error, which already proves network path, credentials, IAM read permission, and database existence without seeding or maintaining a document.
-
 | # | Element | Physical Firestore path | Kind | Document ID (`PK`) | Lifecycle & mutability | Stores |
 |---|---|---|---|---|---|---|
 | 1 | **`cost_centers`** | `cost_centers/{bu_value}` | Top-level collection | Literal `cost-center-bu` value (e.g. `computing`) | `ACTIVE -> DISABLED` on the cost center and on each code inside it (status only; never deleted); codes are added in place | One school's cost center **with its allowed `cost-center-code` values** as a `codes` map on the same document |

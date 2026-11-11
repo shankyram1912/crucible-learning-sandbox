@@ -72,6 +72,8 @@ $ lsb health api
 1. Read the document `_health/ping` with a timeout of `LSB_HEALTH_DB_READ_TIMEOUT_SECONDS` (default 2). The document does not need to exist: a "not found" document still proves network path, credentials, IAM and that the database exists. Cost: one document read per database.
 2. Record status, latency, and on failure the error code only.
 
+> **Note — `_health/ping` is never stored.** Nothing is written at `_health/ping` in either database and it is not part of either data model ([tdd-data-config.md](../tdd-data/tdd-data-config.md)). Reading a path that does not exist returns an empty snapshot (`exists = False`) without error, so the check needs no seeded or maintained document. Implementation: `FirestoreChecker._check_one` in `src/api/lsb_api/firestore_check.py`.
+
 | Database | Role |
 |---|---|
 | `FIRESTORE_CONFIG_DATABASE` (`lsb-control-tower-config-db`) | `CONFIG` |

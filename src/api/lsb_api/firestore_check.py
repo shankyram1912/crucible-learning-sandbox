@@ -43,6 +43,12 @@ class FirestoreChecker:
         timeout = min(self._s.LSB_HEALTH_DB_READ_TIMEOUT_SECONDS, self._s.LSB_HEALTH_DB_TOTAL_TIMEOUT_SECONDS)
         t0 = time.monotonic()
         try:
+            # `_health/ping` is never written and is not part of either data model
+            # (specs/02-tdd/tdd-data/tdd-data-config.md). Reading a path that does not exist
+            # returns an empty snapshot (exists=False) without raising, which already proves
+            # network path, credentials, IAM read permission and that the database exists,
+            # so no seeded or maintained document is needed. Same read on both databases
+            # (config and runtime/jobs), run in parallel by check_all().
             doc = self._client(db).collection("_health").document("ping")
             await asyncio.wait_for(doc.get(timeout=timeout), timeout=timeout + 0.5)
             return DatabaseCheck(database=db, role=role, status=CheckStatus.OK,
