@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# ManualGround Layer 2 CLI wrapper.
+set -Eeuo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+if [[ -x "$ROOT/.venv/bin/mg" ]]; then
+  exec "$ROOT/.venv/bin/mg" "$@"
+fi
+
+exec uv run --project "$ROOT" mg "$@"

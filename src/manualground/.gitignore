@@ -1,0 +1,29 @@
+# ManualGround local environment, runner state, and Python/Terraform build artifacts
+# Never commit uv.lock, secrets, or local state/logs.
+
+# Python & uv
+uv.lock
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Admin-filled environment & runner status/logs
+initialize.env
+*.bak
+*.status
+logs/
+state/
+
+# Terraform working directories, plans, state, and generated backend configs
+.terraform/
+**/.terraform/
+**/.terraform.lock.hcl
+*.tfstate*
+**/terraform.tfstate*
+**/tfplan
+*.tfplan
+terraform/*/backend.tf
